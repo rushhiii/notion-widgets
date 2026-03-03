@@ -68,14 +68,16 @@ export function QuoteWidget() {
             // : "bg-[#0e0f12]"
 
         }
-      contentClassName="w-full max-w-[1100px] rounded-none border-transparent bg-transparent p-0"
-      heightClassName="min-h-[260px]"
+    //   contentClassName="w-full max-w-[1100px] rounded-none border-transparent bg-transparent p-0"
+      contentClassName="w-full max-w-[90%] rounded-none border-transparent bg-transparent p-0"
+    //   heightClassName="min-h-[260px]"
+      heightClassName="min-h-[260px] max-h-[90%]"
     >
       <article
         className={
           theme === "dark"
-            ? "flex h-full w-full flex-col items-center justify-center rounded-[2rem] border border-purple-500/90 bg-black px-6 py-8 md:px-10 md:py-10"
-            : "flex h-full w-full flex-col items-center justify-center rounded-[2rem] border border-zinc-300 bg-[#f4f4f5] px-6 py-8 md:px-10 md:py-10"
+            ? "flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border border-purple-500/90 bg-black px-6 py-8 md:px-10 md:py-10"
+            : "flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border border-zinc-300 bg-[#f4f4f5] px-6 py-8 md:px-10 md:py-10"
         }
       >
         <blockquote
