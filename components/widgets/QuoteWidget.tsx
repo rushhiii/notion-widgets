@@ -15,7 +15,9 @@ export function QuoteWidget() {
 
   const categoryParam = (searchParams.get("category") ?? "").trim().toLowerCase();
   const sourceParam = (searchParams.get("source") ?? "auto").trim().toLowerCase();
-  const theme = resolveTheme(searchParams.get("theme"));
+  const rawThemeParam = (searchParams.get("theme") ?? "").trim().toLowerCase();
+  const requestedTheme = resolveTheme(rawThemeParam);
+  const theme: "dark" | "light" = requestedTheme === "light" ? "light" : "dark";
   const autoRotate = parseBooleanParam(searchParams.get("rotate"), false);
   const intervalSeconds = parsePositiveIntParam(searchParams.get("interval"), 10);
 
@@ -59,27 +61,28 @@ export function QuoteWidget() {
       theme={theme}
       className={
         theme === "dark"
-          ? "bg-[#0e0f12]"
+          ? "bg-black !bg-black"
           : theme === "light"
             ? "bg-[#e6e6e8]"
-            : "bg-transparent"
-      }
-    //   contentClassName="max-w-[980px] rounded-none border-transparent bg-transparent p-0"
-      contentClassName="max-w-[70%] rounded-none border-transparent bg-transparent p-0"
-      heightClassName="h-[240px]"
+            : "bg-[#e6e6e8]"
+            // : "bg-[#0e0f12]"
+
+        }
+      contentClassName="w-full max-w-[1100px] rounded-none border-transparent bg-transparent p-0"
+      heightClassName="min-h-[260px]"
     >
       <article
         className={
           theme === "dark"
-            ? "flex h-full w-full flex-col items-center justify-center rounded-[14px] border border-purple-500/90 bg-black px-5"
-            : "flex h-full w-full flex-col items-center justify-center rounded-[14px] border border-zinc-300 bg-[#f4f4f5] px-5"
+            ? "flex h-full w-full flex-col items-center justify-center rounded-[2rem] border border-purple-500/90 bg-black px-6 py-8 md:px-10 md:py-10"
+            : "flex h-full w-full flex-col items-center justify-center rounded-[2rem] border border-zinc-300 bg-[#f4f4f5] px-6 py-8 md:px-10 md:py-10"
         }
       >
         <blockquote
           className={
             theme === "dark"
-              ? "max-w-[900px] text-center font-serif text-[clamp(1.65rem,2.1vw,2.1rem)] italic leading-[1.45] text-zinc-100"
-              : "max-w-[900px] text-center font-serif text-[clamp(1.65rem,2.1vw,2.1rem)] italic leading-[1.45] text-zinc-900"
+              ? "w-full max-w-[900px] whitespace-pre-wrap break-words text-center font-serif text-[clamp(1.25rem,2vw,2.1rem)] italic leading-[1.45] text-zinc-100"
+              : "w-full max-w-[900px] whitespace-pre-wrap break-words text-center font-serif text-[clamp(1.25rem,2vw,2.1rem)] italic leading-[1.45] text-zinc-900"
           }
         >
           “{quote?.text ?? "Loading quote..."}”
