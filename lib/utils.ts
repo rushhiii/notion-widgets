@@ -6,7 +6,7 @@ export function cn(...classes: Array<string | false | null | undefined>) {
 
 export function resolveTheme(theme: string | null | undefined): WidgetTheme {
   if (theme === "dark" || theme === "minimal") return theme;
-  return "light";
+  return "dark";
 }
 
 export function parseBooleanParam(value: string | null, defaultValue = false): boolean {

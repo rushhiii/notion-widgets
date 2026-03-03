@@ -59,8 +59,15 @@ Open `http://localhost:3000/clock` or `http://localhost:3000/quotes`.
 
 Your widget URLs will be:
 
-- `https://your-domain.vercel.app/clock`
-- `https://your-domain.vercel.app/quotes`
+- `https://rushis-notion-widgets.vercel.app/clock`
+- `https://rushis-notion-widgets.vercel.app/quotes`
+
+Live widget examples:
+
+- `https://rushis-notion-widgets.vercel.app/clock?tz=America/Toronto&format=24&theme=dark`
+- `https://rushis-notion-widgets.vercel.app/clock?tz=Europe/London&format=12&theme=minimal&seconds=true&toggle=false`
+- `https://rushis-notion-widgets.vercel.app/quotes?category=stoic&theme=light`
+- `https://rushis-notion-widgets.vercel.app/quotes?category=focus&theme=dark&source=notion&rotate=true&interval=8`
 
 If using Notion-synced quotes, run `npm run sync:quotes` before each deploy/build to refresh `lib/quotes.notion.json`.
 
@@ -76,7 +83,7 @@ If using Notion-synced quotes, run `npm run sync:quotes` before each deploy/buil
 
 - `tz`: IANA timezone (default: `America/Toronto`)
 - `format`: `12` or `24` (default: `12`)
-- `theme`: `light` | `dark` | `minimal` (default: `light`)
+- `theme`: `light` | `dark` | `minimal` (default: `dark`)
 - `seconds`: `true/false` (default: `false`)
 - `toggle`: `true/false` show in-widget seconds toggle button (default: `true`)
 
@@ -89,7 +96,7 @@ Examples:
 ### Quotes Widget (`/quotes`)
 
 - `category`: `stoic` | `focus` | `growth` | `mindfulness` (optional)
-- `theme`: `light` | `dark` | `minimal` (default: `light`)
+- `theme`: `light` | `dark` | `minimal` (default: `dark`)
 - `source`: `auto` | `local` | `notion` (default: `auto`)
 - `rotate`: `true/false` (optional, default: `false`)
 - `interval`: seconds between rotations (optional, default: `10`)
