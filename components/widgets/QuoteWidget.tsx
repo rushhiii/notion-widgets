@@ -69,9 +69,10 @@ export function QuoteWidget() {
 
         }
     //   contentClassName="w-full max-w-[1100px] rounded-none border-transparent bg-transparent p-0"
-      contentClassName="w-full max-w-[90%] rounded-none border-transparent bg-transparent p-0"
+      // contentClassName="w-full max-w-[90%] rounded-none border-transparent bg-transparent p-0"
+      contentClassName="w-full max-w-[90vw] rounded-none border-transparent bg-transparent p-0"
     //   heightClassName="min-h-[260px]"
-      heightClassName="min-h-[260px] max-h-[90%]"
+      heightClassName="min-h-[260px] max-h-[90vw]"
     >
       <article
         className={
