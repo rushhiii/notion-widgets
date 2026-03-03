@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Notion Widgets",
+  title: {
+    default: "Rushi's Notion Widgets",
+    template: "Rn Widgets | %s",
+  },
   description: "Static, embeddable Notion widgets built with Next.js",
+  icons: {
+    // icon: "/icons/es.png",
+    icon: "/icons/ees.png",
+  },
 };
 
 type RootLayoutProps = {
