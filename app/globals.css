@@ -120,7 +120,7 @@
   height: 4px;
   background-color: var(--holder);
   position: absolute;
-  top: 52%;
+  top: 50vh;
   animation: fc-fade-in 160ms ease forwards;
   left: 50%;
   z-index: 2;
