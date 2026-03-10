@@ -174,7 +174,6 @@ feature_close1.onclick = function () {
 document.getElementsByClassName("features_popup")[0].style.display = "none";
 
 // SIMPLE ANALYTICS STATS
-// const API_KEY = "sa_api_key_jAh46tZrHanCgaOwO64FMgfDUYDL6NQfAyGS"
 // async function getCurrentLivePeople() {
 //     await fetch("https://dashboard.simpleanalytics.com/flipclock.app.json?period=day&count=1&interval=hour", {
 //         headers: {
