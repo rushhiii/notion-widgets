@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { parseBooleanParam, parsePositiveIntParam, parseColorParam, resolveTheme } from "@/lib/utils";
+
+import { Link2, Maximize2, Menu, Minimize2, Timer, TimerReset, X } from "lucide-react";
+
+import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
 
 function isValidTimeZone(timeZone: string): boolean {
   try {
@@ -13,239 +17,307 @@ function isValidTimeZone(timeZone: string): boolean {
   }
 }
 
+function parseBool(val: string | null, fallback: boolean) {
+  if (val === "1" || val === "true" || val === "yes") return true;
+  if (val === "0" || val === "false" || val === "no") return false;
+  return fallback;
+}
+
+function parseIntParam(val: string | null, fallback: number, min = 0, max = 999) {
+  const n = Number(val);
+  if (Number.isFinite(n)) {
+    return Math.min(Math.max(n, min), max);
+  }
+  return fallback;
+}
+
 export function ClockWidget() {
   const searchParams = useSearchParams();
   const [now, setNow] = useState<Date | null>(null);
 
-  useEffect(() => {
-    setNow(new Date());
-
-    const id = window.setInterval(() => {
-      setNow(new Date());
-    }, 1000);
-
-    return () => window.clearInterval(id);
-  }, []);
+  const sizeFromQuery = parseIntParam(searchParams.get("size"), 65, 25, 120);
+  const formatFromQuery = searchParams.get("format") === "24";
+  const secondsFromQuery = parseBool(searchParams.get("seconds"), false);
+  const controlsFromQuery = parseBool(searchParams.get("controls"), false);
+  const themeFromQuery = (searchParams.get("theme")?.trim().toLowerCase() as ThemeName) || "default";
 
   const timezoneParam = searchParams.get("tz") ?? "America/Toronto";
   const timezone = isValidTimeZone(timezoneParam) ? timezoneParam : "America/Toronto";
-  const format = searchParams.get("format") === "24" ? 24 : 12;
-  const theme = resolveTheme(searchParams.get("theme"));
-  const showToggle = parseBooleanParam(searchParams.get("toggle"), false);
-  const defaultShowSeconds = parseBooleanParam(searchParams.get("seconds"), false);
-  const showDetails = parseBooleanParam(searchParams.get("details"), false);
-  const scalePercent = parsePositiveIntParam(searchParams.get("size"), 75);
-  const bgParam = parseColorParam(searchParams.get("bg"));
-  const lineParam = parseColorParam(searchParams.get("line"));
-  const textParam = parseColorParam(searchParams.get("text"));
-  const holderParam = parseColorParam(searchParams.get("holder"));
-  const [showSeconds, setShowSeconds] = useState(defaultShowSeconds);
-  const [activeTheme, setActiveTheme] = useState(theme);
+
+  const [size, setSize] = useState<number>(sizeFromQuery);
+  const [is24h, setIs24h] = useState<boolean>(formatFromQuery);
+  const [showSeconds, setShowSeconds] = useState<boolean>(secondsFromQuery);
+  const [themeName, setThemeName] = useState<ThemeName>(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [showControls, setShowControls] = useState<boolean>(controlsFromQuery);
+  const [copied, setCopied] = useState<boolean>(false);
+  const copyTimeout = useRef<number | null>(null);
 
   useEffect(() => {
-    setShowSeconds(defaultShowSeconds);
-  }, [defaultShowSeconds]);
+    setNow(new Date());
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
-    setActiveTheme(theme);
-  }, [theme]);
+    const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
 
-  const timeFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: timezone,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: format === 12,
-      }),
-    [timezone, format],
-  );
-
-  const dateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: timezone,
-        weekday: "short",
-        month: "short",
-        day: "2-digit",
-      }),
-    [timezone],
-  );
-
-  const parts = useMemo(() => {
-    if (!now) {
-      return {
-        hour: "-",
-        minute: "--",
-        second: "--",
-        dayPeriod: format === 12 ? "--" : "",
-      };
+  useEffect(() => {
+    const stored = window.localStorage.getItem("fc_size");
+    if (stored) {
+      const n = Number(stored);
+      if (Number.isFinite(n)) setSize(n);
     }
+    const storedSeconds = window.localStorage.getItem("fc_seconds");
+    if (storedSeconds === "true") setShowSeconds(true);
+    if (storedSeconds === "false") setShowSeconds(false);
+    const storedFormat = window.localStorage.getItem("fc_24h");
+    if (storedFormat === "true") setIs24h(true);
+    if (storedFormat === "false") setIs24h(false);
+    const storedTheme = window.localStorage.getItem("fc_theme") as ThemeName | null;
+    if (storedTheme && THEME_ORDER.includes(storedTheme)) setThemeName(storedTheme);
+    const storedControls = window.localStorage.getItem("fc_controls");
+    if (storedControls === "true") setShowControls(true);
+  }, []);
 
-    const withSeconds = new Intl.DateTimeFormat("en-US", {
-      timeZone: timezone,
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: format === 12,
-    }).formatToParts(now);
+  useEffect(() => {
+    window.localStorage.setItem("fc_size", String(size));
+  }, [size]);
 
-    const getPart = (type: Intl.DateTimeFormatPartTypes) =>
-      withSeconds.find((part) => part.type === type)?.value ?? "--";
+  useEffect(() => {
+    window.localStorage.setItem("fc_seconds", String(showSeconds));
+  }, [showSeconds]);
 
-    const rawHour = getPart("hour");
-    return {
-      hour: rawHour,
-      minute: getPart("minute").padStart(2, "0"),
-      second: getPart("second").padStart(2, "0"),
-      dayPeriod: format === 12 ? getPart("dayPeriod") : "",
-    };
-  }, [now, timezone, format]);
+  useEffect(() => {
+    window.localStorage.setItem("fc_24h", String(is24h));
+  }, [is24h]);
 
-  const themeVars =
-    activeTheme === "dark"
-      ? {
-        ["--background" as string]: bgParam ?? "black",
-        ["--line" as string]: lineParam ?? "#101010",
-        ["--text" as string]: textParam ?? "#b7b7b7",
-        ["--holder" as string]: holderParam ?? "#101010",
+  useEffect(() => {
+    window.localStorage.setItem("fc_theme", themeName);
+  }, [themeName]);
+
+  useEffect(() => {
+    window.localStorage.setItem("fc_controls", String(showControls));
+  }, [showControls]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeout.current) {
+        window.clearTimeout(copyTimeout.current);
       }
-      : {
-        ["--background" as string]: bgParam ?? "#f3f3f3",
-        ["--line" as string]: lineParam ?? "#e6e6e6",
-        ["--text" as string]: textParam ?? "#000000",
-        ["--holder" as string]: holderParam ?? "#e6e6e6",
-      };
+    };
+  }, []);
 
-  const containerScale = Math.max(25, Math.min(scalePercent, 120)) / 100;
-  const primarySize = showSeconds ? "clamp(22vw, 30vw, 36vw)" : "clamp(30vw, 40vw, 50vw)";
-  const secondarySize = primarySize;
-  const periodSize = showSeconds ? "clamp(2.5vw, 3.2vw, 4vw)" : "clamp(3vw, 4vw, 5vw)";
+  const currentTime = useMemo(() => {
+    if (!now) return null;
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: !is24h,
+      timeZone: timezone,
+    });
 
-  const DigitCard = ({ value, size }: { value: string; size: string }) => (
-    <div className="flip-card">
-      <div className="flip-card-face" style={{ fontSize: size }}>
-        {value}
+    const parts = formatter.formatToParts(now).reduce(
+      (acc, part) => {
+        if (part.type === "hour") acc.hour = part.value;
+        if (part.type === "minute") acc.minute = part.value;
+        if (part.type === "second") acc.second = part.value;
+        if (part.type === "dayPeriod") acc.period = part.value.toUpperCase();
+        return acc;
+      },
+      { hour: "", minute: "", second: "", period: "" },
+    );
+
+    return parts;
+  }, [now, is24h, timezone]);
+
+  const themeVars = THEMES[themeName];
+
+  const rootStyle: CSSProperties = {
+    background: themeVars.background,
+    color: themeVars.text,
+    ["--background"]: themeVars.background,
+    ["--holder"]: themeVars.holder,
+    ["--text"]: themeVars.text,
+  };
+
+  const handleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen();
+    }
+  };
+
+  const scale = Math.min(Math.max(size, 25), 120);
+
+  return (
+    <div className="fc-root" style={rootStyle}>
+      <div className="fc-surface">
+        <div className="fc-line" aria-hidden />
+
+        <div className={showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"} style={{ transform: `scale(${scale / 100})` }}>
+          <div className="fc-holder">
+            <FlipDigit value={currentTime?.hour ?? ""} pad={false} />
+            {!is24h && <h2>{currentTime?.period}</h2>}
+          </div>
+
+          <div className="fc-holder">
+            <FlipDigit value={currentTime?.minute ?? ""} />
+          </div>
+
+          {showSeconds && (
+            <div className="fc-holder" id="seconds_holder">
+              <FlipDigit value={currentTime?.second ?? ""} />
+            </div>
+          )}
+        </div>
+
+        <div className="fc-nav">
+          <a className="fc-nav-btn" href="/timer" aria-label="Timer" title="Timer">
+            <Timer size={18} strokeWidth={1.6} />
+          </a>
+          <a className="fc-nav-btn" href="/stopwatch" aria-label="Stopwatch" title="Stopwatch">
+            <TimerReset size={18} strokeWidth={1.6} />
+          </a>
+          <button className="fc-nav-btn" aria-label="Toggle settings" onClick={() => setShowControls((v) => !v)}>
+            <Menu size={18} strokeWidth={1.6} />
+          </button>
+          <button className="fc-nav-btn" aria-label="Fullscreen" onClick={handleFullscreen}>
+            {isFullscreen ? <Minimize2 size={18} strokeWidth={1.8} /> : <Maximize2 size={18} strokeWidth={1.8} />}
+          </button>
+        </div>
+
+        {showControls && (
+          <>
+            <div className="fc-panel-backdrop" onClick={() => setShowControls(false)} />
+
+            <div className="fc-panel fc-panel-floating" role="dialog" aria-modal>
+              <button className="fc-nav-btn fc-panel-close" aria-label="Close settings" onClick={() => setShowControls(false)}>
+                <X size={18} strokeWidth={1.8} />
+              </button>
+              <div className="fc-panel-themes-only">
+                <div className="fc-themes fc-themes-compact">
+                  {THEME_ORDER.map((name) => {
+                    const t = THEMES[name];
+                    return (
+                      <button
+                        key={name}
+                        className="fc-theme-swatch"
+                        style={{ background: `linear-gradient(135deg, ${t.background}, ${t.holder})`, color: t.text }}
+                        onClick={() => setThemeName(name)}
+                        aria-label={name}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="fc-panel-dock">
+              <div className="fc-dock-slider">
+                {/* <SizeIcon /> */}
+                <input
+                  className="fc-slider"
+                  type="range"
+                  min={25}
+                  max={120}
+                  step={3}
+                  value={scale}
+                  onChange={(e) => setSize(Number(e.target.value))}
+                />
+              </div>
+              <button className="fc-pill-toggle" onClick={() => setIs24h((v) => !v)}>
+                <span className="fc-pill-text">12</span>
+                <input type="checkbox" checked={is24h} readOnly />
+                <span className="fc-pill-text">24</span>
+              </button>
+              <button className={showSeconds ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowSeconds((v) => !v)}>
+                <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
+              </button>
+              {/* <button className="fc-nav-btn" aria-label="Fullscreen" onClick={handleFullscreen}>
+                <FullscreenIcon active={isFullscreen} />
+              </button> */}
+              <button
+                className="fc-nav-btn embed-copy"
+                aria-label="Copy embed"
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("size", String(scale));
+                  url.searchParams.set("format", is24h ? "24" : "12");
+                  url.searchParams.set("seconds", String(showSeconds ? 1 : 0));
+                  url.searchParams.set("theme", themeName);
+                  url.searchParams.set("controls", showControls ? "1" : "0");
+                  navigator.clipboard
+                    .writeText(url.toString())
+                    .then(() => {
+                      setCopied(true);
+                      if (copyTimeout.current) window.clearTimeout(copyTimeout.current);
+                      copyTimeout.current = window.setTimeout(() => setCopied(false), 1200);
+                    })
+                    .catch(() => undefined);
+                }}
+              >
+                <Link2 size={18} strokeWidth={1.6} />
+              </button>
+            </div>
+          </>
+        )}
+
+        {copied && <div className="fc-toast">Embed link copied</div>}
       </div>
     </div>
   );
+}
 
-  const hourDigits = parts.hour.split("");
-  const minuteDigits = parts.minute.split("");
-  const secondDigits = parts.second.split("");
+// Icons provided by lucide-react imports
+
+function FlipDigit({ value, pad = true }: { value: string; pad?: boolean }) {
+  const normalized = value === "" ? "" : String(Number(value));
+  const padded = normalized === "" ? "" : pad ? normalized.padStart(2, "0") : normalized;
+  const [prev, setPrev] = useState<string>(padded);
+  const [anim, setAnim] = useState(false);
+  const nextRef = useRef<string>(padded);
+  const flipTimeout = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (padded === prev) return;
+    nextRef.current = padded;
+    setAnim(true);
+
+    if (flipTimeout.current) window.clearTimeout(flipTimeout.current);
+
+    flipTimeout.current = window.setTimeout(() => {
+      setPrev(nextRef.current);
+      setAnim(false);
+    }, 700);
+    return () => {
+      if (flipTimeout.current) window.clearTimeout(flipTimeout.current);
+    };
+  }, [padded, prev]);
+
+  const current = prev;
+  const incoming = nextRef.current;
+  const topVal = anim ? incoming : current;
 
   return (
-    <main
-      className="relative h-screen w-full overflow-hidden"
-      style={themeVars as React.CSSProperties}
-    >
-      <div className="absolute inset-0 bg-[color:var(--background)]" />
-      <div className="pointer-events-none absolute left-0 right-0 top-[51%] z-[3] h-2 -translate-y-1/2 bg-[color:var(--line)]" />
-
-      <section
-        className="relative z-[2] flex h-full w-full items-center justify-center px-[1%]"
-        style={{ transform: `scale(${containerScale})` }}
-      >
-        <div className="flex h-full w-full items-center gap-[2%]">
-          <div className="relative my-auto flex h-[100%] flex-1 items-center justify-center rounded-[50px] bg-[color:var(--holder)] py-[8.6%]">
-            <div className="flex items-center justify-center gap-[2%]">
-              {hourDigits.map((digit, index) => (
-                <DigitCard
-                  key={`h-${index}-${digit}`}
-                  value={digit}
-                  size={primarySize}
-                />
-              ))}
-            </div>
-            {format === 12 ? (
-              <h2
-                className="clock-bebas absolute bottom-[8%] left-[7%] m-0 leading-none text-[color:var(--text)]"
-                style={{ fontSize: periodSize, fontFamily: "Arial, sans-serif", fontWeight: 700 }}
-              >
-                {parts.dayPeriod}
-              </h2>
-            ) : null}
-          </div>
-
-          <div className="relative my-auto flex h-[100%] flex-1 items-center justify-center rounded-[50px] bg-[color:var(--holder)] py-[8.6%]">
-            <div className="flex items-center justify-center gap-[2%]">
-              {minuteDigits.map((digit, index) => (
-                <DigitCard
-                  key={`m-${index}-${digit}`}
-                  value={digit}
-                  size={primarySize}
-                />
-              ))}
-            </div>
-          </div>
-
-          {showSeconds ? (
-          <div className="relative my-auto flex h-[100%] flex-1 items-center justify-center rounded-[50px] bg-[color:var(--holder)] py-[8.6%]">
-            {/*<div className="relative my-auto flex h-[100%] flex-[0.8] min-w-[140px] max-w-[240px] items-center justify-center rounded-[50px] bg-[color:var(--holder)] py-[8.6%]"> */}
-              <div className="flex items-center justify-center gap-[2%]">
-                {secondDigits.map((digit, index) => (
-                  <DigitCard
-                    key={`s-${index}-${digit}`}
-                    value={digit}
-                    size={secondarySize}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
+    <div className="fc-flip-container">
+      <div className="fc-segment">
+        <div className="fc-flip-card">
+          <div className="fc-top">{topVal}</div>
+          <div className="fc-bottom">{current}</div>
+          {anim && (
+            <>
+              <div className="fc-top-flip">{current}</div>
+              <div className="fc-bottom-flip">{incoming}</div>
+            </>
+          )}
         </div>
-
-        {showToggle ? (
-          <button
-            type="button"
-            onClick={() => setShowSeconds((previous) => !previous)}
-            className="absolute right-6 top-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/70 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-200"
-            aria-label="Toggle seconds"
-          >
-            <span>Seconds</span>
-            <span className={`h-2.5 w-2.5 rounded-full ${showSeconds ? "bg-emerald-400" : "bg-zinc-500"}`} />
-          </button>
-        ) : null}
-
-        {showDetails ? (
-          <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-6 text-xs uppercase tracking-[0.14em] text-[color:var(--text)] opacity-70">
-            <span>{timezone}</span>
-            <span>{now ? dateFormatter.format(now) : "---, --- --"}</span>
-            <span>{now ? timeFormatter.format(now) : "--:--:--"}</span>
-          </div>
-        ) : null}
-
-      </section>
-
-      <button
-        type="button"
-        onClick={() => setActiveTheme((previous) => (previous === "dark" ? "light" : "dark"))}
-        className="fixed bottom-5 right-5 z-50 h-7 w-7 rounded-full transition-transform hover:scale-105"
-        aria-label="Toggle theme"
-        title="Toggle theme"
-      >
-        <span
-          className={`block h-full w-full rounded-full ${activeTheme === "dark" ? "bg-zinc-500" : "bg-zinc-800"
-            }`}
-        />
-      </button>
-
-      <style jsx global>{`
-        .flip-card {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .flip-card-face {
-          display: block;
-          font-family: "Bebas Neue", Arial, sans-serif;
-          font-weight: 400;
-          line-height: 0.82;
-          color: var(--text);
-        }
-      `}</style>
-    </main>
+      </div>
+    </div>
   );
 }

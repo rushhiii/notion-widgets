@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Blog → FlipClock</title>
+
+    <meta name="description"
+        content="Discover the stories behind the FlipClock Web. From its creation to its features, explore the journey of FlipClock in this informative blog">
+    <meta name="keywords"
+        content="flipclock, flipclock web, flipclock blog, flipclock.app, flipclock.app blog, flipclock web online blog">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:image" content="https://flipclock.app/images/blog_cover_image.png" />
+    <meta property="og:url" content="https://flipclock.app/blog" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="website" />
+
+    <meta name="twitter:title" content="FlipClock → Blog">
+    <meta name="twitter:description"
+        content="Discover the stories behind the FlipClock Web. From its creation to its features, explore the journey of FlipClock in this informative blog">
+    <meta name="twitter:site" content="@flipclockweb">
+    <meta name="twitter:image:src" content="https://flipclock.app/images/blog_cover_image.png">
+    <meta name="twitter:domain" content="flipclock.app">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:creator" content="@tanmay_makode_">
+
+    <link rel="icon" href="images/new_logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/new_logo.png">
+
+    <link rel="stylesheet" href="blog/blog_styles.css">
+</head>
+
+<style>
+    a {
+        padding: 0;
+        color: currentColor;
+        border-radius: 0;
+    }
+
+    a:hover {
+        background-color: #8263ff00 !important;
+    }
+
+    img {
+        box-shadow: rgba(0, 0, 0, 0.15) 0px 10px 20px 0px;
+    }
+
+    img:hover {
+        transform: scale(1.03) rotate(.7deg);
+    }
+
+    .main_container {
+        margin: 7rem auto 3rem auto;
+        width: 60%;
+    }
+
+    header>h1 {
+        font-size: clamp(1.5rem, 2.5rem, 3rem);
+    }
+
+    header>p {
+        font-size: clamp(.8rem, .95rem, 1.2rem);
+        width: 60%;
+        margin: 0 auto;
+    }
+
+    .blogs_container {
+        margin: 7rem 0;
+        background-color: rgba(226, 225, 225, 0);
+        display: flex;
+        flex-direction: column;
+        /* gap: 3.5rem; */
+        gap: 5rem;
+    }
+
+    .blog {
+        /* background-color: rgb(247, 247, 247); */
+        display: flex;
+        flex-direction: row;
+        border-radius: 1rem;
+        transition: all .2s ease-out;
+        height: fit-content;
+    }
+
+    .blog:hover {
+        /* background-color: rgb(241, 241, 241); */
+        background-color: rgb(247, 247, 247);
+        transform: scale(1.01);
+    }
+
+    .blog>img {
+        width: 38%;
+        margin: 0;
+        object-fit: cover;
+        transform: scale(1.06);
+    }
+
+    .blog>img:hover {
+        transform: scale(1.07) rotate(1deg);
+        filter: saturate(1.5);
+    }
+
+    .information>a>h3 {
+        font-size: clamp(.8rem, 1.25rem, 1.3rem);
+        font-weight: 600;
+        margin: 1.5rem 1.5rem 1rem 1.5rem;
+    }
+
+    .information>p {
+        font-size: clamp(.6rem, .85rem, 1rem);
+        font-weight: 500;
+        margin: 0rem 1.5rem;
+        line-height: 1.20rem;
+    }
+
+    .likes_and_views {
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        gap: 1rem;
+        object-fit: contain;
+        /* margin: 0rem 1.5rem 1rem 1.5rem; */
+        height: fit-content;
+        margin: 1.5rem 1.5rem;
+
+    }
+
+    .likes_and_views>p {
+        font-size: clamp(.7rem, .8rem, 1rem);
+        margin: 0;
+    }
+
+    .nav_links {
+        display: flex;
+        flex-direction: row;
+        position: absolute;
+        right: 0;
+        top: 0;
+        gap: .5rem;
+
+        margin: 20px;
+    }
+
+    .nav_links>a {
+        font-size: clamp(.7rem, .9rem, 1rem);
+        padding: .5rem .6rem;
+        border-radius: .5rem;
+        color: var(--secondary-text);
+    }
+
+    .nav_links>a:hover {
+        background-color: #ebebed !important;
+        text-decoration: none;
+    }
+
+    #back_button {
+        padding: .3rem .3rem;
+        border-radius: .5rem;
+    }
+
+    #back_button:hover {
+        background-color: #ebebed !important;
+    }
+
+
+
+    .poll_container {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        align-items: center;
+        margin: 40px 0;
+    }
+
+    .poll {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: .7em;
+    }
+
+    .poll>button {
+        padding: .5em 1.5em;
+        border: none;
+        background-color: var(--other);
+        color: var(--primary-text);
+        font-size: clamp(.8rem, .8vw, 1.5vw);
+        border-radius: 1em;
+        text-align: left;
+        transition: all .2s ease-in-out;
+        cursor: pointer;
+    }
+
+    .poll>#yes_button {
+        border: 1px solid #ffffffdb;
+        text-align: left;
+    }
+
+    .poll>#yes_button:hover {
+        /* background-color: #42f068; */
+        background-color: #dadada;
+        color: black;
+    }
+
+    .poll>#yes_button:focus {
+        color: #000000;
+        background-color: #dadada;
+        cursor: not-allowed;
+    }
+
+    .poll>#no_button {
+        text-align: right;
+    }
+
+    .poll>#no_button:hover {
+        /* background-color: #ff5353; */
+        background-color: #dadada;
+        color: black;
+        /* animation: jiggleAnimation .2s infinite; */
+    }
+
+    .poll>#no_button:focus {
+        color: #000000;
+        background-color: #dadada;
+        cursor: not-allowed;
+    }
+
+    @media only screen and (max-width: 1200px) {
+        .main_container {
+            margin: 7rem auto 3rem auto;
+            width: 80%;
+        }
+
+        .blogs_container {
+            gap: 3rem;
+        }
+
+        .blog>img {
+            transform: scale(1);
+        }
+    }
+
+    @media only screen and (max-width: 600px) {
+        header>h1 {
+            font-size: clamp(1.5rem, 2rem, 2.1rem);
+        }
+
+        header>p {
+            width: 85%;
+        }
+
+        .information>a>h3 {
+            font-size: clamp(.8rem, 1rem, 1.3rem);
+        }
+
+        .main_container {
+            margin: 7rem auto 3rem auto;
+            width: 90%;
+        }
+
+        .blogs_container {
+            gap: 3rem;
+        }
+
+        .blog {
+            flex-direction: column-reverse;
+            align-items: center;
+            background-color: rgb(249, 249, 249);
+        }
+
+        .blog>img {
+            width: 100%;
+            margin: 0;
+            object-fit: cover;
+            transform: scale(1);
+        }
+
+        .blog>img:hover {
+            transform: scale(1);
+        }
+    }
+</style>
+
+<body>
+
+    <!-- BACK BUTTON -->
+    <a href="index.html" id="back_button" style="position: fixed; top: 0; left: 0; margin: 20px;">
+        <svg style="margin-bottom: -.2rem;" xmlns="http://www.w3.org/2000/svg" width="25" height="25"
+            fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16">
+            <path fill-rule="evenodd"
+                d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z" />
+        </svg>
+    </a>
+
+    <!-- <div class="poll_container">
+        <p style="font-size: clamp(.7rem,.9rem,1rem);">How's the blog design?</p>
+        <div class="poll hide">
+            <button id="yes_button">Amazing 😄 &nbsp&nbsp&nbsp&nbsp</button>
+            <button id="no_button">Ok 👍 &nbsp&nbsp&nbsp&nbsp</button>
+        </div>
+    </div> -->
+
+    <div class="nav_links">
+        <a href="index.html">Home</a>
+        <a href="upgrade.html">Upgrade</a>
+        <a href="partner.html">Partner</a>
+        <a href="blog.html">Blog</a>
+    </div>
+
+    <div class="main_container">
+        <header>
+            <a href="index.html" style="cursor: pointer">
+                <svg width="35" height="35" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_1725_506)">
+                        <path
+                            d="M34.124 17.8305C34.124 13.3113 32.3363 8.97727 29.154 5.78176C25.9717 2.58624 21.6557 0.791016 17.1553 0.791016C12.6549 0.791015 8.33881 2.58624 5.15656 5.78175C1.9743 8.97727 0.186524 13.3113 0.186523 17.8305L17.1553 17.8305H34.124Z"
+                            fill="#101010" />
+                        <path
+                            d="M0.186523 17.8305C0.186523 22.3496 1.9743 26.6837 5.15655 29.8792C8.33881 33.0747 12.6549 34.8699 17.1553 34.8699C21.6557 34.8699 25.9717 33.0747 29.154 29.8792C32.3362 26.6837 34.124 22.3496 34.124 17.8305L17.1553 17.8305L0.186523 17.8305Z"
+                            fill="#E6E6E6" />
+                        <mask id="mask0_1725_506" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="12" y="7"
+                            width="10" height="22">
+                            <path
+                                d="M17.0397 28.1402C15.5125 28.1402 14.3529 27.716 13.5611 26.8676C12.7881 26.0191 12.4015 24.803 12.4015 23.2193V21.6073H15.3428V23.3607C15.3428 24.6616 15.8801 25.3121 16.9548 25.3121C17.4827 25.3121 17.8787 25.1518 18.1426 24.8313C18.4254 24.492 18.5669 23.9075 18.5669 23.0779V21.4659C18.5669 20.5609 18.4066 19.9198 18.0861 19.5427C17.7656 19.1468 17.2471 18.9488 16.5306 18.9488H15.4842V16.1207H16.6154C17.2376 16.1207 17.6996 15.9604 18.0012 15.6399C18.3218 15.3194 18.482 14.7821 18.482 14.0279V12.5855C18.482 11.9068 18.3406 11.4072 18.0578 11.0866C17.775 10.7661 17.3979 10.6059 16.9265 10.6059C15.9273 10.6059 15.4276 11.2186 15.4276 12.4441V13.7451H12.4864V12.6987C12.4864 11.1149 12.8729 9.89883 13.6459 9.05039C14.4378 8.20195 15.569 7.77773 17.0397 7.77773C18.5291 7.77773 19.6604 8.20195 20.4334 9.05039C21.2064 9.87997 21.5929 11.0866 21.5929 12.6704V13.3774C21.5929 14.4521 21.4138 15.3194 21.0556 15.9793C20.6974 16.6203 20.1412 17.0823 19.387 17.3651V17.4216C20.1977 17.7233 20.7822 18.2135 21.1404 18.8923C21.4987 19.571 21.6778 20.4383 21.6778 21.4941V23.2476C21.6778 24.8313 21.2819 26.0474 20.49 26.8959C19.717 27.7254 18.5669 28.1402 17.0397 28.1402Z"
+                                fill="#E6E6E6" />
+                        </mask>
+                        <g mask="url(#mask0_1725_506)">
+                            <path
+                                d="M34.124 17.7607C34.124 13.2604 32.3363 8.94428 29.154 5.76202C25.9717 2.57977 21.6557 0.791993 17.1553 0.791992C12.6549 0.791992 8.33881 2.57977 5.15656 5.76202C1.9743 8.94428 0.186524 13.2603 0.186523 17.7607L17.1553 17.7607H34.124Z"
+                                fill="#B7B7B7" />
+                        </g>
+                        <mask id="mask1_1725_506" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="12" y="7"
+                            width="10" height="22">
+                            <path
+                                d="M17.0397 28.1402C15.5125 28.1402 14.3529 27.716 13.5611 26.8676C12.7881 26.0191 12.4015 24.803 12.4015 23.2193V21.6073H15.3428V23.3607C15.3428 24.6616 15.8801 25.3121 16.9548 25.3121C17.4827 25.3121 17.8787 25.1518 18.1426 24.8313C18.4254 24.492 18.5669 23.9075 18.5669 23.0779V21.4659C18.5669 20.5609 18.4066 19.9198 18.0861 19.5427C17.7656 19.1468 17.2471 18.9488 16.5306 18.9488H15.4842V16.1207H16.6154C17.2376 16.1207 17.6996 15.9604 18.0012 15.6399C18.3218 15.3194 18.482 14.7821 18.482 14.0279V12.5855C18.482 11.9068 18.3406 11.4072 18.0578 11.0866C17.775 10.7661 17.3979 10.6059 16.9265 10.6059C15.9273 10.6059 15.4276 11.2186 15.4276 12.4441V13.7451H12.4864V12.6987C12.4864 11.1149 12.8729 9.89883 13.6459 9.05039C14.4378 8.20195 15.569 7.77773 17.0397 7.77773C18.5291 7.77773 19.6604 8.20195 20.4334 9.05039C21.2064 9.87997 21.5929 11.0866 21.5929 12.6704V13.3774C21.5929 14.4521 21.4138 15.3194 21.0556 15.9793C20.6974 16.6203 20.1412 17.0823 19.387 17.3651V17.4216C20.1977 17.7233 20.7822 18.2135 21.1404 18.8923C21.4987 19.571 21.6778 20.4383 21.6778 21.4941V23.2476C21.6778 24.8313 21.2819 26.0474 20.49 26.8959C19.717 27.7254 18.5669 28.1402 17.0397 28.1402Z"
+                                fill="black" />
+                        </mask>
+                        <g mask="url(#mask1_1725_506)">
+                            <path
+                                d="M0.186523 17.7607C0.186523 22.2611 1.9743 26.5772 5.15655 29.7595C8.33881 32.9417 12.6549 34.7295 17.1553 34.7295C21.6557 34.7295 25.9717 32.9417 29.154 29.7595C32.3362 26.5772 34.124 22.2611 34.124 17.7607L17.1553 17.7607L0.186523 17.7607Z"
+                                fill="#101010" />
+                        </g>
+                    </g>
+                    <defs>
+                        <clipPath id="clip0_1725_506">
+                            <rect x="0.186523" y="0.791016" width="33.9375" height="33.9375" rx="14.1406"
+                                fill="white" />
+                        </clipPath>
+                    </defs>
+                </svg>
+            </a>
+
+            <h1>FlipClock Blog</h1>
+            <p>Discover the stories behind the FlipClock Web. From its creation to its features, explore the journey of
+                FlipClock in this informative blog</p>
+        </header>
+
+        <div class="blogs_container">
+            <div class="blog">
+                <div class="information">
+
+                    <a href="blog/the-beginning-of-the-journey.html">
+                        <h3>FlipClock - The beginning of the journey</h3>
+                    </a>
+                    <p>Have you ever stumbled upon a stunning digital clock screensaver that you wished you could easily
+                        access and use daily....</p>
+
+                    <div class="likes_and_views">
+
+                        <svg style="margin-bottom: -.2rem;" xmlns="http://www.w3.org/2000/svg" width="17" height="17"
+                            fill="#FF2B2B" class="bi bi-suit-heart-fill" viewBox="0 0 16 16">
+                            <path
+                                d="M4 1c2.21 0 4 1.755 4 3.92C8 2.755 9.79 1 12 1s4 1.755 4 3.92c0 3.263-3.234 4.414-7.608 9.608a.513.513 0 0 1-.784 0C3.234 9.334 0 8.183 0 4.92 0 2.755 1.79 1 4 1z" />
+                        </svg>
+
+                        <p id="blog1_total_likes"></p>
+
+
+                        <svg style="margin: auto 0;" xmlns="http://www.w3.org/2000/svg" width="3" height="3"
+                            fill="currentColor" class="bi bi-circle-fill" viewBox="0 0 16 16">
+                            <circle cx="8" cy="8" r="8" />
+                        </svg>
+
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                            class="bi bi-eye-fill" viewBox="0 0 16 16">
+                            <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z" />
+                            <path
+                                d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
+                        </svg>
+
+                        <p id="blog1_total_views"></p>
+                    </div>
+                </div>
+
+                <img id="cover" src="blog/blog_images/blog1_images/blog1_header_image.png" alt="FlipClock - The beginning of the journey blog image
+                ">
+            </div>
+
+            <div class="blog">
+                <div class="information">
+
+                    <a href="blog/maximize-productivity-with-flipclock.html">
+                        <h3>Increase Productivity - How FlipClock to helps create a focused work environment</h3>
+                    </a>
+                    <p>Increase productivity using flipclock web various features such as flip-animations, themes and
+                        more.</p>
+
+                    <div class="likes_and_views">
+
+                        <svg style="margin-bottom: -.2rem;" xmlns="http://www.w3.org/2000/svg" width="17" height="17"
+                            fill="#FF2B2B" class="bi bi-suit-heart-fill" viewBox="0 0 16 16">
+                            <path
+                                d="M4 1c2.21 0 4 1.755 4 3.92C8 2.755 9.79 1 12 1s4 1.755 4 3.92c0 3.263-3.234 4.414-7.608 9.608a.513.513 0 0 1-.784 0C3.234 9.334 0 8.183 0 4.92 0 2.755 1.79 1 4 1z" />
+                        </svg>
+
+                        <p id="blog3_total_likes"></p>
+
+
+                        <svg style="margin: auto 0;" xmlns="http://www.w3.org/2000/svg" width="3" height="3"
+                            fill="currentColor" class="bi bi-circle-fill" viewBox="0 0 16 16">
+                            <circle cx="8" cy="8" r="8" />
+                        </svg>
+
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                            class="bi bi-eye-fill" viewBox="0 0 16 16">
+                            <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z" />
+                            <path
+                                d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
+                        </svg>
+
+                        <p id="blog3_total_views"></p>
+                    </div>
+                </div>
+
+                <img style="height: 250px;" id="cover" src="blog/blog_images/blog3_images/blog3_header_image.png"
+                    alt="Maximizing Productivity - How FlipClock Helps Create a Focused Work Environment blog image">
+            </div>
+
+            <div class="blog">
+                <div class="information">
+
+                    <a href="blog/flipclock-for-notion-users.html">
+                        <h3>FlipClock for Notion Users - Enhance Your Workspace Aesthetics</h3>
+                    </a>
+                    <p>Enhance Your Workspace Aesthetics and Improve Time Management with a Minimalistic Digital Clock.
+                        Explore the benefits, integration, and customization options with our comprehensive guide.</p>
+
+                    <div class="likes_and_views">
+
+                        <svg style="margin-bottom: -.2rem;" xmlns="http://www.w3.org/2000/svg" width="17" height="17"
+                            fill="#FF2B2B" class="bi bi-suit-heart-fill" viewBox="0 0 16 16">
+                            <path
+                                d="M4 1c2.21 0 4 1.755 4 3.92C8 2.755 9.79 1 12 1s4 1.755 4 3.92c0 3.263-3.234 4.414-7.608 9.608a.513.513 0 0 1-.784 0C3.234 9.334 0 8.183 0 4.92 0 2.755 1.79 1 4 1z" />
+                        </svg>
+
+                        <p id="blog2_total_likes"></p>
+
+
+                        <svg style="margin: auto 0;" xmlns="http://www.w3.org/2000/svg" width="3" height="3"
+                            fill="currentColor" class="bi bi-circle-fill" viewBox="0 0 16 16">
+                            <circle cx="8" cy="8" r="8" />
+                        </svg>
+
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                            class="bi bi-eye-fill" viewBox="0 0 16 16">
+                            <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z" />
+                            <path
+                                d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
+                        </svg>
+
+                        <p id="blog2_total_views"></p>
+                    </div>
+                </div>
+
+                <img id="cover" src="blog/blog_images/blog2_images/blog2_header_image.png"
+                    alt="FlipClock for Notion Users - Elevating Your Workspace Aesthetics blog image">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="link_path_container">
+        <a href="index.html">flipclock.app</a>
+
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right"
+            viewBox="0 0 16 16">
+            <path fill-rule="evenodd"
+                d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z" />
+        </svg>
+
+        <a href="blog.html">Blog</a>
+    </div>
+
+    <footer>
+        <div class="item">
+            <h3>Product</h3>
+
+            <a href="index.html" target="_blank">Home</a>
+            <a href="partner.html" target="_blank">Partner</a>
+            <a href="upgrade.html" target="_blank">Upgrade</a>
+        </div>
+
+        <div class="item">
+            <h3>Updates</h3>
+
+            <a href="https://twitter.com/flipclockweb" target="_blank">Twitter</a>
+            <a href="blog.html" target="_blank">Blog</a>
+        </div>
+
+        <div class="item">
+            <h3>Contact</h3>
+
+            <a href="https://tally.so/r/nGe8Op" target="_blank">Feedback Form</a>
+            <a href="https://tally.so/r/3NpgVQ" target="_blank">Help</a>
+            <a href="https://twitter.com/flipclockweb" target="_blank">Twitter</a>
+        </div>
+
+        <div class="item">
+            <h3>Others</h3>
+
+            <a href="https://tally.so/r/mOQkXp" target="_blank">Share Lo-Fi playlists</a>
+            <a href="https://twitter.com/search?q=%23flipclockweb&src=typed_query" target="_blank">Share desk setups</a>
+            <a href="https://tally.so/r/3laYKp" target="_blank">Suggest new features</a>
+            <br />
+            <a href="http://127.0.0.1:5501/TERMS_AND_CONDITIONS.pdf" target="_blank">terms and conditions</a>
+            <a href="http://127.0.0.1:5501/PRIVACY_POLICY.html" target="_blank">privacy policy</a>
+        </div>
+
+        <!-- LOGO -->
+        <a href="index.html">
+            <svg width="25" height="25" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clip-path="url(#clip0_1725_506)">
+                    <path
+                        d="M34.124 17.8305C34.124 13.3113 32.3363 8.97727 29.154 5.78176C25.9717 2.58624 21.6557 0.791016 17.1553 0.791016C12.6549 0.791015 8.33881 2.58624 5.15656 5.78175C1.9743 8.97727 0.186524 13.3113 0.186523 17.8305L17.1553 17.8305H34.124Z"
+                        fill="#101010" />
+                    <path
+                        d="M0.186523 17.8305C0.186523 22.3496 1.9743 26.6837 5.15655 29.8792C8.33881 33.0747 12.6549 34.8699 17.1553 34.8699C21.6557 34.8699 25.9717 33.0747 29.154 29.8792C32.3362 26.6837 34.124 22.3496 34.124 17.8305L17.1553 17.8305L0.186523 17.8305Z"
+                        fill="#E6E6E6" />
+                    <mask id="mask0_1725_506" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="12" y="7" width="10"
+                        height="22">
+                        <path
+                            d="M17.0397 28.1402C15.5125 28.1402 14.3529 27.716 13.5611 26.8676C12.7881 26.0191 12.4015 24.803 12.4015 23.2193V21.6073H15.3428V23.3607C15.3428 24.6616 15.8801 25.3121 16.9548 25.3121C17.4827 25.3121 17.8787 25.1518 18.1426 24.8313C18.4254 24.492 18.5669 23.9075 18.5669 23.0779V21.4659C18.5669 20.5609 18.4066 19.9198 18.0861 19.5427C17.7656 19.1468 17.2471 18.9488 16.5306 18.9488H15.4842V16.1207H16.6154C17.2376 16.1207 17.6996 15.9604 18.0012 15.6399C18.3218 15.3194 18.482 14.7821 18.482 14.0279V12.5855C18.482 11.9068 18.3406 11.4072 18.0578 11.0866C17.775 10.7661 17.3979 10.6059 16.9265 10.6059C15.9273 10.6059 15.4276 11.2186 15.4276 12.4441V13.7451H12.4864V12.6987C12.4864 11.1149 12.8729 9.89883 13.6459 9.05039C14.4378 8.20195 15.569 7.77773 17.0397 7.77773C18.5291 7.77773 19.6604 8.20195 20.4334 9.05039C21.2064 9.87997 21.5929 11.0866 21.5929 12.6704V13.3774C21.5929 14.4521 21.4138 15.3194 21.0556 15.9793C20.6974 16.6203 20.1412 17.0823 19.387 17.3651V17.4216C20.1977 17.7233 20.7822 18.2135 21.1404 18.8923C21.4987 19.571 21.6778 20.4383 21.6778 21.4941V23.2476C21.6778 24.8313 21.2819 26.0474 20.49 26.8959C19.717 27.7254 18.5669 28.1402 17.0397 28.1402Z"
+                            fill="#E6E6E6" />
+                    </mask>
+                    <g mask="url(#mask0_1725_506)">
+                        <path
+                            d="M34.124 17.7607C34.124 13.2604 32.3363 8.94428 29.154 5.76202C25.9717 2.57977 21.6557 0.791993 17.1553 0.791992C12.6549 0.791992 8.33881 2.57977 5.15656 5.76202C1.9743 8.94428 0.186524 13.2603 0.186523 17.7607L17.1553 17.7607H34.124Z"
+                            fill="#B7B7B7" />
+                    </g>
+                    <mask id="mask1_1725_506" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="12" y="7" width="10"
+                        height="22">
+                        <path
+                            d="M17.0397 28.1402C15.5125 28.1402 14.3529 27.716 13.5611 26.8676C12.7881 26.0191 12.4015 24.803 12.4015 23.2193V21.6073H15.3428V23.3607C15.3428 24.6616 15.8801 25.3121 16.9548 25.3121C17.4827 25.3121 17.8787 25.1518 18.1426 24.8313C18.4254 24.492 18.5669 23.9075 18.5669 23.0779V21.4659C18.5669 20.5609 18.4066 19.9198 18.0861 19.5427C17.7656 19.1468 17.2471 18.9488 16.5306 18.9488H15.4842V16.1207H16.6154C17.2376 16.1207 17.6996 15.9604 18.0012 15.6399C18.3218 15.3194 18.482 14.7821 18.482 14.0279V12.5855C18.482 11.9068 18.3406 11.4072 18.0578 11.0866C17.775 10.7661 17.3979 10.6059 16.9265 10.6059C15.9273 10.6059 15.4276 11.2186 15.4276 12.4441V13.7451H12.4864V12.6987C12.4864 11.1149 12.8729 9.89883 13.6459 9.05039C14.4378 8.20195 15.569 7.77773 17.0397 7.77773C18.5291 7.77773 19.6604 8.20195 20.4334 9.05039C21.2064 9.87997 21.5929 11.0866 21.5929 12.6704V13.3774C21.5929 14.4521 21.4138 15.3194 21.0556 15.9793C20.6974 16.6203 20.1412 17.0823 19.387 17.3651V17.4216C20.1977 17.7233 20.7822 18.2135 21.1404 18.8923C21.4987 19.571 21.6778 20.4383 21.6778 21.4941V23.2476C21.6778 24.8313 21.2819 26.0474 20.49 26.8959C19.717 27.7254 18.5669 28.1402 17.0397 28.1402Z"
+                            fill="black" />
+                    </mask>
+                    <g mask="url(#mask1_1725_506)">
+                        <path
+                            d="M0.186523 17.7607C0.186523 22.2611 1.9743 26.5772 5.15655 29.7595C8.33881 32.9417 12.6549 34.7295 17.1553 34.7295C21.6557 34.7295 25.9717 32.9417 29.154 29.7595C32.3362 26.5772 34.124 22.2611 34.124 17.7607L17.1553 17.7607L0.186523 17.7607Z"
+                            fill="#101010" />
+                    </g>
+                </g>
+                <defs>
+                    <clipPath id="clip0_1725_506">
+                        <rect x="0.186523" y="0.791016" width="33.9375" height="33.9375" rx="14.1406" fill="white" />
+                    </clipPath>
+                </defs>
+            </svg>
+        </a>
+    </footer>
+    <!-- TINY ADZ -->
+    <script src="https://app.tinyadz.com/scripts/ads.js?siteId=67fe90fbcb4c82370fb16b91" type="module" async></script>
+<!-- Cloudflare Pages Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b3e96b7e5ad541c586047719801488ce"}'></script><!-- Cloudflare Pages Analytics --></body>
+
+<script src="blog/blog_script.js"></script>
+
+</html>

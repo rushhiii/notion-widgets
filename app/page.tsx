@@ -67,6 +67,7 @@ export default function HomePage() {
               </Link>
             </div>
           </article>
+
         </section>
 
         <footer className="mt-6 text-xs text-zinc-500">

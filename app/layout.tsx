@@ -20,7 +20,7 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" className="h-full bg-transparent">
-      <body className="h-full bg-transparent antialiased">
+      <body className="h-full bg-transparent antialiased" suppressHydrationWarning>
         {children}
       </body>
     </html>
