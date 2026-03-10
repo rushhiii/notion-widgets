@@ -173,14 +173,14 @@
   position: relative;
   width: min(42vw, 520px);
   min-width: 320px;
-  /* height: clamp(260px, 40vw, 440px); */
+  height: clamp(260px, 40vw, 550px);
   background-color: var(--holder);
   border-radius: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
   /* padding: 24px; */
-  padding: 0 9%;
+  padding: 0% 8%;
   transition: all 0.3s ease;
 }
 
@@ -202,7 +202,8 @@
   color: var(--text);
   font-size: clamp(32px, 5vw, 52px);
   font-weight: 700;
-  font-family: Arial, Helvetica, sans-serif !important;
+  /* font-family: Arial, Helvetica, sans-serif !important; */
+  font-family: Arial, Helvetica !important;
 }
 
 .fc-flip-container {
@@ -441,8 +442,9 @@
 } */
 
 .fc-panel-compact .fc-themes {
-  /* grid-template-columns: repeat(3, minmax(34px, 1fr)); */
-  grid-template-columns: repeat(3, minmax(25px, .5fr));
+  /* grid-template-columns: repeat(4, minmax(34px, 1fr)); */
+  /* grid-template-columns: repeat(3, minmax(25px, .5fr)); */
+  grid-template-columns: repeat(4, minmax(25px, 1fr));
   gap: 4px;
 }
 
@@ -621,7 +623,7 @@
 .fc-themes {
   display: grid;
   /* grid-template-columns: repeat(4, minmax(42px, 1fr)); */
-  grid-template-columns: repeat(3, minmax(34px, 1fr));
+  /* grid-template-columns: repeat(4, minmax(34px, 1fr)); */
   gap: 11px;
   /* width: min(360px, 100%); */
 }
