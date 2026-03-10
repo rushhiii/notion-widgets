@@ -623,7 +623,7 @@
 .fc-themes {
   display: grid;
   /* grid-template-columns: repeat(4, minmax(42px, 1fr)); */
-  /* grid-template-columns: repeat(4, minmax(34px, 1fr)); */
+  grid-template-columns: repeat(4, minmax(34px, 1fr));
   gap: 11px;
   /* width: min(360px, 100%); */
 }
