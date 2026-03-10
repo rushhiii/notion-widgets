@@ -137,12 +137,12 @@ export function ClockWidget() {
 
   const themeVars = THEMES[themeName];
 
-  const rootStyle: CSSProperties = {
+  const rootStyle: CSSProperties & Record<`--${string}`, string> = {
     background: themeVars.background,
     color: themeVars.text,
-    ["--background"]: themeVars.background,
-    ["--holder"]: themeVars.holder,
-    ["--text"]: themeVars.text,
+    "--background": themeVars.background,
+    "--holder": themeVars.holder,
+    "--text": themeVars.text,
   };
 
   const handleFullscreen = () => {

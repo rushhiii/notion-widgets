@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { Home, Link2, Maximize2, Menu, Minimize2, Pause, Play, RotateCcw, Stopwatch, Timer as TimerIcon } from "lucide-react";
+import { Home, Link2, Maximize2, Menu, Minimize2, Pause, Play, RotateCcw, Timer as TimerIcon } from "lucide-react";
 
 import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
 
@@ -127,12 +127,12 @@ export function StopwatchWidget() {
   }, []);
 
   const themeVars = THEMES[themeName];
-  const rootStyle: CSSProperties = {
+  const rootStyle: CSSProperties & Record<`--${string}`, string> = {
     background: themeVars.background,
     color: themeVars.text,
-    ["--background"]: themeVars.background,
-    ["--holder"]: themeVars.holder,
-    ["--text"]: themeVars.text,
+    "--background": themeVars.background,
+    "--holder": themeVars.holder,
+    "--text": themeVars.text,
   };
 
   const scale = Math.min(Math.max(size, 25), 120);

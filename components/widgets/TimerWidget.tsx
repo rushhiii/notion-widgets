@@ -117,12 +117,12 @@ export function TimerWidget() {
   }, []);
 
   const themeVars = THEMES[themeName];
-  const rootStyle: CSSProperties = {
+  const rootStyle: CSSProperties & Record<`--${string}`, string> = {
     background: themeVars.background,
     color: themeVars.text,
-    ["--background"]: themeVars.background,
-    ["--holder"]: themeVars.holder,
-    ["--text"]: themeVars.text,
+    "--background": themeVars.background,
+    "--holder": themeVars.holder,
+    "--text": themeVars.text,
   };
 
   const scale = Math.min(Math.max(size, 25), 120);
