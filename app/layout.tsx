@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: {
     default: "Rushi's Notion Widgets",
-    template: "Rn Widgets | %s",
+    template: "%s | Rn. Widgets",
   },
   description: "Static, embeddable Notion widgets built with Next.js",
   icons: {

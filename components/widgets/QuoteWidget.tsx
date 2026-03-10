@@ -4,10 +4,22 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { WidgetContainer } from "@/components/ui/WidgetContainer";
 import { getQuotes, Quote } from "@/lib/quotes";
-import { parseBooleanParam, parsePositiveIntParam, resolveTheme } from "@/lib/utils";
+import { parseBooleanParam, parsePositiveIntParam, parseColorParam, resolveTheme } from "@/lib/utils";
 
 function randomFrom<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+function pickDailyQuote(quotes: Quote[], category: string, source: string): Quote | null {
+  if (!quotes.length) return null;
+  const dateKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+  const seed = `${dateKey}|${category}|${source}|${quotes.length}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  const index = hash % quotes.length;
+  return quotes[index];
 }
 
 export function QuoteWidget() {
@@ -20,6 +32,11 @@ export function QuoteWidget() {
   const theme: "dark" | "light" = requestedTheme === "light" ? "light" : "dark";
   const autoRotate = parseBooleanParam(searchParams.get("rotate"), false);
   const intervalSeconds = parsePositiveIntParam(searchParams.get("interval"), 10);
+  const modeParam = (searchParams.get("mode") ?? "daily").trim().toLowerCase();
+  const bgParam = parseColorParam(searchParams.get("bg"));
+  const borderParam = parseColorParam(searchParams.get("border"));
+  const textParam = parseColorParam(searchParams.get("text"));
+  const accentParam = parseColorParam(searchParams.get("accent"));
 
   const source: "local" | "notion" | "auto" =
     sourceParam === "local" || sourceParam === "notion" ? sourceParam : "auto";
@@ -32,11 +49,16 @@ export function QuoteWidget() {
   }, [categoryParam, baseQuotes]);
 
   const availableQuotes = filteredQuotes.length > 0 ? filteredQuotes : baseQuotes;
-  const [quote, setQuote] = useState<Quote | null>(null);
+  const initialQuote = useMemo(() => {
+    if (modeParam === "random") return availableQuotes.length ? randomFrom(availableQuotes) : null;
+    return pickDailyQuote(availableQuotes, categoryParam, source);
+  }, [availableQuotes, categoryParam, source, modeParam]);
+
+  const [quote, setQuote] = useState<Quote | null>(initialQuote);
 
   useEffect(() => {
-    setQuote(randomFrom(availableQuotes));
-  }, [availableQuotes]);
+    setQuote(initialQuote);
+  }, [initialQuote]);
 
   useEffect(() => {
     if (!autoRotate || availableQuotes.length <= 1) return;
@@ -55,6 +77,11 @@ export function QuoteWidget() {
 
     return () => window.clearInterval(id);
   }, [autoRotate, intervalSeconds, availableQuotes]);
+
+  const cardBackground = bgParam ?? (theme === "dark" ? "#000" : "#f4f4f5");
+  const cardBorder = borderParam ?? (theme === "dark" ? "#7c3aed" : "#d4d4d8");
+  const quoteColor = textParam ?? (theme === "dark" ? "#e5e7eb" : "#0f172a");
+  const authorColor = accentParam ?? (theme === "dark" ? "#a1a1aa" : "#475569");
 
   return (
     <WidgetContainer
@@ -75,27 +102,21 @@ export function QuoteWidget() {
       heightClassName="min-h-[260px] max-h-[90vw]"
     >
       <article
-        className={
-          theme === "dark"
-            ? "flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border border-purple-500/90 bg-black px-6 py-8 md:px-10 md:py-10"
-            : "flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border border-zinc-300 bg-[#f4f4f5] px-6 py-8 md:px-10 md:py-10"
-        }
+        className="flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border px-6 py-8 md:px-10 md:py-10"
+        style={{
+          backgroundColor: cardBackground,
+          borderColor: cardBorder,
+        }}
       >
         <blockquote
-          className={
-            theme === "dark"
-              ? "w-full max-w-[900px] whitespace-pre-wrap break-words text-center font-serif text-[clamp(1.25rem,2vw,2.1rem)] italic leading-[1.45] text-zinc-100"
-              : "w-full max-w-[900px] whitespace-pre-wrap break-words text-center font-serif text-[clamp(1.25rem,2vw,2.1rem)] italic leading-[1.45] text-zinc-900"
-          }
+          className="w-full max-w-[900px] whitespace-pre-wrap break-words text-center font-serif text-[clamp(1.25rem,2vw,2.1rem)] italic leading-[1.45]"
+          style={{ color: quoteColor }}
         >
           “{quote?.text ?? "Loading quote..."}”
         </blockquote>
         <footer
-          className={
-            theme === "dark"
-              ? "mt-3 text-[clamp(1rem,1.2vw,1.2rem)] leading-none text-zinc-400"
-              : "mt-3 text-[clamp(1rem,1.2vw,1.2rem)] leading-none text-zinc-600"
-          }
+          className="mt-3 text-[clamp(1rem,1.2vw,1.2rem)] leading-none"
+          style={{ color: authorColor }}
         >
           {quote?.author ?? ""}
         </footer>

@@ -92,19 +92,29 @@ Examples:
 - `/clock?tz=America/Toronto&format=24&theme=dark`
 - `/clock?tz=America/Toronto&format=12&theme=dark&seconds=false&toggle=true`
 - `/clock?tz=Europe/London&format=12&theme=minimal&seconds=true&toggle=false`
+- `/clock?tz=Asia/Kolkata&theme=dark&bg=0b0b0b&line=7c3aed&text=f5f5f5&holder=1a1a1a`
 
 ### Quotes Widget (`/quotes`)
 
 - `category`: `stoic` | `focus` | `growth` | `mindfulness` (optional)
 - `theme`: `light` | `dark` | `minimal` (default: `dark`)
 - `source`: `auto` | `local` | `notion` (default: `auto`)
+- `mode`: `daily` (quote of the day) | `random` (new quote on each load; default: `daily`)
 - `rotate`: `true/false` (optional, default: `false`)
 - `interval`: seconds between rotations (optional, default: `10`)
+- Colors (hex, with or without #): `bg`, `border`, `text`, `accent`
 
 Examples:
 
 - `/quotes?category=stoic&theme=light`
 - `/quotes?category=focus&theme=dark&source=notion&rotate=true&interval=8`
+- `/quotes?mode=daily&bg=0b0b0b&border=7c3aed&text=f5f5f5&accent=a1a1aa`
+- `/quotes?mode=random&source=local&theme=dark`
+
+Use cases:
+- Quote of the day on dashboards: `/quotes?mode=daily&source=notion&theme=dark`
+- Brand-matched card colors: `/quotes?bg=111827&border=7c3aed&text=e5e7eb&accent=9ca3af`
+- Random inspiration button: `/quotes?mode=random&rotate=false`
 
 ## Notion Quotes Database Sync
 

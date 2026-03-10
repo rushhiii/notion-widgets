@@ -9,6 +9,14 @@ export function resolveTheme(theme: string | null | undefined): WidgetTheme {
   return "dark";
 }
 
+export function parseColorParam(value: string | null): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  const prefixed = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+  const hexPattern = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+  return hexPattern.test(prefixed) ? prefixed : null;
+}
+
 export function parseBooleanParam(value: string | null, defaultValue = false): boolean {
   if (!value) return defaultValue;
   const normalized = value.trim().toLowerCase();

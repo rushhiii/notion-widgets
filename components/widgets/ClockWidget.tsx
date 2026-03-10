@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { parseBooleanParam, parsePositiveIntParam, resolveTheme } from "@/lib/utils";
+import { parseBooleanParam, parsePositiveIntParam, parseColorParam, resolveTheme } from "@/lib/utils";
 
 function isValidTimeZone(timeZone: string): boolean {
   try {
@@ -35,6 +35,10 @@ export function ClockWidget() {
   const defaultShowSeconds = parseBooleanParam(searchParams.get("seconds"), false);
   const showDetails = parseBooleanParam(searchParams.get("details"), false);
   const scalePercent = parsePositiveIntParam(searchParams.get("size"), 75);
+  const bgParam = parseColorParam(searchParams.get("bg"));
+  const lineParam = parseColorParam(searchParams.get("line"));
+  const textParam = parseColorParam(searchParams.get("text"));
+  const holderParam = parseColorParam(searchParams.get("holder"));
   const [showSeconds, setShowSeconds] = useState(defaultShowSeconds);
   const [activeTheme, setActiveTheme] = useState(theme);
 
@@ -90,10 +94,11 @@ export function ClockWidget() {
     const getPart = (type: Intl.DateTimeFormatPartTypes) =>
       withSeconds.find((part) => part.type === type)?.value ?? "--";
 
+    const rawHour = getPart("hour");
     return {
-      hour: getPart("hour"),
-      minute: getPart("minute"),
-      second: getPart("second"),
+      hour: rawHour,
+      minute: getPart("minute").padStart(2, "0"),
+      second: getPart("second").padStart(2, "0"),
       dayPeriod: format === 12 ? getPart("dayPeriod") : "",
     };
   }, [now, timezone, format]);
@@ -101,19 +106,34 @@ export function ClockWidget() {
   const themeVars =
     activeTheme === "dark"
       ? {
-          ["--background" as string]: "black",
-          ["--line" as string]: "#101010",
-          ["--text" as string]: "#b7b7b7",
-          ["--holder" as string]: "#101010",
-        }
+        ["--background" as string]: bgParam ?? "black",
+        ["--line" as string]: lineParam ?? "#101010",
+        ["--text" as string]: textParam ?? "#b7b7b7",
+        ["--holder" as string]: holderParam ?? "#101010",
+      }
       : {
-          ["--background" as string]: "#f3f3f3",
-          ["--line" as string]: "#e6e6e6",
-          ["--text" as string]: "#000000",
-          ["--holder" as string]: "#e6e6e6",
-        };
+        ["--background" as string]: bgParam ?? "#f3f3f3",
+        ["--line" as string]: lineParam ?? "#e6e6e6",
+        ["--text" as string]: textParam ?? "#000000",
+        ["--holder" as string]: holderParam ?? "#e6e6e6",
+      };
 
   const containerScale = Math.max(25, Math.min(scalePercent, 120)) / 100;
+  const primarySize = showSeconds ? "clamp(22vw, 30vw, 36vw)" : "clamp(30vw, 40vw, 50vw)";
+  const secondarySize = primarySize;
+  const periodSize = showSeconds ? "clamp(2.5vw, 3.2vw, 4vw)" : "clamp(3vw, 4vw, 5vw)";
+
+  const DigitCard = ({ value, size }: { value: string; size: string }) => (
+    <div className="flip-card">
+      <div className="flip-card-face" style={{ fontSize: size }}>
+        {value}
+      </div>
+    </div>
+  );
+
+  const hourDigits = parts.hour.split("");
+  const minuteDigits = parts.minute.split("");
+  const secondDigits = parts.second.split("");
 
   return (
     <main
@@ -128,19 +148,20 @@ export function ClockWidget() {
         style={{ transform: `scale(${containerScale})` }}
       >
         <div className="flex h-full w-full items-center gap-[2%]">
-            {/* py-[8.6%] */}
-          {/* <div className="relative my-auto flex h-[84%] flex-1 items-center justify-center rounded-[50px] bg-[color:var(--holder)]"> */}
           <div className="relative my-auto flex h-[100%] flex-1 items-center justify-center rounded-[50px] bg-[color:var(--holder)] py-[8.6%]">
-            <h1
-              className="clock-bebas m-0 text-center leading-none text-[color:var(--text)]"
-              style={{ fontSize: "clamp(30vw, 40vw, 50vw)" }}
-            >
-              {parts.hour}
-            </h1>
+            <div className="flex items-center justify-center gap-[2%]">
+              {hourDigits.map((digit, index) => (
+                <DigitCard
+                  key={`h-${index}-${digit}`}
+                  value={digit}
+                  size={primarySize}
+                />
+              ))}
+            </div>
             {format === 12 ? (
               <h2
                 className="clock-bebas absolute bottom-[8%] left-[7%] m-0 leading-none text-[color:var(--text)]"
-                style={{ fontSize: "clamp(3vw, 4vw, 5vw)", fontFamily: "Arial, sans-serif", fontWeight: 700 }}
+                style={{ fontSize: periodSize, fontFamily: "Arial, sans-serif", fontWeight: 700 }}
               >
                 {parts.dayPeriod}
               </h2>
@@ -148,22 +169,29 @@ export function ClockWidget() {
           </div>
 
           <div className="relative my-auto flex h-[100%] flex-1 items-center justify-center rounded-[50px] bg-[color:var(--holder)] py-[8.6%]">
-            <h1
-              className="clock-bebas m-0 text-center leading-none text-[color:var(--text)]"
-              style={{ fontSize: "clamp(30vw, 40vw, 50vw)" }}
-            >
-              {parts.minute}
-            </h1>
+            <div className="flex items-center justify-center gap-[2%]">
+              {minuteDigits.map((digit, index) => (
+                <DigitCard
+                  key={`m-${index}-${digit}`}
+                  value={digit}
+                  size={primarySize}
+                />
+              ))}
+            </div>
           </div>
 
           {showSeconds ? (
-            <div className="relative my-auto flex h-[100%] w-[24%] min-w-[140px] items-center justify-center rounded-[50px] bg-[color:var(--holder)] py-[8.6%]">
-              <h1
-                className="clock-bebas m-0 text-center leading-none text-[color:var(--text)]"
-                style={{ fontSize: "clamp(14vw, 18vw, 22vw)" }}
-              >
-                {parts.second}
-              </h1>
+          <div className="relative my-auto flex h-[100%] flex-1 items-center justify-center rounded-[50px] bg-[color:var(--holder)] py-[8.6%]">
+            {/*<div className="relative my-auto flex h-[100%] flex-[0.8] min-w-[140px] max-w-[240px] items-center justify-center rounded-[50px] bg-[color:var(--holder)] py-[8.6%]"> */}
+              <div className="flex items-center justify-center gap-[2%]">
+                {secondDigits.map((digit, index) => (
+                  <DigitCard
+                    key={`s-${index}-${digit}`}
+                    value={digit}
+                    size={secondarySize}
+                  />
+                ))}
+              </div>
             </div>
           ) : null}
         </div>
@@ -198,11 +226,26 @@ export function ClockWidget() {
         title="Toggle theme"
       >
         <span
-          className={`block h-full w-full rounded-full ${
-            activeTheme === "dark" ? "bg-zinc-500" : "bg-zinc-800"
-          }`}
+          className={`block h-full w-full rounded-full ${activeTheme === "dark" ? "bg-zinc-500" : "bg-zinc-800"
+            }`}
         />
       </button>
+
+      <style jsx global>{`
+        .flip-card {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .flip-card-face {
+          display: block;
+          font-family: "Bebas Neue", Arial, sans-serif;
+          font-weight: 400;
+          line-height: 0.82;
+          color: var(--text);
+        }
+      `}</style>
     </main>
   );
 }
