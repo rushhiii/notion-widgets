@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { Link2, Maximize2, Menu, Minimize2, Timer, TimerReset, X } from "lucide-react";
+import { Link2, Maximize2, Menu, Minimize2, Moon, Sun, Timer, TimerReset, X } from "lucide-react";
 
 import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
 
@@ -35,7 +35,7 @@ export function ClockWidget() {
   const searchParams = useSearchParams();
   const [now, setNow] = useState<Date | null>(null);
 
-  const sizeFromQuery = parseIntParam(searchParams.get("size"), 65, 25, 120);
+  const sizeFromQuery = parseIntParam(searchParams.get("size"), 85, 25, 120);
   const formatFromQuery = searchParams.get("format") === "24";
   const secondsFromQuery = parseBool(searchParams.get("seconds"), false);
   const controlsFromQuery = parseBool(searchParams.get("controls"), false);
@@ -136,6 +136,8 @@ export function ClockWidget() {
   }, [now, is24h, timezone]);
 
   const themeVars = THEMES[themeName];
+  const toggleTheme = () => setThemeName((prev) => (prev === "light" ? "default" : "light"));
+  const themeList = useMemo(() => THEME_ORDER.filter((name) => name !== "light"), []);
 
   const rootStyle: CSSProperties & Record<`--${string}`, string> = {
     background: themeVars.background,
@@ -187,6 +189,9 @@ export function ClockWidget() {
           <button className="fc-nav-btn" aria-label="Toggle settings" onClick={() => setShowControls((v) => !v)}>
             <Menu size={18} strokeWidth={1.6} />
           </button>
+          <button className="fc-nav-btn" aria-label="Toggle light/dark" onClick={toggleTheme}>
+            {themeName === "light" ? <Moon size={18} strokeWidth={1.6} /> : <Sun size={18} strokeWidth={1.6} />}
+          </button>
           <button className="fc-nav-btn" aria-label="Fullscreen" onClick={handleFullscreen}>
             {isFullscreen ? <Minimize2 size={18} strokeWidth={1.8} /> : <Maximize2 size={18} strokeWidth={1.8} />}
           </button>
@@ -202,7 +207,7 @@ export function ClockWidget() {
               </button>
               <div className="fc-panel-themes-only">
                 <div className="fc-themes fc-themes-compact">
-                  {THEME_ORDER.map((name) => {
+                  {themeList.map((name) => {
                     const t = THEMES[name];
                     return (
                       <button

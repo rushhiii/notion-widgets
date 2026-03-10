@@ -1,5 +1,6 @@
 export type ThemeName =
   | "default"
+  | "light"
   | "theme1"
   | "theme2"
   | "theme3"
@@ -11,6 +12,7 @@ export type ThemeName =
 
 export const THEMES: Record<ThemeName, { background: string; holder: string; text: string }> = {
   default: { background: "#000", holder: "#101010", text: "#b7b7b7" },
+  light: { background: "#f6f6f7", holder: "#ffffff", text: "#111214" },
   theme1: { background: "#0F140F", holder: "#1A1F1A", text: "#C4EBC1" },
   theme2: { background: "#131315", holder: "#1B1C20", text: "#C5C8F8" },
   theme3: { background: "#1B1616", holder: "#271E1E", text: "#EF6666" },
@@ -23,6 +25,7 @@ export const THEMES: Record<ThemeName, { background: string; holder: string; tex
 
 export const THEME_ORDER: ThemeName[] = [
   "default",
+  "light",
   "theme1",
   "theme2",
   "theme3",

@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { Home, Link2, Maximize2, Menu, Minimize2, TimerReset } from "lucide-react";
+import { Home, Link2, Maximize2, Menu, Minimize2, Moon, Sun, TimerReset } from "lucide-react";
 
 import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
 
@@ -32,7 +32,7 @@ function parseTimeParam(raw: string | null): number | null {
 export function TimerWidget() {
   const searchParams = useSearchParams();
 
-  const sizeFromQuery = parseIntParam(searchParams.get("size"), 65, 25, 120);
+  const sizeFromQuery = parseIntParam(searchParams.get("size"), 85, 25, 120);
   const themeFromQuery = (searchParams.get("theme")?.trim().toLowerCase() as ThemeName) || "default";
   const durationFromQuery = parseTimeParam(searchParams.get("t"));
   const autoStart = parseBool(searchParams.get("start"), false);
@@ -117,6 +117,7 @@ export function TimerWidget() {
   }, []);
 
   const themeVars = THEMES[themeName];
+  const toggleTheme = () => setThemeName((prev) => (prev === "light" ? "default" : "light"));
   const rootStyle: CSSProperties & Record<`--${string}`, string> = {
     background: themeVars.background,
     color: themeVars.text,
@@ -189,6 +190,9 @@ export function TimerWidget() {
           </a>
           <button className="fc-nav-btn" aria-label="Toggle settings" onClick={() => setShowControls((v) => !v)}>
             <Menu size={18} strokeWidth={1.6} />
+          </button>
+          <button className="fc-nav-btn" aria-label="Toggle light/dark" onClick={toggleTheme}>
+            {themeName === "light" ? <Moon size={18} strokeWidth={1.6} /> : <Sun size={18} strokeWidth={1.6} />}
           </button>
           <button className="fc-nav-btn" aria-label="Fullscreen" onClick={handleFullscreen}>
             {isFullscreen ? <Minimize2 size={18} strokeWidth={1.8} /> : <Maximize2 size={18} strokeWidth={1.8} />}
