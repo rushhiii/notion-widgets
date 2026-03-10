@@ -4,6 +4,8 @@ Production-ready, static Notion widgets built with Next.js App Router, TypeScrip
 
 Includes a flick-style clock UI and quote cards that can sync from your Notion quotes database.
 
+Inspiration: [Gluqlo flip clock screensaver](https://www.omgubuntu.co.uk/2016/11/gluqlo-flipqlo-screensaver-ubuntu).
+
 ## Features
 
 - Modular widget architecture with isolated routes:

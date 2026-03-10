@@ -70,8 +70,11 @@ export default function HomePage() {
 
         </section>
 
-        <footer className="mt-6 text-xs text-zinc-500">
-          Tip: In Notion, type /embed and paste any widget URL.
+        <footer className="mt-6 text-xs text-zinc-500 space-y-1">
+          <p>Tip: In Notion, type /embed and paste any widget URL.</p>
+          {/* <p>
+            Inspiration: <a className="underline hover:text-zinc-300" href="https://www.omgubuntu.co.uk/2016/11/gluqlo-flipqlo-screensaver-ubuntu">Gluqlo flip clock screensaver</a>
+          </p> */}
         </footer>
       </div>
     </main>

@@ -1,4 +1,0 @@
-User-agent: *
-Disallow:
-
-Sitemap: https://flipclock.app/sitemap.xml
