@@ -6,6 +6,7 @@ export type Quote = {
   text: string;
   author: string;
   category: QuoteCategory;
+  show?: boolean;
 };
 
 export const QUOTES: Quote[] = [
@@ -52,6 +53,7 @@ export const QUOTES: Quote[] = [
 ];
 
 function sanitizeQuote(input: Partial<Quote>): Quote | null {
+  if (input.show === false) return null;
   const text = (input.text ?? "").trim();
   const author = (input.author ?? "").trim() || "Unknown";
   const category = (input.category ?? "general").trim().toLowerCase() || "general";
