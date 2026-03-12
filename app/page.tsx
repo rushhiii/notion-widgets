@@ -94,6 +94,29 @@ export default function HomePage() {
             </div>
           </article>
 
+          <article className="landing-card flex flex-col rounded-3xl border p-6 backdrop-blur">
+            <h2 className="text-2xl font-semibold text-white">Weather Widget</h2>
+            <p className="mt-2 text-sm text-zinc-400">
+              Current conditions from OpenWeather with city or lat/lon, metric or imperial units, optional details.
+            </p>
+
+            <div className="mt-5 space-y-2 text-sm">
+              <p className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300">/weather</p>
+              <p className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300 overflow-hidden overflow-x-auto scrollbar-hide">
+                /weather?location=Toronto&units=metric&bg=eaf1ec&accent=10b981
+              </p>
+            </div>
+
+            <div className="mt-auto pt-6">
+              <Link
+                href="/weather"
+                className="cta inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition"
+              >
+                Open Weather
+              </Link>
+            </div>
+          </article>
+
 
 
 

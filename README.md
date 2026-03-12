@@ -34,6 +34,7 @@ Production-ready, static Notion widgets built with Next.js App Router, TypeScrip
 	- [Stopwatch Widget (`/stopwatch`)](#stopwatch-widget-stopwatch)
 	- [Quotes Widget (`/quotes`)](#quotes-widget-quotes)
 	- [D-Day Widget (`/dday`)](#d-day-widget-dday)
+	- [Weather Widget (`/weather`)](#weather-widget-weather)
 - [Notion Quotes Database Sync](#notion-quotes-database-sync)
 - [Deploy Your Own (Vercel Quickstart)](#deploy-your-own-vercel-quickstart)
 - [Adding a New Widget](#adding-a-new-widget)
@@ -93,7 +94,8 @@ Open `http://localhost:3000/clock` or `http://localhost:3000/quotes`.
 2. In Vercel, import the repo.
 3. Build command: `npm run build` (sync script is optional; see Notion sync section).
 4. Output: handled by Next.js.
-5. Deploy.
+5. In Vercel project Settings → Environment Variables, add `NEXT_PUBLIC_OPENWEATHER_API_KEY` with your OpenWeather key (Production and Preview). For local dev, add it to `.env.local` and restart dev.
+6. Deploy.
 
 Widget URLs (once deployed):
 
@@ -102,6 +104,7 @@ Widget URLs (once deployed):
 - `https://your-app.vercel.app/stopwatch`
 - `https://your-app.vercel.app/dday`
 - `https://your-app.vercel.app/quotes`
+- `https://your-app.vercel.app/weather`
 
 Live examples (replace host with yours):
 
@@ -111,6 +114,7 @@ Live examples (replace host with yours):
 - `/stopwatch?start=1&theme=sunset`
 - `/dday?date=2026-07-20&units=1&seconds=1&week=1&month=1&year=1&dayColor=green`
 - `/quotes?category=focus&theme=light&source=notion&rotate=true&interval=8`
+- `/weather?location=Toronto&units=metric`
 
 If using Notion-synced quotes, run `npm run sync:quotes` before each deploy/build to refresh `lib/quotes.notion.json`.
 
@@ -197,6 +201,20 @@ Examples:
 - `/dday?display=all&notdisplay=hours,minutes&color=blue&titleColor=gold&showdate=1`
 - `/dday?mode=overview&date=2026-03-11&overviewColor=purple&align=center`
 - `/dday?day=1&hours=1&minutes=1&seconds=1&timeColor=0d9488&totalseconds=1&megaseconds=1&units=1&weeks=1&months=1&years=1&bg=%232F0601`
+
+### Weather Widget (`/weather`)
+
+- Location: `location`/`q` (city), or `lat` + `lon`
+- Units: `units=metric|imperial` (default metric)
+- Details toggle: `details=true/false` (default true)
+- Colors (hex/palette): `bg`, `text`, `accent`
+- Alignment: `align=left|center|right` (default center)
+
+Examples:
+
+- `/weather?location=Toronto&units=metric`
+- `/weather?lat=40.4168&lon=-3.7038&units=metric&bg=eaf1ec&accent=10b981`
+- `/weather?location=Seattle&units=imperial&details=0&align=right`
 
 ## Notion Quotes Database Sync
 
