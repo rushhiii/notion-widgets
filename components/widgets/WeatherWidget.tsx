@@ -120,21 +120,21 @@ export function WeatherWidget() {
 
     fetch(url.toString())
       .then(async (res) => {
-        const json = (await res.json()) as any;
+        const json = (await res.json()) as WeatherResponse;
         if (!res.ok) {
-          const message = json?.message || "Failed to load weather";
+          const message = (json as { message?: string })?.message || json.error || "Failed to load weather";
           throw new Error(message);
         }
         setData({
-          name: json?.name,
-          country: json?.sys?.country,
-          temp: json?.main?.temp,
-          feels_like: json?.main?.feels_like,
-          humidity: json?.main?.humidity,
-          wind_speed: json?.wind?.speed,
-          clouds: json?.clouds?.all,
-          description: json?.weather?.[0]?.description,
-          icon: json?.weather?.[0]?.icon,
+          name: (json as any)?.name,
+          country: (json as any)?.sys?.country,
+          temp: (json as any)?.main?.temp,
+          feels_like: (json as any)?.main?.feels_like,
+          humidity: (json as any)?.main?.humidity,
+          wind_speed: (json as any)?.wind?.speed,
+          clouds: (json as any)?.clouds?.all,
+          description: (json as any)?.weather?.[0]?.description,
+          icon: (json as any)?.weather?.[0]?.icon,
           units: unitsParam,
         });
       })

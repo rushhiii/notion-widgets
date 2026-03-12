@@ -56,7 +56,8 @@ export async function GET(request: Request) {
       icon: data?.weather?.[0]?.icon,
       units: (url.searchParams.get("units") || "metric").toLowerCase() === "imperial" ? "imperial" : "metric",
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || "Unexpected error" }, { status: 400 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unexpected error";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
