@@ -167,7 +167,8 @@ export function DdayWidget() {
     return () => window.clearInterval(id);
   }, []);
 
-  const targetDateStr = searchParams.get("date") ?? "2025-12-08";
+//   const targetDateStr = searchParams.get("date") ?? "2025-12-08";
+  const targetDateStr = searchParams.get("date") ?? "2025-11-11";
   const unitsFlag = parseBool(searchParams.get("units"), false);
   const showDateLabel = parseBool(searchParams.get("showdate"), true);
   const mode = (searchParams.get("mode") || "").toLowerCase();
