@@ -1,7 +1,7 @@
 ![Notion Widgets Banner](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/icons/repo_banner.png)
 
-<!-- ✱ ✻ -->
-# ✱ Notion Widgets Framework
+<!-- ✱ ✻ ✷ ✮-->
+# ✮ Notion Widgets Framework
 Production-ready, static Notion widgets built with Next.js App Router, TypeScript, and Tailwind CSS. Includes flick-style clock/timer/stopwatch widgets and quote cards that can sync from your Notion database.
 > _Inspiration: [Gluqlo flip clock screensaver](https://www.omgubuntu.co.uk/2016/11/gluqlo-flipqlo-screensaver-ubuntu)._
 
@@ -15,6 +15,7 @@ Production-ready, static Notion widgets built with Next.js App Router, TypeScrip
 [![Timer](https://img.shields.io/badge/Timer-Live-2563eb?style=flat-square&labelColor=111827&logo=sandwatch&logoColor=white)](https://rushis-notion-widgets.vercel.app/timer)
 [![Stopwatch](https://img.shields.io/badge/Stopwatch-Live-0f766e?style=flat-square&labelColor=111827&logo=tempo&logoColor=white)](https://rushis-notion-widgets.vercel.app/stopwatch)
 [![Quotes](https://img.shields.io/badge/Quotes-Live-9333ea?style=flat-square&labelColor=111827&logo=quip&logoColor=white)](https://rushis-notion-widgets.vercel.app/quotes)
+[![D-Day](https://img.shields.io/badge/D--Day-Live-f59e0b?style=flat-square&labelColor=111827&logo=counter-strike&logoColor=white)](https://rushis-notion-widgets.vercel.app/dday)
 [![View Repo](https://img.shields.io/badge/View%20Repo-1f6feb?style=flat-square&labelColor=111827&logo=github&logoColor=white)](https://github.com/rushhiii/notion-widgets)
 
 
@@ -28,10 +29,11 @@ Production-ready, static Notion widgets built with Next.js App Router, TypeScrip
 - [Deployment (Vercel)](#deployment-vercel)
 - [Notion Embed](#notion-embed)
 - [Query Parameters](#query-parameters)
-	- [Quotes Widget (`/quotes`)](#quotes-widget-quotes)
 	- [Clock Widget (`/clock`)](#clock-widget-clock)
-		- [Timer Widget (`/timer`)](#timer-widget-timer)
-		- [Stopwatch Widget (`/stopwatch`)](#stopwatch-widget-stopwatch)
+	- [Timer Widget (`/timer`)](#timer-widget-timer)
+	- [Stopwatch Widget (`/stopwatch`)](#stopwatch-widget-stopwatch)
+	- [Quotes Widget (`/quotes`)](#quotes-widget-quotes)
+	- [D-Day Widget (`/dday`)](#d-day-widget-dday)
 - [Notion Quotes Database Sync](#notion-quotes-database-sync)
 - [Deploy Your Own (Vercel Quickstart)](#deploy-your-own-vercel-quickstart)
 - [Adding a New Widget](#adding-a-new-widget)
@@ -39,7 +41,7 @@ Production-ready, static Notion widgets built with Next.js App Router, TypeScrip
 
 ## Features
 
-- Clock, Timer, Stopwatch, and Quotes widgets (separate routes)
+- Clock, Timer, Stopwatch, Quotes, and D-Day widgets (separate routes)
 - Multiple themes (default, light, purple, teal, sunset, theme1–theme8)
 - Static-compatible (no backend) and iframe-safe for Notion embeds
 - URL query customization for layout, theme, and behavior
@@ -59,12 +61,14 @@ app/
 	clock/page.tsx
 	timer/page.tsx
 	stopwatch/page.tsx
+	dday/page.tsx
 	quotes/page.tsx
 components/
 	widgets/
 		ClockWidget.tsx
 		TimerWidget.tsx
 		StopwatchWidget.tsx
+		DdayWidget.tsx
 		QuoteWidget.tsx
 	ui/
 		WidgetContainer.tsx
@@ -96,6 +100,7 @@ Widget URLs (once deployed):
 - `https://your-app.vercel.app/clock`
 - `https://your-app.vercel.app/timer`
 - `https://your-app.vercel.app/stopwatch`
+- `https://your-app.vercel.app/dday`
 - `https://your-app.vercel.app/quotes`
 
 Live examples (replace host with yours):
@@ -104,6 +109,7 @@ Live examples (replace host with yours):
 - `/clock?tz=Europe/London&format=12&theme=default&seconds=true`
 - `/timer?t=15:00&theme=teal`
 - `/stopwatch?start=1&theme=sunset`
+- `/dday?date=2026-07-20&units=1&seconds=1&week=1&month=1&year=1&dayColor=green`
 - `/quotes?category=focus&theme=light&source=notion&rotate=true&interval=8`
 
 If using Notion-synced quotes, run `npm run sync:quotes` before each deploy/build to refresh `lib/quotes.notion.json`.
@@ -171,6 +177,26 @@ Use cases:
 - Quote of the day on dashboards: `/quotes?mode=daily&source=notion&theme=dark`
 - Brand-matched card colors: `/quotes?bg=111827&border=7c3aed&text=e5e7eb&accent=9ca3af`
 - Random inspiration button: `/quotes?mode=random&rotate=false`
+
+### D-Day Widget (`/dday`)
+
+- `date`: target date (e.g., `2026-07-20`)
+- Toggles (true/false): `day`, `week`, `month`, `year`, `hours`, `minutes`, `seconds`, `totalseconds`, `megaseconds`
+- Bulk display control: `display=all|unit1,unit2`, `notdisplay=unit1,unit2`
+- `units`: quick-enable extra units (defaults off unless set)
+- Color overrides (palette key or hex): `color` (global), `dayColor`, `weekColor`, `monthColor`, `yearColor`, `timeColor`, `totalColor`, `megaColor`, `overviewColor`, `titleColor`
+- Date heading: `showdate=true/false` (default true)
+- Overview mode: `mode=overview` shows a single combined badge with days/weeks/months/years/hours/minutes/seconds/microseconds
+- Alignment: `align=left|center|right`
+- Background: `bg`/`background` (palette or hex). Use `%23` to encode `#` in URLs (e.g., `%232F0601`).
+
+Examples:
+
+- `/dday?date=2026-12-31&units=1&seconds=1&week=1&month=1&year=1&dayColor=green`
+- `/dday?date=2027-05-10&day=1&week=0&hours=1&minutes=1&seconds=1&timeColor=0d9488`
+- `/dday?display=all&notdisplay=hours,minutes&color=blue&titleColor=gold&showdate=1`
+- `/dday?mode=overview&date=2026-03-11&overviewColor=purple&align=center`
+- `/dday?day=1&hours=1&minutes=1&seconds=1&timeColor=0d9488&totalseconds=1&megaseconds=1&units=1&weeks=1&months=1&years=1&bg=%232F0601`
 
 ## Notion Quotes Database Sync
 

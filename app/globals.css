@@ -82,6 +82,34 @@
   filter: brightness(1.08);
 }
 
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-cue {
+  animation: scroll-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes scroll-pulse {
+  0% {
+    transform: translate(-50%, 0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-50%, -4px);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 0.8;
+  }
+}
+
 /* FlipClock theme variables and structure */
 .fc-root {
   --background: black;
