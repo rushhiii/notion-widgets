@@ -1,6 +1,7 @@
 ![Notion Widgets Banner](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/icons/repo_banner.png)
 
-# Notion Widgets Framework
+<!-- ✱ ✻ -->
+# ✱ Notion Widgets Framework
 Production-ready, static Notion widgets built with Next.js App Router, TypeScript, and Tailwind CSS. Includes flick-style clock/timer/stopwatch widgets and quote cards that can sync from your Notion database.
 > _Inspiration: [Gluqlo flip clock screensaver](https://www.omgubuntu.co.uk/2016/11/gluqlo-flipqlo-screensaver-ubuntu)._
 
