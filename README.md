@@ -1,20 +1,25 @@
-# Notion Widgets Framework
-
 ![Notion Widgets Banner](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/icons/repo_banner.png)
 
-![Notion](https://img.shields.io/badge/Notion-black?logo=notion&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-111?logo=nextdotjs&logoColor=white)
-![React](https://img.shields.io/badge/React-0a7ea4?logo=react&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-06b6d4?logo=tailwindcss&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-000?logo=vercel&logoColor=white)
-
+# Notion Widgets Framework
 Production-ready, static Notion widgets built with Next.js App Router, TypeScript, and Tailwind CSS. Includes flick-style clock/timer/stopwatch widgets and quote cards that can sync from your Notion database.
+> _Inspiration: [Gluqlo flip clock screensaver](https://www.omgubuntu.co.uk/2016/11/gluqlo-flipqlo-screensaver-ubuntu)._
 
-Inspiration: [Gluqlo flip clock screensaver](https://www.omgubuntu.co.uk/2016/11/gluqlo-flipqlo-screensaver-ubuntu).
+[![Notion](https://img.shields.io/badge/Notion-Platform-111827?style=flat-square&labelColor=0f0f11&logo=notion&logoColor=white)](https://www.notion.so/)
+[![Next.js](https://img.shields.io/badge/Next.js-Framework-111827?style=flat-square&labelColor=0f0f11&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-Library-0a7ea4?style=flat-square&labelColor=0f0f11&logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-2563eb?style=flat-square&labelColor=0f0f11&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-Utility-06b6d4?style=flat-square&labelColor=0f0f11&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-Hosting-111827?style=flat-square&labelColor=0f0f11&logo=vercel&logoColor=white)](https://vercel.com/)
+[![Live Clock](https://img.shields.io/badge/Clock-Live-7c3aed?style=flat-square&labelColor=111827&logo=clockify&logoColor=white)](https://rushis-notion-widgets.vercel.app/clock)
+[![Timer](https://img.shields.io/badge/Timer-Live-2563eb?style=flat-square&labelColor=111827&logo=sandwatch&logoColor=white)](https://rushis-notion-widgets.vercel.app/timer)
+[![Stopwatch](https://img.shields.io/badge/Stopwatch-Live-0f766e?style=flat-square&labelColor=111827&logo=tempo&logoColor=white)](https://rushis-notion-widgets.vercel.app/stopwatch)
+[![Quotes](https://img.shields.io/badge/Quotes-Live-9333ea?style=flat-square&labelColor=111827&logo=quip&logoColor=white)](https://rushis-notion-widgets.vercel.app/quotes)
+[![View Repo](https://img.shields.io/badge/View%20Repo-1f6feb?style=flat-square&labelColor=111827&logo=github&logoColor=white)](https://github.com/rushhiii/notion-widgets)
+
 
 ## Table of Contents
 
+- [Notion Widgets Framework](#notion-widgets-framework)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
@@ -22,13 +27,13 @@ Inspiration: [Gluqlo flip clock screensaver](https://www.omgubuntu.co.uk/2016/11
 - [Deployment (Vercel)](#deployment-vercel)
 - [Notion Embed](#notion-embed)
 - [Query Parameters](#query-parameters)
-	- [Clock](#clock-widget-clock)
-	- [Timer](#timer-widget-timer)
-	- [Stopwatch](#stopwatch-widget-stopwatch)
-	- [Quotes](#quotes-widget-quotes)
+	- [Quotes Widget (`/quotes`)](#quotes-widget-quotes)
+	- [Clock Widget (`/clock`)](#clock-widget-clock)
+		- [Timer Widget (`/timer`)](#timer-widget-timer)
+		- [Stopwatch Widget (`/stopwatch`)](#stopwatch-widget-stopwatch)
 - [Notion Quotes Database Sync](#notion-quotes-database-sync)
-- [Adding a New Widget](#adding-a-new-widget)
 - [Deploy Your Own (Vercel Quickstart)](#deploy-your-own-vercel-quickstart)
+- [Adding a New Widget](#adding-a-new-widget)
 - [Notes](#notes)
 
 ## Features
