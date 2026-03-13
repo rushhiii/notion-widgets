@@ -190,7 +190,9 @@ Use cases:
 - `units`: quick-enable extra units (defaults off unless set)
 - Color overrides (palette key or hex): `color` (global), `dayColor`, `weekColor`, `monthColor`, `yearColor`, `timeColor`, `hoursColor`, `minutesColor`, `secondsColor`, `totalColor`, `megaColor`, `overviewColor`, `titleColor`
 - Date heading: `showdate=true/false` (default true)
-- Overview mode: `mode=overview` shows a single combined badge with days/weeks/months/years/hours/minutes/seconds/microseconds
+- Modes:
+	- `mode=overview` shows a single combined badge with days/weeks/months/years/hours/minutes/seconds/microseconds
+	- `mode=countdown` shows remaining (or ago) in each enabled unit, e.g., `12 days remaining`, `3 weeks remaining`, `420 seconds remaining`
 - Alignment: `align=left|center|right`
 - Background: `bg`/`background` (palette or hex). Use `%23` to encode `#` in URLs (e.g., `%232F0601`).
 - Custom note: `note=Your%20text` renders just below the date heading.
@@ -201,6 +203,7 @@ Examples:
 - `/dday?date=2027-05-10&day=1&week=0&hours=1&minutes=1&seconds=1&timeColor=0d9488`
 - `/dday?display=all&notdisplay=hours,minutes&color=blue&titleColor=gold&showdate=1`
 - `/dday?mode=overview&date=2026-03-11&overviewColor=purple&align=center`
+- `/dday?mode=countdown&date=2026-09-01&display=day,week,seconds&timeColor=purple`
 - `/dday?day=1&hours=1&minutes=1&seconds=1&timeColor=0d9488&totalseconds=1&megaseconds=1&units=1&weeks=1&months=1&years=1&bg=%232F0601&titleColor=gold&note=Started%20Dec%208%2C%202025`
 
 ### Weather Widget (`/weather`)

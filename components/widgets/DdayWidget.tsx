@@ -35,6 +35,22 @@ function parseLocalDate(value: string) {
   return new Date(value);
 }
 
+function parseMonthDay(value: string, ref: Date): Date | null {
+  const parts = value.split("-");
+  if (parts.length !== 2) return null;
+  const [mRaw, dRaw] = parts;
+  const m = parseInt(mRaw, 10);
+  const d = parseInt(dRaw, 10);
+  if (Number.isNaN(m) || Number.isNaN(d)) return null;
+  const year = ref.getFullYear();
+  const candidate = new Date(year, m - 1, d, 0, 0, 0, 0);
+  if (candidate.getMonth() !== m - 1 || candidate.getDate() !== d) return null;
+  if (candidate < ref) {
+    return new Date(year + 1, m - 1, d, 0, 0, 0, 0);
+  }
+  return candidate;
+}
+
 type UnitKey =
   | "day"
   | "week"
@@ -172,6 +188,7 @@ export function DdayWidget() {
   const unitsFlag = parseBool(searchParams.get("units"), false);
   const showDateLabel = parseBool(searchParams.get("showdate"), true);
   const mode = (searchParams.get("mode") || "").toLowerCase();
+  const isCountdown = mode === "countdown";
   const alignParam = (searchParams.get("align") || "left").toLowerCase();
   const note = searchParams.get("note") || "";
 
@@ -183,9 +200,9 @@ export function DdayWidget() {
     week: parseBool(searchParams.get("week"), true),
     month: parseBool(searchParams.get("month"), unitsFlag),
     year: parseBool(searchParams.get("year"), unitsFlag),
-    hours: parseBool(searchParams.get("hours"), unitsFlag),
-    minutes: parseBool(searchParams.get("minutes"), unitsFlag),
-    seconds: parseBool(searchParams.get("seconds"), unitsFlag || true),
+    hours: parseBool(searchParams.get("hours"), isCountdown || unitsFlag),
+    minutes: parseBool(searchParams.get("minutes"), isCountdown || unitsFlag),
+    seconds: parseBool(searchParams.get("seconds"), isCountdown || unitsFlag),
     totalseconds: parseBool(searchParams.get("totalseconds"), false),
     megaseconds: parseBool(searchParams.get("megaseconds"), false),
   };
@@ -232,7 +249,13 @@ export function DdayWidget() {
   const totalColorOverride = searchParams.get("totalColor");
   const megaColorOverride = searchParams.get("megaColor");
 
-  const target = useMemo(() => parseLocalDate(targetDateStr), [targetDateStr]);
+  const target = useMemo(() => {
+    if (mode === "countdown" && now) {
+      const md = parseMonthDay(targetDateStr, now);
+      if (md) return md;
+    }
+    return parseLocalDate(targetDateStr);
+  }, [mode, now, targetDateStr]);
   const isValidTarget = !Number.isNaN(target.getTime());
   const formattedDate = useMemo(() => {
     if (!isValidTarget) return "Invalid date";
@@ -307,6 +330,59 @@ export function DdayWidget() {
     pushBadge("invalid", "Invalid date", pickColor("red", defaultTotal));
   } else if (!mounted || !now) {
     // Avoid rendering mismatched SSR/CSR content until mounted.
+  } else if (mode === "countdown") {
+    const remMs = Math.max(0, diffMs);
+    const remDays = Math.floor(remMs / dayMs);
+    const remWeeks = Math.floor(remDays / 7);
+    const remMonths = now ? Math.max(0, diffCalendarMonths(now, target)) : 0;
+    const remYears = Math.floor(remMonths / 12);
+    const remTotalSeconds = Math.floor(remMs / 1000);
+    const remTotalMinutes = Math.floor(remMs / (1000 * 60));
+    const remTotalHours = Math.floor(remMs / (1000 * 60 * 60));
+
+    const label = "remaining";
+    const isFuture = diffMs > 0;
+    if (!isFuture) {
+      pushBadge("passed", "Event has passed", defaultTotal);
+    }
+
+    if (showDays) {
+      const text = `${remDays} days ${label}`;
+      pushBadge("days", text, defaultDay);
+    }
+    if (showWeeks) {
+      const text = `${remWeeks} weeks ${label}`;
+      pushBadge("weeks", text, defaultWeek);
+    }
+    if (showMonths) {
+      const text = `${remMonths} months ${label}`;
+      pushBadge("months", text, defaultMonth);
+    }
+    if (showYears) {
+      const text = `${remYears} years ${label}`;
+      pushBadge("years", text, defaultYear);
+    }
+    if (showHours) {
+      const text = `${remTotalHours} hours ${label}`;
+      pushBadge("hours", text, defaultHours);
+    }
+    if (showMinutes) {
+      const text = `${remTotalMinutes} minutes ${label}`;
+      pushBadge("minutes", text, defaultMinutes);
+    }
+    if (showSeconds) {
+      const text = `${remTotalSeconds} seconds ${label}`;
+      pushBadge("seconds", text, defaultSeconds);
+    }
+    if (showTotalSeconds) {
+      const text = `${remTotalSeconds.toLocaleString()} total seconds ${label}`;
+      pushBadge("total", text, defaultTotal);
+    }
+    if (showMegaSeconds) {
+      const mega = remTotalSeconds === 0 ? "0.000" : (remTotalSeconds / 1_000_000).toFixed(3);
+      const text = `${mega} mega-seconds ${label}`;
+      pushBadge("mega", text, defaultMega);
+    }
   } else if (mode === "overview") {
     const microseconds = Math.floor(absMs * 1000);
     const parts = [
