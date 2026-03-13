@@ -247,7 +247,7 @@ export function WeatherWidget() {
                 return <Icon size={56} strokeWidth={2.1} color={themeAccent} />;
               })()}
             </div>
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-end items-center">
               <div className="text-4xl font-semibold" style={{ color: themeAccent }}>
                 {loading ? "--" : formatTemp(data?.temp, unitsParam)}
               </div>
