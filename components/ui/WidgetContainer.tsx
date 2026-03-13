@@ -33,7 +33,8 @@ export function WidgetContainer({
     >
       <section
         className={cn(
-          "flex w-full items-center justify-center rounded-2xl border p-6 text-center shadow-none",
+          // "flex w-full items-center justify-center rounded-2xl border p-6 text-center shadow-none",
+          "flex w-full items-center justify-center  p-0 text-center shadow-none",
           !contentClassName && "max-w-xl",
           heightClassName,
           themeClasses[resolvedTheme],

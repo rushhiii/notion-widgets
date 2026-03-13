@@ -188,11 +188,12 @@ Use cases:
 - Toggles (true/false): `day`, `week`, `month`, `year`, `hours`, `minutes`, `seconds`, `totalseconds`, `megaseconds`
 - Bulk display control: `display=all|unit1,unit2`, `notdisplay=unit1,unit2`
 - `units`: quick-enable extra units (defaults off unless set)
-- Color overrides (palette key or hex): `color` (global), `dayColor`, `weekColor`, `monthColor`, `yearColor`, `timeColor`, `totalColor`, `megaColor`, `overviewColor`, `titleColor`
+- Color overrides (palette key or hex): `color` (global), `dayColor`, `weekColor`, `monthColor`, `yearColor`, `timeColor`, `hoursColor`, `minutesColor`, `secondsColor`, `totalColor`, `megaColor`, `overviewColor`, `titleColor`
 - Date heading: `showdate=true/false` (default true)
 - Overview mode: `mode=overview` shows a single combined badge with days/weeks/months/years/hours/minutes/seconds/microseconds
 - Alignment: `align=left|center|right`
 - Background: `bg`/`background` (palette or hex). Use `%23` to encode `#` in URLs (e.g., `%232F0601`).
+- Custom note: `note=Your%20text` renders just below the date heading.
 
 Examples:
 
@@ -200,21 +201,23 @@ Examples:
 - `/dday?date=2027-05-10&day=1&week=0&hours=1&minutes=1&seconds=1&timeColor=0d9488`
 - `/dday?display=all&notdisplay=hours,minutes&color=blue&titleColor=gold&showdate=1`
 - `/dday?mode=overview&date=2026-03-11&overviewColor=purple&align=center`
-- `/dday?day=1&hours=1&minutes=1&seconds=1&timeColor=0d9488&totalseconds=1&megaseconds=1&units=1&weeks=1&months=1&years=1&bg=%232F0601`
+- `/dday?day=1&hours=1&minutes=1&seconds=1&timeColor=0d9488&totalseconds=1&megaseconds=1&units=1&weeks=1&months=1&years=1&bg=%232F0601&titleColor=gold&note=Started%20Dec%208%2C%202025`
 
 ### Weather Widget (`/weather`)
 
 - Location: `location`/`q` (city), or `lat` + `lon`
 - Units: `units=metric|imperial` (default metric)
-- Details toggle: `details=true/false` (default true)
-- Colors (hex/palette): `bg`, `text`, `accent`
+- Mode: `mode=minimal|detail` (default minimal). Minimal shows location, icon, temp, and condition.
+- Details toggle: `details=true/false` (default true in detail mode, false in minimal unless enabled)
+- Colors/themes: presets via `theme=mint|sand|dusk|sky`; overrides with `bg`, `text`, `accent`
 - Alignment: `align=left|center|right` (default center)
 
 Examples:
 
 - `/weather?location=Toronto&units=metric`
-- `/weather?lat=40.4168&lon=-3.7038&units=metric&bg=eaf1ec&accent=10b981`
-- `/weather?location=Seattle&units=imperial&details=0&align=right`
+- `/weather?location=Toronto&units=metric&mode=minimal&theme=mint`
+- `/weather?lat=40.4168&lon=-3.7038&units=metric&bg=eaf1ec&accent=10b981&mode=detail`
+- `/weather?location=Seattle&units=imperial&details=0&align=right&theme=dusk`
 
 ## Notion Quotes Database Sync
 

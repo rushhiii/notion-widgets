@@ -38,6 +38,16 @@ type OpenWeatherApiResponse = {
   message?: string;
 };
 
+const THEME_PRESETS: Record<
+  string,
+  { bg: string; text: string; accent: string; border?: string }
+> = {
+  mint: { bg: "#eef5ef", text: "#0f172a", accent: "#27ae60" },
+  sand: { bg: "#f5f0e6", text: "#3b2f2f", accent: "#c47c2c" },
+  dusk: { bg: "#0f172a", text: "#e2e8f0", accent: "#7c3aed" },
+  sky: { bg: "#e8f3fb", text: "#0b2345", accent: "#1d8fe1" },
+};
+
 function formatTemp(value: number | undefined, units: "metric" | "imperial") {
   if (typeof value !== "number") return "--";
   const rounded = Math.round(value);
@@ -72,11 +82,14 @@ export function WeatherWidget() {
   const latParam = searchParams.get("lat");
   const lonParam = searchParams.get("lon");
   const unitsParam = (searchParams.get("units") || "metric").toLowerCase() === "imperial" ? "imperial" : "metric";
-  const showDetails = parseBooleanParam(searchParams.get("details"), true);
+  const modeParam = (searchParams.get("mode") || "minimal").toLowerCase();
+  const showDetails = modeParam === "detail" ? true : parseBooleanParam(searchParams.get("details"), modeParam !== "minimal");
 
-  const bgParam = parseColorParam(searchParams.get("bg")) ?? parseColorParam(searchParams.get("background"));
-  const textParam = parseColorParam(searchParams.get("text"));
-  const accentParam = parseColorParam(searchParams.get("accent"));
+  const themeParam = (searchParams.get("theme") || "mint").toLowerCase();
+  const preset = THEME_PRESETS[themeParam] ?? THEME_PRESETS.mint;
+  const bgParam = parseColorParam(searchParams.get("bg")) ?? parseColorParam(searchParams.get("background")) ?? preset.bg;
+  const textParam = parseColorParam(searchParams.get("text")) ?? preset.text;
+  const accentParam = parseColorParam(searchParams.get("accent")) ?? preset.accent;
   const alignParam = (searchParams.get("align") || "center").toLowerCase();
 
   const [data, setData] = useState<WeatherResponse | null>(null);
@@ -173,41 +186,70 @@ export function WeatherWidget() {
     <WidgetContainer
       theme="light"
       className="bg-transparent"
+      // contentClassName="w-full"
+      // heightClassName="min-h-[200px]"
       contentClassName="w-full"
       heightClassName="min-h-[200px]"
     >
       <div
-        className="flex w-full flex-col gap-4 rounded-2xl border p-6 shadow-sm"
+        // className="flex w-full flex-col gap-4 rounded-2xl border p-6 shadow-sm"
+        className="flex w-full flex-col gap-4 p-6 shadow-sm"
         style={{ backgroundColor: themeBg, color: themeText, borderColor: themeAccent, alignItems, textAlign }}
       >
-        <div className="flex w-full flex-wrap items-center justify-between gap-4" style={{ alignItems }}>
-          <div className="text-base font-medium" style={{ color: themeAccent }}>
-            {placeLabel}
+        {modeParam === "minimal" ? (
+          // <div className="flex w-full items-center justify-between gap-6 md:gap-10">
+          <div className="flex w-full items-center justify-evenly gap-6 md:gap-10">
+            <div className="flex text-lg font-semibold" style={{ color: themeAccent }}>
+              {placeLabel}
+            </div>
+            {/* <div className="flex flex-1 items-center justify-center"> */}
+            <div className="flex items-center justify-center">
+              {(() => {
+                const Icon = pickIcon(data?.icon);
+                return <Icon size={56} strokeWidth={2.1} color={themeAccent} />;
+              })()}
+            </div>
+            <div className="flex flex-col items-end">
+              <div className="text-4xl font-semibold" style={{ color: themeAccent }}>
+                {loading ? "--" : formatTemp(data?.temp, unitsParam)}
+              </div>
+              <div className="text-base capitalize" style={{ color: themeAccent }}>
+                {loading ? "Loading..." : error ? error : data?.description || ""}
+              </div>
+            </div>
           </div>
-          <div className="text-3xl" style={{ color: themeAccent }}>
-            {(() => {
-              const Icon = pickIcon(data?.icon);
-              return <Icon size={48} strokeWidth={2.2} />;
-            })()}
-          </div>
-          <div className="text-4xl font-semibold" style={{ color: themeAccent }}>
-            {loading ? "--" : formatTemp(data?.temp, unitsParam)}
-          </div>
-        </div>
-        <div className="flex w-full flex-wrap items-center justify-between gap-2 text-sm" style={{ color: themeText }}>
-          <div className="capitalize">{loading ? "Loading..." : error ? error : data?.description || ""}</div>
-          <div>
-            {loading ? "" : data?.name}
-            {data?.country ? `, ${data.country}` : ""}
-          </div>
-        </div>
-        {showDetails && (
-          <div className="grid w-full grid-cols-2 gap-3 text-sm" style={{ color: themeText }}>
-            <div>Feels like: {loading ? "--" : formatTemp(data?.feels_like, unitsParam)}</div>
-            <div>Humidity: {loading ? "--" : `${data?.humidity ?? "--"}%`}</div>
-            <div>Wind: {loading ? "--" : `${data?.wind_speed ?? "--"}${unitsParam === "imperial" ? " mph" : " m/s"}`}</div>
-            <div>Clouds: {loading ? "--" : `${data?.clouds ?? "--"}%`}</div>
-          </div>
+        ) : (
+          <>
+            <div className="flex w-full flex-wrap items-center justify-between gap-4" style={{ alignItems }}>
+              <div className="text-base font-medium" style={{ color: themeAccent }}>
+                {placeLabel}
+              </div>
+              <div className="text-3xl" style={{ color: themeAccent }}>
+                {(() => {
+                  const Icon = pickIcon(data?.icon);
+                  return <Icon size={48} strokeWidth={2.2} />;
+                })()}
+              </div>
+              <div className="text-4xl font-semibold" style={{ color: themeAccent }}>
+                {loading ? "--" : formatTemp(data?.temp, unitsParam)}
+              </div>
+            </div>
+            <div className="flex w-full flex-wrap items-center justify-between gap-2 text-sm" style={{ color: themeText }}>
+              <div className="capitalize">{loading ? "Loading..." : error ? error : data?.description || ""}</div>
+              <div>
+                {loading ? "" : data?.name}
+                {data?.country ? `, ${data.country}` : ""}
+              </div>
+            </div>
+            {showDetails && (
+              <div className="grid w-full grid-cols-2 gap-3 text-sm" style={{ color: themeText }}>
+                <div>Feels like: {loading ? "--" : formatTemp(data?.feels_like, unitsParam)}</div>
+                <div>Humidity: {loading ? "--" : `${data?.humidity ?? "--"}%`}</div>
+                <div>Wind: {loading ? "--" : `${data?.wind_speed ?? "--"}${unitsParam === "imperial" ? " mph" : " m/s"}`}</div>
+                <div>Clouds: {loading ? "--" : `${data?.clouds ?? "--"}%`}</div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </WidgetContainer>

@@ -173,6 +173,7 @@ export function DdayWidget() {
   const showDateLabel = parseBool(searchParams.get("showdate"), true);
   const mode = (searchParams.get("mode") || "").toLowerCase();
   const alignParam = (searchParams.get("align") || "left").toLowerCase();
+  const note = searchParams.get("note") || "";
 
   const displayList = parseUnitsList(searchParams.get("display"));
   const hideList = parseUnitsList(searchParams.get("notdisplay"));
@@ -225,6 +226,9 @@ export function DdayWidget() {
   const monthColorOverride = searchParams.get("monthColor");
   const yearColorOverride = searchParams.get("yearColor");
   const timeColorOverride = searchParams.get("timeColor");
+  const hoursColorOverride = searchParams.get("hoursColor");
+  const minutesColorOverride = searchParams.get("minutesColor");
+  const secondsColorOverride = searchParams.get("secondsColor");
   const totalColorOverride = searchParams.get("totalColor");
   const megaColorOverride = searchParams.get("megaColor");
 
@@ -263,12 +267,24 @@ export function DdayWidget() {
   const defaultWeek = pickColor(weekColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.purple);
   const defaultMonth = pickColor(monthColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.blue);
   const defaultYear = pickColor(yearColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.orange);
-  const defaultTime = pickColor(timeColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.gray);
+  const baseTime = pickColor(timeColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.gray);
+  const defaultHours = pickColor(
+    hoursColorOverride,
+    timeColorOverride || globalColorOverride ? baseTime : NOTION_PALETTE.blue,
+  );
+  const defaultMinutes = pickColor(
+    minutesColorOverride,
+    timeColorOverride || globalColorOverride ? baseTime : NOTION_PALETTE.purple,
+  );
+  const defaultSeconds = pickColor(
+    secondsColorOverride,
+    timeColorOverride || globalColorOverride ? baseTime : NOTION_PALETTE.pink,
+  );
   const defaultTotal = pickColor(totalColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.red);
-  const defaultMega = pickColor(megaColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.yellow);
-  const defaultOverview = pickColor(overviewColorOverride, defaultTime);
-  const titleColor = pickColor(titleColorOverride, globalColor).text;
-  const pageBackground = pickColor(backgroundOverride, { bg: "transparent", text: "#111111" }).bg;
+  const defaultMega = pickColor(megaColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.orange);
+  const defaultOverview = pickColor(overviewColorOverride, baseTime);
+  const titleColor = pickColor(titleColorOverride ?? "yellow", globalColor).text;
+  const pageBackground = pickColor(backgroundOverride, { bg: "#800000", text: "#ffffff" }).bg;
 
   const alignItems = alignParam === "center" ? "center" : alignParam === "right" ? "flex-end" : "flex-start";
   const textAlign = alignParam === "center" ? "center" : alignParam === "right" ? "right" : "left";
@@ -328,15 +344,15 @@ export function DdayWidget() {
     }
     if (showHours) {
       const text = `${totalHours} hours ${sign}`;
-      pushBadge("hours", text, defaultTime);
+      pushBadge("hours", text, defaultHours);
     }
     if (showMinutes) {
       const text = `${totalMinutes} minutes ${sign}`;
-      pushBadge("minutes", text, defaultTime);
+      pushBadge("minutes", text, defaultMinutes);
     }
     if (showSeconds) {
       const text = `${totalSeconds} seconds ${sign}`;
-      pushBadge("seconds", text, defaultTime);
+      pushBadge("seconds", text, defaultSeconds);
     }
     if (showTotalSeconds) {
       const text = `${totalSeconds.toLocaleString()} total seconds ${sign}`;
@@ -384,6 +400,18 @@ export function DdayWidget() {
           >
             {formattedDate}
           </span>
+          {note && (
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                opacity: 0.85,
+                marginTop: 2,
+              }}
+            >
+              {note}
+            </span>
+          )}
         </div>
       )}
       {badges.map((badge) => (
