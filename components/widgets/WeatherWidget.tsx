@@ -231,7 +231,7 @@ export function WeatherWidget() {
     >
       <div
         // className="flex w-full flex-col gap-4 rounded-2xl border p-6 shadow-sm"
-        className="flex w-full flex-col gap-4 p-6 shadow-sm"
+        className="flex w-full flex-col gap-4 p-6"
         style={{ backgroundColor: themeBg, color: themeText, borderColor: themeAccent, alignItems, textAlign }}
       >
         {modeParam === "minimal" ? (
