@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { WidgetContainer } from "@/components/ui/WidgetContainer";
 import { parseBooleanParam, parseColorParam } from "@/lib/utils";
 import {
@@ -78,6 +78,8 @@ function pickIcon(icon?: string) {
 export function WeatherWidget() {
   const [paramString, setParamString] = useState<string | null>(null);
   const [clientParams, setClientParams] = useState<URLSearchParams | null>(null);
+  const originalBodyBg = useRef<string | null>(null);
+  const originalHtmlBg = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -182,6 +184,18 @@ export function WeatherWidget() {
 
   // Ensure we only render after we have read client-side params to avoid stale static defaults on Vercel.
   const paramsReady = clientParams !== null || paramString !== null;
+
+  useEffect(() => {
+    if (!paramsReady) return;
+    if (originalBodyBg.current === null) originalBodyBg.current = document.body.style.backgroundColor;
+    if (originalHtmlBg.current === null) originalHtmlBg.current = document.documentElement.style.backgroundColor;
+    document.body.style.backgroundColor = themeBg;
+    document.documentElement.style.backgroundColor = themeBg;
+    return () => {
+      if (originalBodyBg.current !== null) document.body.style.backgroundColor = originalBodyBg.current;
+      if (originalHtmlBg.current !== null) document.documentElement.style.backgroundColor = originalHtmlBg.current;
+    };
+  }, [paramsReady, themeBg]);
 
   const alignItems = alignParam === "left" ? "flex-start" : alignParam === "right" ? "flex-end" : "center";
   const textAlign = alignParam === "left" ? "left" : alignParam === "right" ? "right" : "center";
