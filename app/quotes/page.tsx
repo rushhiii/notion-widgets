@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   title: "Quotes",
   description: "Embeddable quote widget with optional Notion source",
   icons: {
-    icon: "/icons/quotes.png",
+    // icon: "/icons/quotes.png",
+    icon: "/icons/bw_quotes.png",
   },
 };
 

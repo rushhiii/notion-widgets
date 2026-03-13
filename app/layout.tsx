@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   icons: {
     // icon: "/icons/es.png",
     icon: "/icons/ees.png",
+    // icon: "/icons/n_icon.png",
+    // icon: "/icons/r_icon.png",
+    // icon: "/icons/rr_icon.png",
+    // icon: "/icons/w_icon.png",
   },
 };
 

@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   title: "FlipClock",
   description: "Embeddable clock widget with timezone and format controls",
   icons: {
-    icon: "/icons/clock.png",
+    // icon: "/icons/clock.png",
+    icon: "/icons/flipclock_icon.png",
   },
 };
 
