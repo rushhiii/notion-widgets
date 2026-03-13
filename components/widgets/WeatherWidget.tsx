@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { WidgetContainer } from "@/components/ui/WidgetContainer";
 import { parseBooleanParam, parseColorParam } from "@/lib/utils";
 import {
@@ -77,16 +76,18 @@ function pickIcon(icon?: string) {
 }
 
 export function WeatherWidget() {
-  const searchParams = useSearchParams();
+  const [paramString, setParamString] = useState<string | null>(null);
   const [clientParams, setClientParams] = useState<URLSearchParams | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     // Pull params directly from the live URL after hydration to avoid static pre-render defaults.
-    setClientParams(new URLSearchParams(window.location.search));
+    const search = window.location.search || "";
+    setParamString(search);
+    setClientParams(new URLSearchParams(search));
   }, []);
 
-  const getParam = (key: string) => clientParams?.get(key) ?? searchParams.get(key);
+  const getParam = (key: string) => clientParams?.get(key) ?? null;
 
   const location = getParam("location") || getParam("q") || "Toronto";
   const latParam = getParam("lat");
@@ -179,6 +180,9 @@ export function WeatherWidget() {
   const themeText = textParam ?? "#0f172a";
   const themeAccent = accentParam ?? "#10b981";
 
+  // Ensure we only render after we have read client-side params to avoid stale static defaults on Vercel.
+  const paramsReady = clientParams !== null || paramString !== null;
+
   const alignItems = alignParam === "left" ? "flex-start" : alignParam === "right" ? "flex-end" : "center";
   const textAlign = alignParam === "left" ? "left" : alignParam === "right" ? "right" : "center";
 
@@ -191,6 +195,8 @@ export function WeatherWidget() {
   const placeLabel = data?.name
     ? `${data.name}${data.country ? `, ${data.country}` : ""}`
     : displayLocation;
+
+  if (!paramsReady) return null;
 
   return (
     <WidgetContainer
