@@ -104,6 +104,7 @@ export function WeatherWidget() {
   const textParam = parseColorParam(getParam("text")) ?? preset.text;
   const accentParam = parseColorParam(getParam("accent")) ?? preset.accent;
   const alignParam = (getParam("align") || "center").toLowerCase();
+  const matchPageBg = parseBooleanParam(getParam("pagebg"), false);
 
   const [data, setData] = useState<WeatherResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -187,15 +188,22 @@ export function WeatherWidget() {
 
   useEffect(() => {
     if (!paramsReady) return;
-    if (originalBodyBg.current === null) originalBodyBg.current = document.body.style.backgroundColor;
-    if (originalHtmlBg.current === null) originalHtmlBg.current = document.documentElement.style.backgroundColor;
-    document.body.style.backgroundColor = themeBg;
-    document.documentElement.style.backgroundColor = themeBg;
-    return () => {
-      if (originalBodyBg.current !== null) document.body.style.backgroundColor = originalBodyBg.current;
-      if (originalHtmlBg.current !== null) document.documentElement.style.backgroundColor = originalHtmlBg.current;
-    };
-  }, [paramsReady, themeBg]);
+
+    if (matchPageBg) {
+      if (originalBodyBg.current === null) originalBodyBg.current = document.body.style.backgroundColor;
+      if (originalHtmlBg.current === null) originalHtmlBg.current = document.documentElement.style.backgroundColor;
+      document.body.style.backgroundColor = themeBg;
+      document.documentElement.style.backgroundColor = themeBg;
+      return () => {
+        if (originalBodyBg.current !== null) document.body.style.backgroundColor = originalBodyBg.current;
+        if (originalHtmlBg.current !== null) document.documentElement.style.backgroundColor = originalHtmlBg.current;
+      };
+    }
+
+    // If not matching page bg, restore any prior changes.
+    if (originalBodyBg.current !== null) document.body.style.backgroundColor = originalBodyBg.current;
+    if (originalHtmlBg.current !== null) document.documentElement.style.backgroundColor = originalHtmlBg.current;
+  }, [paramsReady, matchPageBg, themeBg]);
 
   const alignItems = alignParam === "left" ? "flex-start" : alignParam === "right" ? "flex-end" : "center";
   const textAlign = alignParam === "left" ? "left" : alignParam === "right" ? "right" : "center";

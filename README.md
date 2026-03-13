@@ -211,6 +211,7 @@ Examples:
 - Details toggle: `details=true/false` (default true in detail mode, false in minimal unless enabled)
 - Colors/themes: presets via `theme=mint|sand|dusk|sky`; overrides with `bg`, `text`, `accent`
 - Alignment: `align=left|center|right` (default center)
+- Page background: `pagebg=true|1` to match the entire page background to the widget `bg`; omit/false keeps the page transparent (only the card colored)
 
 Examples:
 
@@ -218,6 +219,7 @@ Examples:
 - `/weather?location=Toronto&units=metric&mode=minimal&theme=mint`
 - `/weather?lat=40.4168&lon=-3.7038&units=metric&bg=eaf1ec&accent=10b981&mode=detail`
 - `/weather?location=Seattle&units=imperial&details=0&align=right&theme=dusk`
+- `/weather?location=Berlin&theme=sky&pagebg=1` (match page background to the sky preset)
 
 ## Notion Quotes Database Sync
 
