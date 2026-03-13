@@ -78,19 +78,31 @@ function pickIcon(icon?: string) {
 
 export function WeatherWidget() {
   const searchParams = useSearchParams();
-  const location = searchParams.get("location") || searchParams.get("q") || "Toronto";
-  const latParam = searchParams.get("lat");
-  const lonParam = searchParams.get("lon");
-  const unitsParam = (searchParams.get("units") || "metric").toLowerCase() === "imperial" ? "imperial" : "metric";
-  const modeParam = (searchParams.get("mode") || "minimal").toLowerCase();
-  const showDetails = modeParam === "detail" ? true : parseBooleanParam(searchParams.get("details"), modeParam !== "minimal");
+  const [clientParams, setClientParams] = useState<URLSearchParams | null>(null);
 
-  const themeParam = (searchParams.get("theme") || "mint").toLowerCase();
+  useEffect(() => {
+    // Ensure query params are read from the real URL even on static deployments.
+    const fromWindow = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const merged = fromWindow ?? new URLSearchParams();
+    searchParams.forEach((value, key) => merged.set(key, value));
+    setClientParams(merged);
+  }, [searchParams]);
+
+  const getParam = (key: string) => clientParams?.get(key) ?? searchParams.get(key);
+
+  const location = getParam("location") || getParam("q") || "Toronto";
+  const latParam = getParam("lat");
+  const lonParam = getParam("lon");
+  const unitsParam = (getParam("units") || "metric").toLowerCase() === "imperial" ? "imperial" : "metric";
+  const modeParam = (getParam("mode") || "minimal").toLowerCase();
+  const showDetails = modeParam === "detail" ? true : parseBooleanParam(getParam("details"), modeParam !== "minimal");
+
+  const themeParam = (getParam("theme") || "mint").toLowerCase();
   const preset = THEME_PRESETS[themeParam] ?? THEME_PRESETS.mint;
-  const bgParam = parseColorParam(searchParams.get("bg")) ?? parseColorParam(searchParams.get("background")) ?? preset.bg;
-  const textParam = parseColorParam(searchParams.get("text")) ?? preset.text;
-  const accentParam = parseColorParam(searchParams.get("accent")) ?? preset.accent;
-  const alignParam = (searchParams.get("align") || "center").toLowerCase();
+  const bgParam = parseColorParam(getParam("bg")) ?? parseColorParam(getParam("background")) ?? preset.bg;
+  const textParam = parseColorParam(getParam("text")) ?? preset.text;
+  const accentParam = parseColorParam(getParam("accent")) ?? preset.accent;
+  const alignParam = (getParam("align") || "center").toLowerCase();
 
   const [data, setData] = useState<WeatherResponse | null>(null);
   const [loading, setLoading] = useState(false);
