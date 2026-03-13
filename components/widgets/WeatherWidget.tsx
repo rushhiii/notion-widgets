@@ -81,12 +81,10 @@ export function WeatherWidget() {
   const [clientParams, setClientParams] = useState<URLSearchParams | null>(null);
 
   useEffect(() => {
-    // Ensure query params are read from the real URL even on static deployments.
-    const fromWindow = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-    const merged = fromWindow ?? new URLSearchParams();
-    searchParams.forEach((value, key) => merged.set(key, value));
-    setClientParams(merged);
-  }, [searchParams]);
+    if (typeof window === "undefined") return;
+    // Pull params directly from the live URL after hydration to avoid static pre-render defaults.
+    setClientParams(new URLSearchParams(window.location.search));
+  }, []);
 
   const getParam = (key: string) => clientParams?.get(key) ?? searchParams.get(key);
 
