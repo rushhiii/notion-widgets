@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { DdayClient } from "./DdayClient";
 
@@ -12,5 +13,9 @@ export const metadata: Metadata = {
 };
 
 export default function DdayPage() {
-  return <DdayClient />;
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-zinc-950" aria-busy="true" />}> 
+      <DdayClient />
+    </Suspense>
+  );
 }
