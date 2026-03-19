@@ -593,7 +593,6 @@ export function ProgressWidget() {
   const [showTotals, setShowTotals] = useState(initial.showTotals);
   const [fullPage, setFullPage] = useState(initial.fullPage);
   const [adjustMode, setAdjustMode] = useState<"add" | "set">("add");
-  const [adjustAmount, setAdjustAmount] = useState(1);
   const [defaultStep, setDefaultStep] = useState(initial.defaultStep || 100);
   const [bars, setBars] = useState<BarRow[]>(
     initial.bars.length
@@ -631,7 +630,6 @@ export function ProgressWidget() {
     setShowTotals(initial.showTotals);
     setFullPage(initial.fullPage);
     setAdjustMode("add");
-    setAdjustAmount(1);
     setDefaultStep(initial.defaultStep || 100);
     const nextBars = initial.bars.length
       ? initial.bars
@@ -791,7 +789,6 @@ export function ProgressWidget() {
                 setSelectedBarId(resetBar.id);
                 setShowMilestones(true);
                 setAdjustMode("add");
-                setAdjustAmount(1);
               }}
               aria-label="Reset"
             >
@@ -1066,27 +1063,7 @@ export function ProgressWidget() {
               ))}
             </div>
 
-            {/* pre-built example step button */}
-            {/* <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0}
-                className="w-28 rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                value={adjustAmount}
-                onChange={(e) => setAdjustAmount(clampNumber(Number(e.target.value)))}
-              />
-              <button
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/15"
-                onClick={() => {
-                  if (!activeBar) return;
-                  updateBarProgress(activeBar.id, (prev) =>
-                    adjustMode === "add" ? clampNumber(prev + adjustAmount) : clampNumber(adjustAmount),
-                  );
-                }}
-              >
-                <Plus size={14} /> Apply
-              </button>
-            </div> */}
+            {/* pre-built example step button placeholder removed (adjustAmount unused) */}
 
             <div className="items-center gap-3 text-sm">
                 <span className="text-zinc-300">Default step value:</span>

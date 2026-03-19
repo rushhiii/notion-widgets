@@ -12,8 +12,6 @@ export const metadata: Metadata = {
   },
 };
 
-type WeatherPageProps = { searchParams?: Record<string, string | string[] | undefined> };
-
 export default function WeatherPage() {
   return <WeatherClient />;
 }

@@ -556,192 +556,100 @@ export function DdayBuilder() {
 
             <div className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-300">Advanced colors</span>
-                <span className="text-[11px] text-zinc-500">Use hex or Notion palette names</span>
+                <span className="text-sm text-zinc-300">Background & text colors</span>
+                <span className="text-[11px] text-zinc-500">Leave text blank to auto-pick</span>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="space-y-3 text-sm">
                 {[{
-                  label: "Title color",
-                  value: titleColor,
-                  onChange: setTitleColor,
-                  placeholder: paletteColorDefaults.title,
-                  fallback: paletteColorDefaults.title,
+                  label: "Title",
+                  bg: { value: titleColor, onChange: setTitleColor, placeholder: paletteColorDefaults.title, fallback: paletteColorDefaults.title },
+                  text: null,
                 }, {
-                  label: "Overview color",
-                  value: overviewColor,
-                  onChange: setOverviewColor,
-                  placeholder: paletteColorDefaults.overview,
-                  fallback: paletteColorDefaults.overview,
+                  label: "Overview",
+                  bg: { value: overviewColor, onChange: setOverviewColor, placeholder: paletteColorDefaults.overview, fallback: paletteColorDefaults.overview },
+                  text: { value: overviewText, onChange: setOverviewText, placeholder: paletteTextDefaults.overview, fallback: paletteTextDefaults.overview },
                 }, {
                   label: "Days",
-                  value: dayColor,
-                  onChange: setDayColor,
-                  placeholder: paletteColorDefaults.day,
-                  fallback: paletteColorDefaults.day,
+                  bg: { value: dayColor, onChange: setDayColor, placeholder: paletteColorDefaults.day, fallback: paletteColorDefaults.day },
+                  text: { value: dayText, onChange: setDayText, placeholder: paletteTextDefaults.day, fallback: paletteTextDefaults.day },
                 }, {
                   label: "Weeks",
-                  value: weekColor,
-                  onChange: setWeekColor,
-                  placeholder: paletteColorDefaults.week,
-                  fallback: paletteColorDefaults.week,
+                  bg: { value: weekColor, onChange: setWeekColor, placeholder: paletteColorDefaults.week, fallback: paletteColorDefaults.week },
+                  text: { value: weekText, onChange: setWeekText, placeholder: paletteTextDefaults.week, fallback: paletteTextDefaults.week },
                 }, {
                   label: "Months",
-                  value: monthColor,
-                  onChange: setMonthColor,
-                  placeholder: paletteColorDefaults.month,
-                  fallback: paletteColorDefaults.month,
+                  bg: { value: monthColor, onChange: setMonthColor, placeholder: paletteColorDefaults.month, fallback: paletteColorDefaults.month },
+                  text: { value: monthText, onChange: setMonthText, placeholder: paletteTextDefaults.month, fallback: paletteTextDefaults.month },
                 }, {
                   label: "Years",
-                  value: yearColor,
-                  onChange: setYearColor,
-                  placeholder: paletteColorDefaults.year,
-                  fallback: paletteColorDefaults.year,
+                  bg: { value: yearColor, onChange: setYearColor, placeholder: paletteColorDefaults.year, fallback: paletteColorDefaults.year },
+                  text: { value: yearText, onChange: setYearText, placeholder: paletteTextDefaults.year, fallback: paletteTextDefaults.year },
                 }, {
                   label: "Time group",
-                  value: timeColor,
-                  onChange: setTimeColor,
-                  placeholder: paletteColorDefaults.time,
-                  fallback: paletteColorDefaults.time,
+                  bg: { value: timeColor, onChange: setTimeColor, placeholder: paletteColorDefaults.time, fallback: paletteColorDefaults.time },
+                  text: null,
                 }, {
                   label: "Hours",
-                  value: hoursColor,
-                  onChange: setHoursColor,
-                  placeholder: paletteColorDefaults.hours,
-                  fallback: paletteColorDefaults.hours,
+                  bg: { value: hoursColor, onChange: setHoursColor, placeholder: paletteColorDefaults.hours, fallback: paletteColorDefaults.hours },
+                  text: { value: hoursText, onChange: setHoursText, placeholder: paletteTextDefaults.hours, fallback: paletteTextDefaults.hours },
                 }, {
                   label: "Minutes",
-                  value: minutesColor,
-                  onChange: setMinutesColor,
-                  placeholder: paletteColorDefaults.minutes,
-                  fallback: paletteColorDefaults.minutes,
+                  bg: { value: minutesColor, onChange: setMinutesColor, placeholder: paletteColorDefaults.minutes, fallback: paletteColorDefaults.minutes },
+                  text: { value: minutesText, onChange: setMinutesText, placeholder: paletteTextDefaults.minutes, fallback: paletteTextDefaults.minutes },
                 }, {
                   label: "Seconds",
-                  value: secondsColor,
-                  onChange: setSecondsColor,
-                  placeholder: paletteColorDefaults.seconds,
-                  fallback: paletteColorDefaults.seconds,
+                  bg: { value: secondsColor, onChange: setSecondsColor, placeholder: paletteColorDefaults.seconds, fallback: paletteColorDefaults.seconds },
+                  text: { value: secondsText, onChange: setSecondsText, placeholder: paletteTextDefaults.seconds, fallback: paletteTextDefaults.seconds },
                 }, {
                   label: "Total seconds",
-                  value: totalColor,
-                  onChange: setTotalColor,
-                  placeholder: paletteColorDefaults.total,
-                  fallback: paletteColorDefaults.total,
+                  bg: { value: totalColor, onChange: setTotalColor, placeholder: paletteColorDefaults.total, fallback: paletteColorDefaults.total },
+                  text: { value: totalText, onChange: setTotalText, placeholder: paletteTextDefaults.total, fallback: paletteTextDefaults.total },
                 }, {
                   label: "Mega-seconds",
-                  value: megaColor,
-                  onChange: setMegaColor,
-                  placeholder: paletteColorDefaults.mega,
-                  fallback: paletteColorDefaults.mega,
+                  bg: { value: megaColor, onChange: setMegaColor, placeholder: paletteColorDefaults.mega, fallback: paletteColorDefaults.mega },
+                  text: { value: megaText, onChange: setMegaText, placeholder: paletteTextDefaults.mega, fallback: paletteTextDefaults.mega },
                 }].map((item) => (
-                  <label key={item.label} className="space-y-1">
-                    <span className="text-zinc-300">{item.label}</span>
-                    <div className="flex items-center gap-2">
-                      <input
-                        className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                        placeholder={item.placeholder}
-                        value={item.value}
-                        onChange={(e) => item.onChange(e.target.value)}
-                      />
-                      <input
-                        type="color"
-                        // className="h-10 w-12 rounded-lg border border-white/10 bg-transparent"
-                        className="color-swatch max-w-[16px] h-10 "
-                        value={ensureHex(item.value, item.fallback)}
-                        onChange={(e) => item.onChange(e.target.value)}
-                        aria-label={`${item.label} color picker`}
-                      />
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
+                  <div key={item.label} className="grid grid-cols-[120px,1fr,1fr] items-center gap-3">
+                 {/* <div key={item.label} className=""> */}
 
-            <div className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-300">Text colors (optional)</span>
-                <span className="text-[11px] text-zinc-500">Leave blank to auto-pick</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {[{
-                  label: "Overview text",
-                  value: overviewText,
-                  onChange: setOverviewText,
-                  placeholder: paletteTextDefaults.overview,
-                  fallback: paletteTextDefaults.overview,
-                }, {
-                  label: "Days text",
-                  value: dayText,
-                  onChange: setDayText,
-                  placeholder: paletteTextDefaults.day,
-                  fallback: paletteTextDefaults.day,
-                }, {
-                  label: "Weeks text",
-                  value: weekText,
-                  onChange: setWeekText,
-                  placeholder: paletteTextDefaults.week,
-                  fallback: paletteTextDefaults.week,
-                }, {
-                  label: "Months text",
-                  value: monthText,
-                  onChange: setMonthText,
-                  placeholder: paletteTextDefaults.month,
-                  fallback: paletteTextDefaults.month,
-                }, {
-                  label: "Years text",
-                  value: yearText,
-                  onChange: setYearText,
-                  placeholder: paletteTextDefaults.year,
-                  fallback: paletteTextDefaults.year,
-                }, {
-                  label: "Hours text",
-                  value: hoursText,
-                  onChange: setHoursText,
-                  placeholder: paletteTextDefaults.hours,
-                  fallback: paletteTextDefaults.hours,
-                }, {
-                  label: "Minutes text",
-                  value: minutesText,
-                  onChange: setMinutesText,
-                  placeholder: paletteTextDefaults.minutes,
-                  fallback: paletteTextDefaults.minutes,
-                }, {
-                  label: "Seconds text",
-                  value: secondsText,
-                  onChange: setSecondsText,
-                  placeholder: paletteTextDefaults.seconds,
-                  fallback: paletteTextDefaults.seconds,
-                }, {
-                  label: "Total seconds text",
-                  value: totalText,
-                  onChange: setTotalText,
-                  placeholder: paletteTextDefaults.total,
-                  fallback: paletteTextDefaults.total,
-                }, {
-                  label: "Mega-seconds text",
-                  value: megaText,
-                  onChange: setMegaText,
-                  placeholder: paletteTextDefaults.mega,
-                  fallback: paletteTextDefaults.mega,
-                }].map((item) => (
-                  <label key={item.label} className="space-y-1">
                     <span className="text-zinc-300">{item.label}</span>
+                    {/* <div className="flex items-center gap-2"> */}
                     <div className="flex items-center gap-2">
                       <input
                         className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                        placeholder={item.placeholder}
-                        value={item.value}
-                        onChange={(e) => item.onChange(e.target.value)}
+                        placeholder={item.bg.placeholder}
+                        value={item.bg.value}
+                        onChange={(e) => item.bg.onChange(e.target.value)}
                       />
                       <input
                         type="color"
-                        // className="h-10 w-12 rounded-lg border border-white/10 bg-transparent"
                         className="color-swatch max-w-[16px] h-10"
-                        value={ensureHex(item.value || item.fallback, item.fallback)}
-                        onChange={(e) => item.onChange(e.target.value)}
-                        aria-label={`${item.label} color picker`}
+                        value={ensureHex(item.bg.value, item.bg.fallback)}
+                        onChange={(e) => item.bg.onChange(e.target.value)}
+                        aria-label={`${item.label} background color picker`}
                       />
                     </div>
-                  </label>
+                    {item.text ? (
+                    //   <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                          placeholder={item.text.placeholder}
+                          value={item.text.value}
+                          onChange={(e) => item.text?.onChange(e.target.value)}
+                        />
+                        <input
+                          type="color"
+                          className="color-swatch max-w-[16px] h-10"
+                          value={ensureHex(item.text.value || item.text.fallback, item.text.fallback)}
+                          onChange={(e) => item.text?.onChange(e.target.value)}
+                          aria-label={`${item.label} text color picker`}
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-xs text-zinc-500">Text auto</div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
