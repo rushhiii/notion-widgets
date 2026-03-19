@@ -1,4 +1,4 @@
-![Notion Widgets Banner](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/icons/repo_banner_new.png)
+![Notion Widgets Banner](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/icons/repo_banner.png)
 
 <!-- ✱ ✻ ✷ ✮-->
 # ✮ Notion Widgets Framework
