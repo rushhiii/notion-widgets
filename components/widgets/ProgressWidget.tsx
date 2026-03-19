@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Copy, Plus, RefreshCw, Trash } from "lucide-react";
 
@@ -48,8 +48,8 @@ const DEFAULTS = {
   text: "#0f172a",
   background: "#f6f8ff",
   layoutMode: "linear" as LayoutMode,
-  fontFamily: "var(--font-space-grotesk), 'Space Grotesk', 'Inter', system-ui, sans-serif",
-  themeName: "daylight",
+  fontFamily: "var(--font-plus-jakarta), 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
+  themeName: "serif",
 };
 
 const THEME_PRESETS: Record<
@@ -155,6 +155,80 @@ function formatNumber(value: number) {
   return value.toLocaleString("en-US");
 }
 
+type FancyOption = { value: string; label: string };
+
+function FancySelect({
+  value,
+  onChange,
+  options,
+  placeholder = "Select",
+  dropdownClassName = "",
+  buttonClassName = "flex w-full items-center justify-between rounded-lg border border-white/12 bg-white/10 px-3 py-2 text-sm text-white/90 shadow-[0_1px_0_rgba(255,255,255,0.08)] transition focus:border-white/40 focus:ring-2 focus:ring-white/15 focus:outline-none",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: FancyOption[];
+  placeholder?: string;
+  dropdownClassName?: string;
+  buttonClassName?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", handleClick);
+    return () => window.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const current = options.find((o) => o.value === value);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        className={buttonClassName}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="truncate">{current?.label ?? placeholder}</span>
+        <span className="ml-2 text-xs text-white/60">▾</span>
+      </button>
+
+      {open && (
+        <div
+          className={`absolute left-0 z-20 mt-2 w-fit min-w-full overflow-hidden rounded-lg border border-white/10 bg-zinc-900/95 shadow-2xl backdrop-blur ${dropdownClassName}`}
+        >
+          <div className="max-h-56 w-[100%] overflow-y-auto scrollbar-hide">
+            {options.map((opt) => {
+              const active = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`flex w-full items-center justify-between px-3 py-2 text-sm text-white/90 transition hover:bg-white/10 ${
+                    active ? "bg-white/10" : ""
+                  }`}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {active && <span className="pl-2 text-xs text-white/70">●</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProgressPreview({
   title,
   label,
@@ -196,6 +270,7 @@ function ProgressPreview({
     backgroundImage: transparent || isMidnight
       ? undefined
       : "radial-gradient(circle at 25% 25%, rgba(59,130,246,0.08), transparent 45%)",
+    transition: "background-color 180ms ease, color 180ms ease, border-color 180ms ease",
   } as const;
 
   return (
@@ -357,10 +432,13 @@ function ProgressPreview({
               )}
 
               <div className="relative h-4 w-full overflow-visible">
-                <div className="absolute inset-0 rounded-full" style={{ background: track }} />
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{ background: track, transition: "background-color 180ms ease" }}
+                />
                 <div
                   className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
-                  style={{ width: `${pct}%`, background: accent }}
+                  style={{ width: `${pct}%`, background: accent, transition: "width 300ms ease, background-color 180ms ease" }}
                 />
 
                 {onAdjustBar && (
@@ -439,6 +517,9 @@ function ProgressPreview({
 export function ProgressWidget() {
   const searchParams = useSearchParams();
 
+  const fieldClass = "w-full rounded-lg border border-white/12 bg-white/10 px-3 py-2 text-sm text-white/90 placeholder:text-zinc-500 shadow-[0_1px_0_rgba(255,255,255,0.08)] transition focus:border-white/40 focus:ring-2 focus:ring-white/15 focus:outline-none";
+  const compactFieldClass = "w-full rounded-md border border-transparent bg-white/10 px-3 py-1.5 text-sm text-white/90 placeholder:text-zinc-500 shadow-[0_1px_0_rgba(255,255,255,0.06)] transition focus:ring-2 focus:ring-white/15 focus:outline-none";
+
   const initial = useMemo(() => {
     const themeParam = searchParams.get("theme") || DEFAULTS.themeName;
     const themePreset = THEME_PRESETS[themeParam] ?? null;
@@ -481,11 +562,11 @@ export function ProgressWidget() {
       fontCustom: Boolean(fontParamRaw),
       themeName: themePreset ? themeParam : "custom",
       showBuilder: !parseBooleanParam(searchParams.get("embed"), false) && !parseBooleanParam(searchParams.get("bare"), false),
-      showMilestones: parseBooleanParam(searchParams.get("markers"), true),
+      showMilestones: parseBooleanParam(searchParams.get("markers"), false),
       showMilestoneList: parseBooleanParam(searchParams.get("mlist"), false),
       showPct: parseBooleanParam(searchParams.get("pct"), true),
       showTotals: parseBooleanParam(searchParams.get("totals"), true),
-      fullPage: parseBooleanParam(searchParams.get("full"), false),
+      fullPage: parseBooleanParam(searchParams.get("full"), true),
       defaultStep: parseNumberParam(searchParams.get("step"), 100),
       bars: barsWithMilestones,
     };
@@ -598,7 +679,7 @@ export function ProgressWidget() {
     if (showMilestoneList) url.searchParams.set("mlist", "1");
     if (!showPct) url.searchParams.set("pct", "0");
     if (!showTotals) url.searchParams.set("totals", "0");
-    if (fullPage) url.searchParams.set("full", "1");
+    url.searchParams.set("full", fullPage ? "1" : "0");
     bars.forEach((bar, idx) => {
       url.searchParams.append("bar", `${bar.label}:${bar.progress}:${bar.goal}`);
       bar.milestones.forEach((ms) => {
@@ -672,6 +753,7 @@ export function ProgressWidget() {
   }
 
   return (
+    <>
     <main className="flex min-h-screen w-full items-start justify-center bg-zinc-950 px-4 py-10 text-zinc-100">
       <div className="grid w-full max-w-6xl grid-cols-1 gap-6 md:grid-cols-[340px,1fr]">
         {/* left widget container */}
@@ -720,41 +802,31 @@ export function ProgressWidget() {
           <div className="grid grid-cols-1 gap-3">
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Title</span>
-              <input
-                className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
+              <input className={fieldClass} value={title} onChange={(e) => setTitle(e.target.value)} />
             </label>
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Label</span>
-              <input
-                className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-              />
+              <input className={fieldClass} value={label} onChange={(e) => setLabel(e.target.value)} />
             </label>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Display mode</span>
-                <select
-                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                <FancySelect
                   value={layoutMode}
-                  onChange={(e) => setLayoutMode(e.target.value as LayoutMode)}
-                >
-                  <option className="bg-zinc-900" value="linear">Horizontal bars</option>
-                  <option className="bg-zinc-900" value="circular">Circular dials</option>
-                </select>
+                  onChange={(val) => setLayoutMode(val as LayoutMode)}
+                  options={[
+                    { value: "linear", label: "Horizontal bars" },
+                    { value: "circular", label: "Circular dials" },
+                  ]}
+                />
               </label>
 
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Theme</span>
-                <select
-                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                <FancySelect
                   value={themeName}
-                  onChange={(e) => {
-                    const nextTheme = e.target.value;
+                  onChange={(nextTheme) => {
                     setThemeName(nextTheme);
                     const preset = THEME_PRESETS[nextTheme];
                     if (preset) {
@@ -767,33 +839,34 @@ export function ProgressWidget() {
                       }
                     }
                   }}
-                >
-                  {Object.keys(THEME_PRESETS).map((key) => (
-                    <option key={key} className="bg-zinc-900" value={key}>
-                      {key.charAt(0).toUpperCase() + key.slice(1)}
-                    </option>
-                  ))}
-                  <option className="bg-zinc-900" value="custom">Custom</option>
-                </select>
+                  options={[
+                    ...Object.keys(THEME_PRESETS).map((key) => ({
+                      value: key,
+                      label: key.charAt(0).toUpperCase() + key.slice(1),
+                    })),
+                    { value: "custom", label: "Custom" },
+                  ]}
+                />
               </label>
 
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Typography</span>
-                <select
-                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                <FancySelect
                   value={fontFamily}
-                  onChange={(e) => {
-                    setFontFamily(e.target.value);
+                  onChange={(val) => {
+                    setFontFamily(val);
                     setFontCustom(true);
                   }}
-                >
-                  <option className="bg-zinc-900" value="var(--font-space-grotesk), 'Space Grotesk', 'Inter', system-ui, sans-serif">Space Grotesk</option>
-                  <option className="bg-zinc-900" value="var(--font-sora), 'Sora', 'Segoe UI', system-ui, sans-serif">Sora</option>
-                  <option className="bg-zinc-900" value="var(--font-plus-jakarta), 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif">Plus Jakarta Sans</option>
-                  <option className="bg-zinc-900" value="var(--font-manrope), 'Manrope', 'Inter', system-ui, sans-serif">Manrope</option>
-                  <option className="bg-zinc-900" value="var(--font-playfair), 'Playfair Display', 'Georgia', serif">Playfair Display</option>
-                  <option className="bg-zinc-900" value="var(--font-libre-baskerville), 'Libre Baskerville', 'Times New Roman', serif">Libre Baskerville</option>
-                </select>
+                  dropdownClassName="-left-7"
+                  options={[
+                    { value: "var(--font-space-grotesk), 'Space Grotesk', 'Inter', system-ui, sans-serif", label: "Space Grotesk" },
+                    { value: "var(--font-sora), 'Sora', 'Segoe UI', system-ui, sans-serif", label: "Sora" },
+                    { value: "var(--font-plus-jakarta), 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif", label: "Plus Jakarta Sans" },
+                    { value: "var(--font-manrope), 'Manrope', 'Inter', system-ui, sans-serif", label: "Manrope" },
+                    { value: "var(--font-playfair), 'Playfair Display', 'Georgia', serif", label: "Playfair Display" },
+                    { value: "var(--font-libre-baskerville), 'Libre Baskerville', 'Times New Roman', serif", label: "Libre Baskerville" },
+                  ]}
+                />
               </label>
             </div>
 
@@ -803,7 +876,7 @@ export function ProgressWidget() {
                 <input
                   type="number"
                   min={0}
-                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                  className={fieldClass}
                   value={goal}
                   onChange={(e) => {
                     const next = clampNumber(Number(e.target.value));
@@ -817,7 +890,7 @@ export function ProgressWidget() {
                 <input
                   type="number"
                   min={0}
-                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                  className={fieldClass}
                   value={progress}
                   onChange={(e) => {
                     const next = clampNumber(Number(e.target.value));
@@ -831,19 +904,11 @@ export function ProgressWidget() {
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Value Prefix</span>
-                <input
-                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                  value={prefix}
-                  onChange={(e) => setPrefix(e.target.value)}
-                />
+                <input className={fieldClass} value={prefix} onChange={(e) => setPrefix(e.target.value)} />
               </label>
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Value Suffix</span>
-                <input
-                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                  value={suffix}
-                  onChange={(e) => setSuffix(e.target.value)}
-                />
+                <input className={fieldClass} value={suffix} onChange={(e) => setSuffix(e.target.value)} />
               </label>
             </div>
 
@@ -902,7 +967,7 @@ export function ProgressWidget() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 items-center">
-              <label className="flex items-center gap-2 text-sm text-zinc-300">
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-white/20 bg-white/10"
@@ -911,7 +976,7 @@ export function ProgressWidget() {
                 />
                 Show milestone markers
               </label>
-              <label className="flex items-center gap-2 text-sm text-zinc-300">
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-white/20 bg-white/10"
@@ -923,7 +988,7 @@ export function ProgressWidget() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 items-center">
-              <label className="flex items-center gap-2 text-sm text-zinc-300">
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-white/20 bg-white/10"
@@ -932,7 +997,7 @@ export function ProgressWidget() {
                 />
                 Show progress percent value
               </label>
-              <label className="flex items-center gap-2 text-sm text-zinc-300">
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-white/20 bg-white/10"
@@ -944,7 +1009,7 @@ export function ProgressWidget() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 items-center">
-              <label className="flex items-center gap-2 text-sm text-zinc-300">
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-white/20 bg-white/10"
@@ -1026,12 +1091,12 @@ export function ProgressWidget() {
             <div className="items-center gap-3 text-sm">
                 <span className="text-zinc-300">Default step value:</span>
 
-              <label className="flex items-center gap-2 py-1">
+              <label className="flex items-center gap-2 py-1 max-w-">
                 {/* <span className="text-zinc-300">Default +/- step</span> */}
                 <input
                   type="number"
                   min={1}
-                  className="w-24 rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                  className={`${compactFieldClass} no-spin`}
                   value={defaultStep}
                   onChange={(e) => setDefaultStep(Math.max(1, clampNumber(Number(e.target.value))))}
                 />
@@ -1045,18 +1110,15 @@ export function ProgressWidget() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
-                <h3 className="font-semibold">Milestones</h3>
-                <select
-                  className="rounded-lg border border-white/10 bg-white/10 px-2 py-1 text-xs text-white outline-none"
-                  value={activeBar?.id ?? ""}
-                  onChange={(e) => setSelectedBarId(e.target.value)}
-                >
-                  {bars.map((bar) => (
-                    <option key={bar.id} value={bar.id} className="bg-zinc-900 text-white">
-                      {bar.label || "Bar"}
-                    </option>
-                  ))}
-                </select>
+                <h3 className="font-semibold">Milestones:</h3>
+                <div className="min-w-[140px] max-w-[160px]">
+                  <FancySelect
+                    value={activeBar?.id ?? ""}
+                    onChange={(val) => setSelectedBarId(val)}
+                    options={bars.map((bar) => ({ value: bar.id, label: bar.label || "Bar" }))}
+                    buttonClassName="flex w-full items-center justify-between rounded-md border border-transparent bg-white/8 px-3 py-1.5 text-sm text-white/90 shadow-[0_1px_0_rgba(255,255,255,0.04)] transition focus:ring-2 focus:ring-white/12 focus:outline-none"
+                  />
+                </div>
               </div>
               <button
                 className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-1 text-sm font-medium text-white transition hover:bg-white/10"
@@ -1085,7 +1147,7 @@ export function ProgressWidget() {
               {activeMilestones.map((ms, index) => (
                 <div key={ms.id} className="grid grid-cols-[1fr,110px,40px] items-center gap-2">
                   <input
-                    className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                    className={fieldClass}
                     value={ms.label}
                     onChange={(e) =>
                       setBars((current) =>
@@ -1105,7 +1167,7 @@ export function ProgressWidget() {
                   <input
                     type="number"
                     min={0}
-                    className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                    className={`${fieldClass} no-spin`}
                     value={ms.value}
                     onChange={(e) =>
                       setBars((current) =>
@@ -1169,7 +1231,7 @@ export function ProgressWidget() {
               {bars.map((bar, index) => (
                 <div key={bar.id} className="grid grid-cols-[1fr,1fr,1fr,40px] items-center gap-2">
                   <input
-                    className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                    className={fieldClass}
                     value={bar.label}
                     onChange={(e) =>
                       setBars((current) => current.map((b) => (b.id === bar.id ? { ...b, label: e.target.value } : b)))
@@ -1178,7 +1240,7 @@ export function ProgressWidget() {
                   <input
                     type="number"
                     min={0}
-                    className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                    className={`${fieldClass} no-spin`}
                     value={bar.progress}
                     onChange={(e) =>
                       setBars((current) => {
@@ -1191,7 +1253,7 @@ export function ProgressWidget() {
                   <input
                     type="number"
                     min={1}
-                    className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                    className={`${fieldClass} no-spin`}
                     value={bar.goal}
                     onChange={(e) =>
                       setBars((current) => {
@@ -1249,10 +1311,17 @@ export function ProgressWidget() {
         </section>
 
         {/* right widget container */}
-        <section className="flex max-h-[88vh] items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl overflow-y-auto scrollbar-hide">
+        <section
+          className={`flex max-h-[88vh] items-center justify-center rounded-2xl overflow-y-auto scrollbar-hide ${
+            fullPage ? "p-0 border border-transparent shadow-none" : "border border-white/10 bg-white/5 p-6 shadow-xl"
+          }`}
+          style={fullPage ? { background: background, width: "100%" } : undefined}
+        >
           {fullPage ? (
-            <div className="w-full">
-              <ProgressPreview {...previewProps} />
+            <div className="flex w-full items-center justify-center" style={{ background }}>
+              <div className="w-full">
+                <ProgressPreview {...previewProps} isEmbedView />
+              </div>
             </div>
           ) : (
             <WidgetContainer theme="light" className="bg-transparent" heightClassName="h-auto" fullHeight={false} allowOverflow>
@@ -1262,5 +1331,16 @@ export function ProgressWidget() {
         </section>
       </div>
     </main>
+    <style jsx global>{`
+      .no-spin::-webkit-inner-spin-button,
+      .no-spin::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .no-spin {
+        -moz-appearance: textfield;
+      }
+    `}</style>
+    </>
   );
 }

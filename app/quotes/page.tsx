@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { QuoteWidget } from "@/components/widgets/QuoteWidget";
-
-export const dynamic = "force-static";
+import QuotesClientView from "./ClientView";
 
 export const metadata: Metadata = {
   title: "Quotes",
@@ -13,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function QuotesPage() {
-  return <QuoteWidget />;
+  return <QuotesClientView />;
 }

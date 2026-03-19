@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import DdayWidget from "@/components/widgets/DdayWidget";
-
-export const dynamic = "force-static";
+import { DdayClient } from "./DdayClient";
 
 export const metadata: Metadata = {
   title: "Days Since",
@@ -14,9 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function DdayPage() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-transparent">
-      <DdayWidget />
-    </main>
-  );
+  return <DdayClient />;
 }

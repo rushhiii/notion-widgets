@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import WeatherWidget from "@/components/widgets/WeatherWidget";
+import WeatherClient from "./WeatherClient";
 
 export const dynamic = "force-static";
 
@@ -12,11 +12,8 @@ export const metadata: Metadata = {
   },
 };
 
+type WeatherPageProps = { searchParams?: Record<string, string | string[] | undefined> };
+
 export default function WeatherPage() {
-  return (
-    // <main className="flex min-h-screen items-center justify-center bg-transparent">
-    <main className="flex w-full min-h-screen items-center justify-center bg-transparent">
-      <WeatherWidget />
-    </main>
-  );
+  return <WeatherClient />;
 }

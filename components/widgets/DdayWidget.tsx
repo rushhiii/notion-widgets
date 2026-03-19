@@ -15,6 +15,7 @@ const NOTION_PALETTE: Record<string, BadgeColor> = {
   purple: { text: "#6940A5", bg: "#EAE4F2" },
   pink: { text: "#C14C8A", bg: "#F4DFEB" },
   red: { text: "#D44C47", bg: "#FBE4E4" },
+  overview: { text: "#0f172a", bg: "#EBECED" },
 };
 
 function parseBool(val: string | null, fallback: boolean) {
@@ -120,6 +121,14 @@ function normalizeHex(input: string) {
   return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex) ? hex : null;
 }
 
+function pickTextColor(key: string | null, fallback: string) {
+  if (!key) return fallback;
+  const preset = NOTION_PALETTE[key.toLowerCase()];
+  if (preset) return preset.text;
+  const hex = normalizeHex(key);
+  return hex ?? fallback;
+}
+
 function pickColor(key: string | null, fallback: BadgeColor): BadgeColor {
   if (!key) return fallback;
   const preset = NOTION_PALETTE[key.toLowerCase()];
@@ -160,7 +169,9 @@ function diffCalendarMonths(a: Date, b: Date) {
   return months;
 }
 
-export function DdayWidget() {
+type EmbedParams = Record<string, string | number | boolean | undefined>;
+
+export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const searchParams = useSearchParams();
   const [now, setNow] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -168,6 +179,14 @@ export function DdayWidget() {
   const [bgFromQueryRaw, setBgFromQueryRaw] = useState<string | null>(null);
   const originalBodyBg = useRef<string | null>(null);
   const originalHtmlBg = useRef<string | null>(null);
+
+  const getParam = (key: string) => {
+    if (embedParams && key in embedParams) {
+      const value = embedParams[key];
+      return value === undefined ? null : String(value);
+    }
+    return searchParams.get(key);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -183,28 +202,28 @@ export function DdayWidget() {
     return () => window.clearInterval(id);
   }, []);
 
-//   const targetDateStr = searchParams.get("date") ?? "2022-11-29";
-  const targetDateStr = searchParams.get("date") ?? "2025-11-11";
-  const unitsFlag = parseBool(searchParams.get("units"), false);
-  const showDateLabel = parseBool(searchParams.get("showdate"), true);
-  const mode = (searchParams.get("mode") || "").toLowerCase();
+//   const targetDateStr = getParam("date") ?? "2022-11-29";
+  const targetDateStr = getParam("date") ?? "2025-11-11";
+  const unitsFlag = parseBool(getParam("units"), false);
+  const showDateLabel = parseBool(getParam("showdate"), true);
+  const mode = (getParam("mode") || "").toLowerCase();
   const isCountdown = mode === "countdown";
-  const alignParam = (searchParams.get("align") || "left").toLowerCase();
-  const note = searchParams.get("note") || "";
+  const alignParam = (getParam("align") || "left").toLowerCase();
+  const note = getParam("note") || "";
 
-  const displayList = parseUnitsList(searchParams.get("display"));
-  const hideList = parseUnitsList(searchParams.get("notdisplay"));
+  const displayList = parseUnitsList(getParam("display"));
+  const hideList = parseUnitsList(getParam("notdisplay"));
 
   const initial: Record<UnitKey, boolean> = {
-    day: parseBool(searchParams.get("day"), true),
-    week: parseBool(searchParams.get("week"), true),
-    month: parseBool(searchParams.get("month"), unitsFlag),
-    year: parseBool(searchParams.get("year"), unitsFlag),
-    hours: parseBool(searchParams.get("hours"), isCountdown || unitsFlag),
-    minutes: parseBool(searchParams.get("minutes"), isCountdown || unitsFlag),
-    seconds: parseBool(searchParams.get("seconds"), isCountdown || unitsFlag),
-    totalseconds: parseBool(searchParams.get("totalseconds"), false),
-    megaseconds: parseBool(searchParams.get("megaseconds"), false),
+    day: parseBool(getParam("day"), true),
+    week: parseBool(getParam("week"), true),
+    month: parseBool(getParam("month"), unitsFlag),
+    year: parseBool(getParam("year"), unitsFlag),
+    hours: parseBool(getParam("hours"), isCountdown || unitsFlag),
+    minutes: parseBool(getParam("minutes"), isCountdown || unitsFlag),
+    seconds: parseBool(getParam("seconds"), isCountdown || unitsFlag),
+    totalseconds: parseBool(getParam("totalseconds"), false),
+    megaseconds: parseBool(getParam("megaseconds"), false),
   };
 
   if (displayList) {
@@ -230,24 +249,34 @@ export function DdayWidget() {
   const showTotalSeconds = initial.totalseconds;
   const showMegaSeconds = initial.megaseconds;
 
-  const globalColorOverride = searchParams.get("color");
-  const titleColorOverride = searchParams.get("titleColor");
-  const overviewColorOverride = searchParams.get("overviewColor");
+  const globalColorOverride = getParam("color");
+  const titleColorOverride = getParam("titleColor");
+  const overviewColorOverride = getParam("overviewColor");
+  const overviewTextOverride = getParam("overviewText");
   const backgroundOverride =
-    searchParams.get("background") ??
-    searchParams.get("bg") ??
+    getParam("background") ??
+    getParam("bg") ??
     bgFromQueryRaw ??
     bgFromHash;
-  const dayColorOverride = searchParams.get("dayColor");
-  const weekColorOverride = searchParams.get("weekColor");
-  const monthColorOverride = searchParams.get("monthColor");
-  const yearColorOverride = searchParams.get("yearColor");
-  const timeColorOverride = searchParams.get("timeColor");
-  const hoursColorOverride = searchParams.get("hoursColor");
-  const minutesColorOverride = searchParams.get("minutesColor");
-  const secondsColorOverride = searchParams.get("secondsColor");
-  const totalColorOverride = searchParams.get("totalColor");
-  const megaColorOverride = searchParams.get("megaColor");
+  const dayColorOverride = getParam("dayColor");
+  const dayTextOverride = getParam("dayText");
+  const weekColorOverride = getParam("weekColor");
+  const weekTextOverride = getParam("weekText");
+  const monthColorOverride = getParam("monthColor");
+  const monthTextOverride = getParam("monthText");
+  const yearColorOverride = getParam("yearColor");
+  const yearTextOverride = getParam("yearText");
+  const timeColorOverride = getParam("timeColor");
+  const hoursColorOverride = getParam("hoursColor");
+  const hoursTextOverride = getParam("hoursText");
+  const minutesColorOverride = getParam("minutesColor");
+  const minutesTextOverride = getParam("minutesText");
+  const secondsColorOverride = getParam("secondsColor");
+  const secondsTextOverride = getParam("secondsText");
+  const totalColorOverride = getParam("totalColor");
+  const totalTextOverride = getParam("totalText");
+  const megaColorOverride = getParam("megaColor");
+  const megaTextOverride = getParam("megaText");
 
   const target = useMemo(() => {
     if (mode === "countdown" && now) {
@@ -290,7 +319,7 @@ export function DdayWidget() {
   const defaultWeek = pickColor(weekColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.purple);
   const defaultMonth = pickColor(monthColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.blue);
   const defaultYear = pickColor(yearColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.orange);
-  const baseTime = pickColor(timeColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.gray);
+  const baseTime = pickColor(timeColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.overview);
   const defaultHours = pickColor(
     hoursColorOverride,
     timeColorOverride || globalColorOverride ? baseTime : NOTION_PALETTE.blue,
@@ -306,8 +335,18 @@ export function DdayWidget() {
   const defaultTotal = pickColor(totalColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.red);
   const defaultMega = pickColor(megaColorOverride, globalColorOverride ? globalColor : NOTION_PALETTE.orange);
   const defaultOverview = pickColor(overviewColorOverride, baseTime);
+  const defaultDayText = pickTextColor(dayTextOverride, defaultDay.text);
+  const defaultWeekText = pickTextColor(weekTextOverride, defaultWeek.text);
+  const defaultMonthText = pickTextColor(monthTextOverride, defaultMonth.text);
+  const defaultYearText = pickTextColor(yearTextOverride, defaultYear.text);
+  const defaultHoursText = pickTextColor(hoursTextOverride, defaultHours.text);
+  const defaultMinutesText = pickTextColor(minutesTextOverride, defaultMinutes.text);
+  const defaultSecondsText = pickTextColor(secondsTextOverride, defaultSeconds.text);
+  const defaultTotalText = pickTextColor(totalTextOverride, defaultTotal.text);
+  const defaultMegaText = pickTextColor(megaTextOverride, defaultMega.text);
+  const defaultOverviewText = pickTextColor(overviewTextOverride, defaultOverview.text);
   const titleColor = pickColor(titleColorOverride ?? "yellow", globalColor).text;
-  const pageBackground = pickColor(backgroundOverride, { bg: "#800000", text: "#ffffff" }).bg;
+  const pageBackground = pickColor(backgroundOverride, { bg: "#0f172a", text: "#ffffff" }).bg;
 
   const alignItems = alignParam === "center" ? "center" : alignParam === "right" ? "flex-end" : "flex-start";
   const textAlign = alignParam === "center" ? "center" : alignParam === "right" ? "right" : "left";
@@ -348,40 +387,40 @@ export function DdayWidget() {
 
     if (showDays) {
       const text = `${remDays} days ${label}`;
-      pushBadge("days", text, defaultDay);
+      pushBadge("days", text, { ...defaultDay, text: defaultDayText });
     }
     if (showWeeks) {
       const text = `${remWeeks} weeks ${label}`;
-      pushBadge("weeks", text, defaultWeek);
+      pushBadge("weeks", text, { ...defaultWeek, text: defaultWeekText });
     }
     if (showMonths) {
       const text = `${remMonths} months ${label}`;
-      pushBadge("months", text, defaultMonth);
+      pushBadge("months", text, { ...defaultMonth, text: defaultMonthText });
     }
     if (showYears) {
       const text = `${remYears} years ${label}`;
-      pushBadge("years", text, defaultYear);
+      pushBadge("years", text, { ...defaultYear, text: defaultYearText });
     }
     if (showHours) {
       const text = `${remTotalHours} hours ${label}`;
-      pushBadge("hours", text, defaultHours);
+      pushBadge("hours", text, { ...defaultHours, text: defaultHoursText });
     }
     if (showMinutes) {
       const text = `${remTotalMinutes} minutes ${label}`;
-      pushBadge("minutes", text, defaultMinutes);
+      pushBadge("minutes", text, { ...defaultMinutes, text: defaultMinutesText });
     }
     if (showSeconds) {
       const text = `${remTotalSeconds} seconds ${label}`;
-      pushBadge("seconds", text, defaultSeconds);
+      pushBadge("seconds", text, { ...defaultSeconds, text: defaultSecondsText });
     }
     if (showTotalSeconds) {
       const text = `${remTotalSeconds.toLocaleString()} total seconds ${label}`;
-      pushBadge("total", text, defaultTotal);
+      pushBadge("total", text, { ...defaultTotal, text: defaultTotalText });
     }
     if (showMegaSeconds) {
       const mega = remTotalSeconds === 0 ? "0.000" : (remTotalSeconds / 1_000_000).toFixed(3);
       const text = `${mega} mega-seconds ${label}`;
-      pushBadge("mega", text, defaultMega);
+      pushBadge("mega", text, { ...defaultMega, text: defaultMegaText });
     }
   } else if (mode === "overview") {
     const microseconds = Math.floor(absMs * 1000);
@@ -396,48 +435,48 @@ export function DdayWidget() {
       `${microseconds.toLocaleString()} microseconds`,
     ];
     const text = `${parts.join(", ")} ${sign}`;
-    pushBadge("overview", text, defaultOverview);
+    pushBadge("overview", text, { ...defaultOverview, text: defaultOverviewText });
   } else {
     if (showDays) {
       const value = days;
       const text = days === 0 ? "D-Day" : `${value} days ${sign}`;
-      pushBadge("days", text, defaultDay);
+      pushBadge("days", text, { ...defaultDay, text: defaultDayText });
     }
     if (showWeeks) {
       const value = weeks;
       const text = weeks === 0 ? "D-Week" : `${value} weeks ${sign}`;
-      pushBadge("weeks", text, defaultWeek);
+      pushBadge("weeks", text, { ...defaultWeek, text: defaultWeekText });
     }
     if (showMonths) {
       const value = Math.abs(months);
       const text = months === 0 ? "This month" : `${value} months ${sign}`;
-      pushBadge("months", text, defaultMonth);
+      pushBadge("months", text, { ...defaultMonth, text: defaultMonthText });
     }
     if (showYears) {
       const value = Math.abs(years);
       const text = years === 0 ? "This year" : `${value} years ${sign}`;
-      pushBadge("years", text, defaultYear);
+      pushBadge("years", text, { ...defaultYear, text: defaultYearText });
     }
     if (showHours) {
       const text = `${totalHours} hours ${sign}`;
-      pushBadge("hours", text, defaultHours);
+      pushBadge("hours", text, { ...defaultHours, text: defaultHoursText });
     }
     if (showMinutes) {
       const text = `${totalMinutes} minutes ${sign}`;
-      pushBadge("minutes", text, defaultMinutes);
+      pushBadge("minutes", text, { ...defaultMinutes, text: defaultMinutesText });
     }
     if (showSeconds) {
       const text = `${totalSeconds} seconds ${sign}`;
-      pushBadge("seconds", text, defaultSeconds);
+      pushBadge("seconds", text, { ...defaultSeconds, text: defaultSecondsText });
     }
     if (showTotalSeconds) {
       const text = `${totalSeconds.toLocaleString()} total seconds ${sign}`;
-      pushBadge("total", text, defaultTotal);
+      pushBadge("total", text, { ...defaultTotal, text: defaultTotalText });
     }
     if (showMegaSeconds) {
       const mega = (totalSeconds / 1_000_000).toFixed(3);
       const text = `${mega} mega-seconds ${sign}`;
-      pushBadge("mega", text, defaultMega);
+      pushBadge("mega", text, { ...defaultMega, text: defaultMegaText });
     }
   }
 
@@ -499,7 +538,9 @@ export function DdayWidget() {
             fontSize: 14,
             fontWeight: 600,
             lineHeight: 1.2,
-            whiteSpace: "nowrap",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            maxWidth: "100%",
             color: badge.color.text,
             backgroundColor: badge.color.bg,
             boxShadow: "0 4px 10px rgba(0,0,0,0.08)",

@@ -47,6 +47,8 @@ const THEME_PRESETS: Record<
   sky: { bg: "#e8f3fb", text: "#0b2345", accent: "#1d8fe1" },
 };
 
+type EmbedParams = Record<string, string | number | boolean | undefined>;
+
 function formatTemp(value: number | undefined, units: "metric" | "imperial") {
   if (typeof value !== "number") return "--";
   const rounded = Math.round(value);
@@ -75,21 +77,27 @@ function pickIcon(icon?: string) {
   return ICON_MAP.clouds;
 }
 
-export function WeatherWidget() {
+export function WeatherWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const [paramString, setParamString] = useState<string | null>(null);
   const [clientParams, setClientParams] = useState<URLSearchParams | null>(null);
   const originalBodyBg = useRef<string | null>(null);
   const originalHtmlBg = useRef<string | null>(null);
 
   useEffect(() => {
+    if (embedParams) return;
     if (typeof window === "undefined") return;
-    // Pull params directly from the live URL after hydration to avoid static pre-render defaults.
     const search = window.location.search || "";
     setParamString(search);
     setClientParams(new URLSearchParams(search));
-  }, []);
+  }, [embedParams]);
 
-  const getParam = (key: string) => clientParams?.get(key) ?? null;
+  const getParam = (key: string) => {
+    if (embedParams && key in embedParams) {
+      const value = embedParams[key];
+      return value === undefined ? null : String(value);
+    }
+    return clientParams?.get(key) ?? null;
+  };
 
   const location = getParam("location") || getParam("q") || "Toronto";
   const latParam = getParam("lat");
@@ -184,7 +192,7 @@ export function WeatherWidget() {
   const themeAccent = accentParam ?? "#10b981";
 
   // Ensure we only render after we have read client-side params to avoid stale static defaults on Vercel.
-  const paramsReady = clientParams !== null || paramString !== null;
+  const paramsReady = Boolean(embedParams) || clientParams !== null || paramString !== null;
 
   useEffect(() => {
     if (!paramsReady) return;
