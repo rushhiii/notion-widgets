@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import {
+  fontManrope,
+  fontPlayfair,
+  fontPlusJakarta,
+  fontLibreBaskerville,
+  fontSora,
+  fontSpaceGrotesk,
+} from "./fonts";
 
 export const metadata: Metadata = {
   title: {
@@ -23,7 +31,10 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" className="h-full bg-transparent">
+    <html
+      lang="en"
+      className={`h-full bg-transparent ${fontSpaceGrotesk.variable} ${fontSora.variable} ${fontPlusJakarta.variable} ${fontManrope.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable}`}
+    >
       <body className="h-full bg-transparent antialiased" suppressHydrationWarning>
         {children}
       </body>

@@ -9,6 +9,7 @@ import { parseBooleanParam, parseColorParam } from "@/lib/utils";
 
 type Milestone = { id: string; label: string; value: number };
 type BarRow = { id: string; label: string; progress: number; goal: number; milestones: Milestone[] };
+type LayoutMode = "linear" | "circular";
 
 type PreviewProps = {
   title: string;
@@ -26,6 +27,9 @@ type PreviewProps = {
   showPct: boolean;
   showTotals: boolean;
   fullPage: boolean;
+  layoutMode: LayoutMode;
+  fontFamily: string;
+  themeName: string;
   isEmbedView?: boolean;
   defaultStep: number;
   onAdjustBar?: (barId: string, delta: number) => void;
@@ -43,6 +47,50 @@ const DEFAULTS = {
   track: "#e5e7eb",
   text: "#0f172a",
   background: "#f6f8ff",
+  layoutMode: "linear" as LayoutMode,
+  fontFamily: "var(--font-space-grotesk), 'Space Grotesk', 'Inter', system-ui, sans-serif",
+  themeName: "daylight",
+};
+
+const THEME_PRESETS: Record<
+  string,
+  { accent: string; track: string; text: string; background: string; font?: string }
+> = {
+  daylight: {
+    accent: "#3b82f6",
+    track: "#e5e7eb",
+    text: "#0f172a",
+    background: "#f6f8ff",
+    font: "var(--font-space-grotesk), 'Space Grotesk', 'Inter', system-ui, sans-serif",
+  },
+  midnight: {
+    accent: "#a855f7",
+    track: "#261a44",
+    text: "#d8c8ff",
+    background: "#0c0f1f",
+    font: "var(--font-libre-baskerville), 'Libre Baskerville', 'Times New Roman', serif",
+  },
+  sunset: {
+    accent: "#f97316",
+    track: "#ffe6d5",
+    text: "#1f172a",
+    background: "#fff7ed",
+    font: "var(--font-plus-jakarta), 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
+  },
+  mint: {
+    accent: "#10b981",
+    track: "#d1fae5",
+    text: "#064e3b",
+    background: "#ecfdf3",
+    font: "var(--font-manrope), 'Manrope', 'Inter', system-ui, sans-serif",
+  },
+  serif: {
+    accent: "#c084fc",
+    track: "#e2d9ff",
+    text: "#20123a",
+    background: "#f6f3ff",
+    font: "var(--font-playfair), 'Playfair Display', 'Georgia', serif",
+  },
 };
 
 let milestoneId = 0;
@@ -123,6 +171,9 @@ function ProgressPreview({
   showPct,
   showTotals,
   fullPage,
+  layoutMode,
+  fontFamily,
+  themeName,
   isEmbedView = false,
   defaultStep,
   onAdjustBar,
@@ -132,14 +183,18 @@ function ProgressPreview({
   const rows = bars.length ? bars : [baseBar];
   const labelText = (label || "").trim();
   const transparent = fullPage && isEmbedView;
+  const isMidnight = themeName === "midnight";
   const containerClass = transparent
     ? "flex w-[100vw] flex-col gap-3 p-2 sm:p-6"
-    : "flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/90 px-7 py-6 shadow-sm";
+    : isMidnight
+      ? "flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-transparent bg-[#0c0f1f] px-7 py-6 shadow-sm"
+      : "flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/90 px-7 py-6 shadow-sm";
   const containerStyle = {
     color: text,
-    background: transparent ? "transparent" : background,
-    backgroundImage: transparent
-      ? "none"
+    fontFamily,
+    backgroundColor: transparent ? "transparent" : background,
+    backgroundImage: transparent || isMidnight
+      ? undefined
       : "radial-gradient(circle at 25% 25%, rgba(59,130,246,0.08), transparent 45%)",
   } as const;
 
@@ -164,10 +219,129 @@ function ProgressPreview({
         {rows.map((row) => {
           const safeGoal = Math.max(row.goal || 0, 1);
           const pct = clampNumber((row.progress / safeGoal) * 100, 0, 100);
-          const sortedMilestones = [...(row.milestones?.length ? row.milestones : defaultMilestones())]
+          const milestones = row.milestones ?? defaultMilestones();
+          const sortedMilestones = [...milestones]
             .filter((m) => Number.isFinite(m.value))
             .map((m) => ({ ...m, pct: clampNumber((m.value / safeGoal) * 100, 0, 100) }))
             .sort((a, b) => a.value - b.value);
+
+          if (layoutMode === "circular") {
+            const size = 240;
+            const stroke = 14;
+            const center = size / 2;
+            const radius = center - stroke - 6;
+            const circumference = 2 * Math.PI * radius;
+            const arc = (pct / 100) * circumference;
+
+            return (
+              <div key={row.id} className="space-y-3 rounded-2xl border border-white/10 bg-white/70 p-4 shadow-sm" style={{ background: transparent ? background : "rgba(255,255,255,0.7)" }}>
+                {row.label.trim() !== "" && (
+                  <div className="flex items-center justify-between text-sm font-semibold" style={{ color: text }}>
+                    <span>{row.label.trim()}</span>
+                    <span>
+                      {prefix}
+                      {formatNumber(row.goal)}
+                      {suffix}
+                    </span>
+                  </div>
+                )}
+
+                <div className="relative flex flex-col items-center gap-3">
+                  <div className="relative" style={{ width: size, height: size }}>
+                    <svg width={size} height={size}>
+                      <circle
+                        cx={center}
+                        cy={center}
+                        r={radius}
+                        stroke={track}
+                        strokeWidth={stroke}
+                        fill="none"
+                        opacity={0.7}
+                      />
+                      <circle
+                        cx={center}
+                        cy={center}
+                        r={radius}
+                        stroke={accent}
+                        strokeWidth={stroke}
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={`${arc} ${circumference}`}
+                        strokeDashoffset={0}
+                        transform={`rotate(-90 ${center} ${center})`}
+                      />
+                    </svg>
+
+                    {showMilestones && (
+                      <div className="absolute inset-0">
+                        {sortedMilestones.map((ms) => {
+                          const angle = (ms.pct / 100) * 2 * Math.PI - Math.PI / 2;
+                          const x = center + Math.cos(angle) * (radius - stroke / 2);
+                          const y = center + Math.sin(angle) * (radius - stroke / 2);
+                          return (
+                            <div
+                              key={`${row.id}-dot-${ms.id}`}
+                              className="absolute -translate-x-1 -translate-y-0 rounded-full border border-white/70 shadow-sm"
+                              style={{ left: x, top: y, width: 14, height: 14, background: accent }}
+                              title={ms.label}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {onAdjustBar && (
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-3 opacity-0 transition-opacity duration-200 hover:opacity-100">
+                        <button
+                          className="pointer-events-auto rounded-full bg-white/80 px-2 py-1 text-sm font-semibold text-zinc-700 shadow"
+                          onClick={() => onAdjustBar(row.id, -defaultStep)}
+                          aria-label="Decrement progress"
+                        >
+                          -
+                        </button>
+                        <button
+                          className="pointer-events-auto rounded-full bg-white/80 px-2 py-1 text-sm font-semibold text-zinc-700 shadow"
+                          onClick={() => onAdjustBar(row.id, defaultStep)}
+                          aria-label="Increment progress"
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center" style={{ color: text }}>
+                      {showPct && <div className="text-2xl font-semibold">{pct.toFixed(1)}%</div>}
+                      {showTotals && <div className="text-sm text-zinc-600" style={{ color: text }}>{formatNumber(row.progress)}</div>}
+                    </div>
+                  </div>
+
+                  {showMilestoneList && (
+                    <div className="w-full space-y-2">
+                      {sortedMilestones.map((ms) => {
+                        const milestonePct = clampNumber((ms.value / safeGoal) * 100, 0, 100);
+                        return (
+                          <div key={`${row.id}-list-${ms.id}`} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs font-medium" style={{ color: text }}>
+                              <span>{ms.label}</span>
+                              <span>
+                                {formatNumber(ms.value)} ({milestonePct.toFixed(1)}%)
+                              </span>
+                            </div>
+                            <div className="relative h-2 w-full rounded-full" style={{ background: track }}>
+                              <div
+                                className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
+                                style={{ width: `${milestonePct}%`, background: accent }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
 
           return (
             <div key={row.id} className="space-y-2 group">
@@ -266,6 +440,12 @@ export function ProgressWidget() {
   const searchParams = useSearchParams();
 
   const initial = useMemo(() => {
+    const themeParam = searchParams.get("theme") || DEFAULTS.themeName;
+    const themePreset = THEME_PRESETS[themeParam] ?? null;
+    const layoutParam = (searchParams.get("mode") as LayoutMode) || DEFAULTS.layoutMode;
+    const fontParamRaw = searchParams.get("font");
+    const fontParam = fontParamRaw || themePreset?.font || DEFAULTS.fontFamily;
+
     const barsFromParams = searchParams
       .getAll("bar")
       .map((b) => parseBarRow(b))
@@ -280,6 +460,11 @@ export function ProgressWidget() {
       };
     });
 
+    const accentParam = parseColorParam(searchParams.get("accent")) ?? themePreset?.accent ?? DEFAULTS.accent;
+    const trackParam = parseColorParam(searchParams.get("track")) ?? themePreset?.track ?? DEFAULTS.track;
+    const textParam = parseColorParam(searchParams.get("text")) ?? themePreset?.text ?? DEFAULTS.text;
+    const backgroundParam = parseColorParam(searchParams.get("bg")) ?? themePreset?.background ?? DEFAULTS.background;
+
     return {
       title: searchParams.get("title") ?? DEFAULTS.title,
       label: searchParams.get("label") ?? DEFAULTS.label,
@@ -287,10 +472,14 @@ export function ProgressWidget() {
       progress: parseNumberParam(searchParams.get("progress"), DEFAULTS.progress),
       prefix: searchParams.get("prefix") ?? DEFAULTS.prefix,
       suffix: searchParams.get("suffix") ?? DEFAULTS.suffix,
-      accent: parseColorParam(searchParams.get("accent")) ?? DEFAULTS.accent,
-      track: parseColorParam(searchParams.get("track")) ?? DEFAULTS.track,
-      text: parseColorParam(searchParams.get("text")) ?? DEFAULTS.text,
-      background: parseColorParam(searchParams.get("bg")) ?? DEFAULTS.background,
+      accent: accentParam,
+      track: trackParam,
+      text: textParam,
+      background: backgroundParam,
+      layoutMode: layoutParam,
+      fontFamily: fontParam,
+      fontCustom: Boolean(fontParamRaw),
+      themeName: themePreset ? themeParam : "custom",
       showBuilder: !parseBooleanParam(searchParams.get("embed"), false) && !parseBooleanParam(searchParams.get("bare"), false),
       showMilestones: parseBooleanParam(searchParams.get("markers"), true),
       showMilestoneList: parseBooleanParam(searchParams.get("mlist"), false),
@@ -312,6 +501,10 @@ export function ProgressWidget() {
   const [track, setTrack] = useState(initial.track);
   const [text, setText] = useState(initial.text);
   const [background, setBackground] = useState(initial.background);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(initial.layoutMode ?? DEFAULTS.layoutMode);
+  const [fontFamily, setFontFamily] = useState(initial.fontFamily ?? DEFAULTS.fontFamily);
+  const [fontCustom, setFontCustom] = useState(initial.fontCustom ?? false);
+  const [themeName, setThemeName] = useState(initial.themeName ?? "custom");
   const [copied, setCopied] = useState(false);
   const [showMilestones, setShowMilestones] = useState(initial.showMilestones);
   const [showMilestoneList, setShowMilestoneList] = useState(initial.showMilestoneList);
@@ -347,6 +540,10 @@ export function ProgressWidget() {
     setTrack(initial.track);
     setText(initial.text);
     setBackground(initial.background);
+    setLayoutMode(initial.layoutMode ?? DEFAULTS.layoutMode);
+    setFontFamily(initial.fontFamily ?? DEFAULTS.fontFamily);
+    setFontCustom(initial.fontCustom ?? false);
+    setThemeName(initial.themeName ?? "custom");
     setShowMilestones(initial.showMilestones);
     setShowMilestoneList(initial.showMilestoneList);
     setShowPct(initial.showPct);
@@ -388,6 +585,9 @@ export function ProgressWidget() {
     url.searchParams.set("label", label);
     url.searchParams.set("goal", String(goal));
     url.searchParams.set("progress", String(progress));
+    url.searchParams.set("mode", layoutMode);
+    url.searchParams.set("font", fontFamily);
+    url.searchParams.set("theme", themeName || "custom");
     if (prefix) url.searchParams.set("prefix", prefix);
     if (suffix) url.searchParams.set("suffix", suffix);
     if (accent) url.searchParams.set("accent", accent.replace("#", ""));
@@ -434,6 +634,9 @@ export function ProgressWidget() {
     showPct,
     showTotals,
     fullPage,
+    layoutMode,
+    fontFamily,
+    themeName,
     isEmbedView: false,
     defaultStep,
     onAdjustBar: (barId: string, delta: number) => {
@@ -444,8 +647,19 @@ export function ProgressWidget() {
 
   if (!showBuilder) {
     if (fullPage) {
+      const isMidnight = themeName === "midnight";
+      const fullPageStyle = {
+        minHeight: "100vh",
+        width: "100%",
+        backgroundColor: background,
+        backgroundImage: isMidnight
+          ? undefined
+          : "radial-gradient(circle at 25% 25%, rgba(59,130,246,0.08), transparent 45%)",
+        color: text,
+        fontFamily,
+      } as const;
       return (
-        <div className="min-h-screen w-full bg-transparent">
+        <div style={fullPageStyle}>
           <ProgressPreview {...previewProps} isEmbedView />
         </div>
       );
@@ -480,6 +694,10 @@ export function ProgressWidget() {
                 setTrack(DEFAULTS.track);
                 setText(DEFAULTS.text);
                 setBackground(DEFAULTS.background);
+                setLayoutMode(DEFAULTS.layoutMode);
+                setFontFamily(DEFAULTS.fontFamily);
+                setFontCustom(false);
+                setThemeName(DEFAULTS.themeName);
                 const resetBar = {
                   id: nextId(),
                   label: "Progress",
@@ -516,6 +734,68 @@ export function ProgressWidget() {
                 onChange={(e) => setLabel(e.target.value)}
               />
             </label>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Display mode</span>
+                <select
+                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                  value={layoutMode}
+                  onChange={(e) => setLayoutMode(e.target.value as LayoutMode)}
+                >
+                  <option className="bg-zinc-900" value="linear">Horizontal bars</option>
+                  <option className="bg-zinc-900" value="circular">Circular dials</option>
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Theme</span>
+                <select
+                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                  value={themeName}
+                  onChange={(e) => {
+                    const nextTheme = e.target.value;
+                    setThemeName(nextTheme);
+                    const preset = THEME_PRESETS[nextTheme];
+                    if (preset) {
+                      setAccent(preset.accent);
+                      setTrack(preset.track);
+                      setText(preset.text);
+                      setBackground(preset.background);
+                      if (preset.font && !fontCustom) {
+                        setFontFamily(preset.font);
+                      }
+                    }
+                  }}
+                >
+                  {Object.keys(THEME_PRESETS).map((key) => (
+                    <option key={key} className="bg-zinc-900" value={key}>
+                      {key.charAt(0).toUpperCase() + key.slice(1)}
+                    </option>
+                  ))}
+                  <option className="bg-zinc-900" value="custom">Custom</option>
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Typography</span>
+                <select
+                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                  value={fontFamily}
+                  onChange={(e) => {
+                    setFontFamily(e.target.value);
+                    setFontCustom(true);
+                  }}
+                >
+                  <option className="bg-zinc-900" value="var(--font-space-grotesk), 'Space Grotesk', 'Inter', system-ui, sans-serif">Space Grotesk</option>
+                  <option className="bg-zinc-900" value="var(--font-sora), 'Sora', 'Segoe UI', system-ui, sans-serif">Sora</option>
+                  <option className="bg-zinc-900" value="var(--font-plus-jakarta), 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif">Plus Jakarta Sans</option>
+                  <option className="bg-zinc-900" value="var(--font-manrope), 'Manrope', 'Inter', system-ui, sans-serif">Manrope</option>
+                  <option className="bg-zinc-900" value="var(--font-playfair), 'Playfair Display', 'Georgia', serif">Playfair Display</option>
+                  <option className="bg-zinc-900" value="var(--font-libre-baskerville), 'Libre Baskerville', 'Times New Roman', serif">Libre Baskerville</option>
+                </select>
+              </label>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1 text-sm">
@@ -574,7 +854,10 @@ export function ProgressWidget() {
                   type="color"
                   className="color-swatch"
                   value={accent}
-                  onChange={(e) => setAccent(e.target.value)}
+                  onChange={(e) => {
+                    setThemeName("custom");
+                    setAccent(e.target.value);
+                  }}
                 />
               </label>
               <label className="space-y-1 text-sm">
@@ -583,7 +866,10 @@ export function ProgressWidget() {
                   type="color"
                   className="color-swatch"
                   value={track}
-                  onChange={(e) => setTrack(e.target.value)}
+                  onChange={(e) => {
+                    setThemeName("custom");
+                    setTrack(e.target.value);
+                  }}
                 />
               </label>
             </div>
@@ -595,7 +881,10 @@ export function ProgressWidget() {
                   type="color"
                   className="color-swatch"
                   value={text}
-                  onChange={(e) => setText(e.target.value)}
+                  onChange={(e) => {
+                    setThemeName("custom");
+                    setText(e.target.value);
+                  }}
                 />
               </label>
               <label className="space-y-1 text-sm">
@@ -604,7 +893,10 @@ export function ProgressWidget() {
                   type="color"
                   className="color-swatch"
                   value={background}
-                  onChange={(e) => setBackground(e.target.value)}
+                  onChange={(e) => {
+                    setThemeName("custom");
+                    setBackground(e.target.value);
+                  }}
                 />
               </label>
             </div>
