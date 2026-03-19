@@ -117,6 +117,29 @@ export default function HomePage() {
             </div>
           </article>
 
+          <article className="landing-card flex flex-col rounded-3xl border p-6 backdrop-blur">
+            <h2 className="text-2xl font-semibold text-white">Progress Widget</h2>
+            <p className="mt-2 text-sm text-zinc-400">
+              Customizable progress bar with milestones, prefixes/suffixes, and a built-in embed link copier.
+            </p>
+
+            <div className="mt-5 space-y-2 text-sm">
+              <p className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300">/progress</p>
+              <p className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300 overflow-hidden overflow-x-auto scrollbar-hide">
+                /progress?goal=23300&progress=5000&prefix=%2A&ms=+1:8200&ms=+bundle:15000&ms=+3:20000&embed=1
+              </p>
+            </div>
+
+            <div className="mt-auto pt-6">
+              <Link
+                href="/progress"
+                className="cta inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition"
+              >
+                Open Progress
+              </Link>
+            </div>
+          </article>
+
 
 
 

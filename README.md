@@ -35,6 +35,7 @@ Production-ready, static Notion widgets built with Next.js App Router, TypeScrip
 	- [Quotes Widget (`/quotes`)](#quotes-widget-quotes)
 	- [D-Day Widget (`/dday`)](#d-day-widget-dday)
 	- [Weather Widget (`/weather`)](#weather-widget-weather)
+	- [Progress Widget (`/progress`)](#progress-widget-progress)
 - [Notion Quotes Database Sync](#notion-quotes-database-sync)
 - [Deploy Your Own (Vercel Quickstart)](#deploy-your-own-vercel-quickstart)
 - [Adding a New Widget](#adding-a-new-widget)
@@ -42,7 +43,7 @@ Production-ready, static Notion widgets built with Next.js App Router, TypeScrip
 
 ## Features
 
-- Clock, Timer, Stopwatch, Quotes, and D-Day widgets (separate routes)
+- Clock, Timer, Stopwatch, Quotes, D-Day, Weather, and Progress widgets (separate routes)
 - Multiple themes (default, light, purple, teal, sunset, theme1–theme8)
 - Static-compatible (no backend) and iframe-safe for Notion embeds
 - URL query customization for layout, theme, and behavior
@@ -64,6 +65,8 @@ app/
 	stopwatch/page.tsx
 	dday/page.tsx
 	quotes/page.tsx
+	weather/page.tsx
+	progress/page.tsx
 components/
 	widgets/
 		ClockWidget.tsx
@@ -71,6 +74,8 @@ components/
 		StopwatchWidget.tsx
 		DdayWidget.tsx
 		QuoteWidget.tsx
+		WeatherWidget.tsx
+		ProgressWidget.tsx
 	ui/
 		WidgetContainer.tsx
 lib/
@@ -105,6 +110,7 @@ Widget URLs (once deployed):
 - `https://your-app.vercel.app/dday`
 - `https://your-app.vercel.app/quotes`
 - `https://your-app.vercel.app/weather`
+- `https://your-app.vercel.app/progress`
 
 Live examples (replace host with yours):
 
@@ -115,6 +121,7 @@ Live examples (replace host with yours):
 - `/dday?date=2026-07-20&units=1&seconds=1&week=1&month=1&year=1&dayColor=green`
 - `/quotes?category=focus&theme=light&source=notion&rotate=true&interval=8`
 - `/weather?location=Toronto&units=metric`
+- `/progress?goal=23300&progress=5000&prefix=%2A&ms=+1:8200&ms=+bundle:15000&ms=+3:20000&embed=1`
 
 If using Notion-synced quotes, run `npm run sync:quotes` before each deploy/build to refresh `lib/quotes.notion.json`.
 
@@ -223,6 +230,23 @@ Examples:
 - `/weather?lat=40.4168&lon=-3.7038&units=metric&bg=eaf1ec&accent=10b981&mode=detail`
 - `/weather?location=Seattle&units=imperial&details=0&align=right&theme=dusk`
 - `/weather?location=Berlin&theme=sky&pagebg=1` (match page background to the sky preset)
+
+### Progress Widget (`/progress`)
+
+- `title`: heading text (default `My Progress`)
+- `label`: small label above the bar (default `Orbs Collected`)
+- `goal`: total target number
+- `progress`: current progress number
+- `prefix` / `suffix`: prepend/append around numbers (encode special characters, e.g., `%2A` for `*`)
+- Colors (hex): `accent` (fill), `track` (background), `text`, `bg`
+- Milestones: repeat `ms=Label:Value` or provide a pipe list `milestones=+1:8200|+bundle:15000`
+- Marker toggle: `markers=true|false` (default true)
+- Embed mode: `embed=1` or `bare=1` hides the builder and shows only the bar
+
+Examples:
+
+- `/progress?goal=23300&progress=5000&prefix=%2A&ms=+1:8200&ms=+bundle:15000&ms=+3:20000&embed=1`
+- `/progress?title=Sprints&label=Tickets&goal=50&progress=18&prefix=%23&suffix=%20done&accent=0ea5e9&bg=f8fafc&markers=0`
 
 ## Notion Quotes Database Sync
 

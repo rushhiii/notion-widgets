@@ -6,6 +6,8 @@ type WidgetContainerProps = {
   className?: string;
   contentClassName?: string;
   heightClassName?: string;
+  fullHeight?: boolean;
+  allowOverflow?: boolean;
 };
 
 export function WidgetContainer({
@@ -14,6 +16,8 @@ export function WidgetContainer({
   className,
   contentClassName,
   heightClassName = "h-[360px]",
+  fullHeight = true,
+  allowOverflow = false,
 }: WidgetContainerProps) {
   const resolvedTheme = resolveTheme(theme);
 
@@ -27,7 +31,9 @@ export function WidgetContainer({
   return (
     <main
       className={cn(
-        "flex h-screen w-full items-center justify-center overflow-hidden bg-transparent px-4",
+        "flex w-full items-center justify-center bg-transparent px-4",
+        fullHeight ? "h-screen" : "h-auto",
+        allowOverflow ? "overflow-visible" : "overflow-hidden",
         className,
       )}
     >

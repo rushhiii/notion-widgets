@@ -1,3 +1,30 @@
+.color-swatch {
+  /* @apply h-11 w-full p-0 m-0 rounded-2xl border border-white/15 bg-zinc-900/40 shadow-[0_10px_30px_rgba(0,0,0,0.2)] transition duration-150 ease-out; */
+  @apply h-11 w-full p-0 m-0 rounded-2xl bg-zinc-900/0;
+  @apply focus:outline-none focus:ring-0 focus:ring-white/30 focus:border-white/40;
+}
+
+.color-swatch::-webkit-color-swatch-wrapper {
+  padding: none;
+  margin: none;
+}
+
+.color-swatch::-webkit-color-swatch {
+  border: 0px solid rgba(255, 255, 255, 0.1);
+  padding: none;
+  /* margin: none; */
+  border-radius: 14px;
+  /* width: 100%;
+  height: 100%; */
+  box-shadow: none;
+  /* box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.2); */
+}
+
+.color-swatch::-moz-color-swatch {
+  /* border: 1px solid rgba(255, 255, 255, 0.1); */
+  /* border-radius: 14px; */
+  /* box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.2); */
+}
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,700&display=swap");
 
 @font-face {
