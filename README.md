@@ -248,6 +248,13 @@ Examples:
 - `/progress?goal=23300&progress=5000&prefix=%2A&ms=+1:8200&ms=+bundle:15000&ms=+3:20000&embed=1`
 - `/progress?title=Sprints&label=Tickets&goal=50&progress=18&prefix=%23&suffix=%20done&accent=0ea5e9&bg=f8fafc&markers=0`
 
+## Recent Updates
+
+- Added Suspense boundaries around pages that use `useSearchParams` so embeds/builds stay compliant: `/dday`, `/quotes`, `/weather`.
+- Weather builder now renders the live widget directly (no iframe) and only shows the text color picker in detailed layout.
+- D-Day builder groups background/text overrides side by side per unit for quicker color tuning.
+- Progress builder cleanup: removed unused adjust controls; copy/reset behavior unchanged.
+
 ## Notion Quotes Database Sync
 
 1. Duplicate `.env.example` as `.env.local`.
