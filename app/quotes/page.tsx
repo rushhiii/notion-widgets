@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import QuotesClientView from "./ClientView";
 
@@ -11,5 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default function QuotesPage() {
-  return <QuotesClientView />;
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-zinc-950" aria-busy="true" />}> 
+      <QuotesClientView />
+    </Suspense>
+  );
 }
