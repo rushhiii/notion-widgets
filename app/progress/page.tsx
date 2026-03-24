@@ -8,7 +8,6 @@ export const metadata: Metadata = {
   description: "Embeddable progress bar widget with milestones",
     icons: {
     icon: "/icons/progressbar_icon.png",
-    // icon: "/icons/image.png",
   },
 
 };

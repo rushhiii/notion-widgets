@@ -155,7 +155,8 @@ export function ClockWidget() {
     }
   };
 
-  const scale = Math.min(Math.max(size, 25), 120);
+  // const scale = Math.min(Math.max(size, 25), 120);
+  const scale = Math.min(Math.max(size, 70), 100);
 
   return (
     <div className="fc-root" style={rootStyle}>
