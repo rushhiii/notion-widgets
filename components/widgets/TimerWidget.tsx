@@ -32,7 +32,7 @@ function parseTimeParam(raw: string | null): number | null {
 export function TimerWidget() {
   const searchParams = useSearchParams();
 
-  const sizeFromQuery = parseIntParam(searchParams.get("size"), 85, 25, 120);
+  const sizeFromQuery = parseIntParam(searchParams.get("size"), 75, 75, 120);
   const themeFromQuery = (searchParams.get("theme")?.trim().toLowerCase() as ThemeName) || "default";
   const durationFromQuery = parseTimeParam(searchParams.get("t"));
   const autoStart = parseBool(searchParams.get("start"), false);
