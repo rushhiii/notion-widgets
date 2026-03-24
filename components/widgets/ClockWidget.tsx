@@ -35,7 +35,7 @@ export function ClockWidget() {
   const searchParams = useSearchParams();
   const [now, setNow] = useState<Date | null>(null);
 
-  const sizeFromQuery = parseIntParam(searchParams.get("size"), 85, 25, 120);
+  const sizeFromQuery = parseIntParam(searchParams.get("size"), 25, 75, 120);
   const formatFromQuery = searchParams.get("format") === "24";
   const secondsFromQuery = parseBool(searchParams.get("seconds"), false);
   const controlsFromQuery = parseBool(searchParams.get("controls"), false);
@@ -155,8 +155,7 @@ export function ClockWidget() {
     }
   };
 
-  // const scale = Math.min(Math.max(size, 25), 120);
-  const scale = Math.min(Math.max(size, 70), 100);
+  const scale = Math.min(Math.max(size, 25), 120);
 
   return (
     <div className="fc-root" style={rootStyle}>
