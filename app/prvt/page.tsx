@@ -1,14 +1,8 @@
 
 
-export const metadata: Metadata = {
-  title: "Private Page | Rn. Widgets",
-  icons: {
-    icon: "/icons/ees.png",
-  },
-};
 "use client";
 
-import type { Metadata } from "next";
+
 import React, { useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
