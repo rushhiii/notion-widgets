@@ -83,37 +83,36 @@ export default function PrvtPage() {
         </header>
         <section className="grid flex-1 grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {/* Example private widgets or links */}
-          {(() => {
-            const { cardRef, handleMouseMove, cardBg } = useCardHover();
-            return (
-              <article
-                ref={cardRef}
-                className="landing-card flex flex-col rounded-3xl border p-6 backdrop-blur"
-                style={cardBg}
-                onMouseMove={handleMouseMove}
-              >
-                <h2 className="text-2xl font-semibold text-white">Secret Widget</h2>
-                <p className="mt-2 text-sm text-zinc-400">This widget is only visible to you.</p>
-                <div className="mt-5 space-y-2 text-sm">
-                  <p className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300">/prvt/secret</p>
-                </div>
-                <div className="mt-auto pt-6 flex items-center gap-3">
-                  <Link
-                    href="/prvt/secret"
-                    className="cta inline-flex flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition"
-                  >
-                    Open Secret
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 ml-1 lucide lucide-square-arrow-up-right-icon lucide-square-arrow-up-right"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 8h8v8" /><path d="m8 16 8-8" /></svg>
-                  </Link>
-                </div>
-              </article>
-            );
-          })()}
+          <PrivateLandingCard />
           {/* Add more private widgets or links here */}
         </section>
       </div>
     </main>
+  )
+function PrivateLandingCard() {
+  const { cardRef, handleMouseMove, cardBg } = useCardHover();
+  return (
+    <article
+      ref={cardRef}
+      className="landing-card flex flex-col rounded-3xl border p-6 backdrop-blur"
+      style={cardBg}
+      onMouseMove={handleMouseMove}
+    >
+      <h2 className="text-2xl font-semibold text-white">Secret Widget</h2>
+      <p className="mt-2 text-sm text-zinc-400">This widget is only visible to you.</p>
+      <div className="mt-5 space-y-2 text-sm">
+        <p className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300">/prvt/secret</p>
+      </div>
+      <div className="mt-auto pt-6 flex items-center gap-3">
+        <Link
+          href="/prvt/secret"
+          className="cta inline-flex flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition"
+        >
+          Open Secret
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 ml-1 lucide lucide-square-arrow-up-right-icon lucide-square-arrow-up-right"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 8h8v8" /><path d="m8 16 8-8" /></svg>
+        </Link>
+      </div>
+    </article>
   );
 }
-
-
+}
