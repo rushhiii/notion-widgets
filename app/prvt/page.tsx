@@ -1,13 +1,5 @@
 "use client";
-import type { Metadata } from "next";
 import { useEffect } from "react";
-
-export const metadata: Metadata = {
-  title: "Private Page | Rn. Widgets",
-  icons: {
-    icon: "/icons/ees.png",
-  },
-};
 
 export default function PrvtPage() {
   useEffect(() => {
