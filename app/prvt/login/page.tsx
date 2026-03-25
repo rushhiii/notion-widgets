@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -6,6 +7,7 @@ export default function PrvtLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [attempts, setAttempts] = useState(0);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -22,8 +24,19 @@ export default function PrvtLogin() {
       sessionStorage.setItem("prvtAuth", btoa(`${username}:${password}`));
       router.push("/prvt");
     } else {
+      setAttempts(a => {
+        const next = a + 1;
+        if (next >= 3) {
+          router.replace("/prvt/not-found");
+        }
+        return next;
+      });
       setError("Invalid username or password");
     }
+  }
+
+  function handleCancel() {
+    router.replace("/prvt/not-found");
   }
 
   return (
@@ -46,10 +59,18 @@ export default function PrvtLogin() {
           onChange={e => setPassword(e.target.value)}
           required
         />
-        <button className="bg-black text-white rounded px-3 py-2" type="submit">
-          Login
-        </button>
+        <div className="flex gap-2">
+          <button className="bg-black text-white rounded px-3 py-2" type="submit">
+            Login
+          </button>
+          <button className="bg-gray-300 text-black rounded px-3 py-2" type="button" onClick={handleCancel}>
+            Cancel
+          </button>
+        </div>
         {error && <div className="text-red-600 text-sm">{error}</div>}
+        {attempts > 0 && attempts < 3 && (
+          <div className="text-sm text-gray-500">Attempt {attempts} of 3</div>
+        )}
       </form>
     </div>
   );
