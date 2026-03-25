@@ -54,17 +54,13 @@ export default function PrvtLogin() {
   }
 
   // Dynamic card background style
-  const cardBg = hovered
-    ? {
-        background: `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),
-          radial-gradient(circle at 80% 10%,rgba(186,162,255,.06),transparent 32%),
-          rgba(17,17,23,.8)`
-      }
-    : {
-        background: `radial-gradient(circle at 20% 20%,rgba(255,255,255,.02),transparent 30%),
-          radial-gradient(circle at 80% 10%,rgba(186,162,255,.06),transparent 32%),
-          rgba(17,17,23,.8)`
-      };
+  
+  const cardBg = {
+    background:
+      `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),` +
+      `rgba(17,17,23,.8)`
+  };
+
 
   // Mouse move handler
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
@@ -89,8 +85,8 @@ export default function PrvtLogin() {
           onMouseLeave={() => setHovered(false)}
           onMouseMove={handleMouseMove}
         >
-          <h1 className="text-3xl font-semibold text-white mb-2 text-center tracking-tight">Private Login</h1>
-          <p className="text-zinc-400 text-center mb-6 text-sm">Access to this section is restricted. Please log in to continue.</p>
+          <h1 className="text-3xl font-semibold text-white mb-7 text-center tracking-tight">Private Login</h1>
+          {/* <p className="text-zinc-400 text-center mb-6 text-sm">Access to this section is restricted. Please log in to continue.</p> */}
           {blocked ? (
             <div className="text-red-500 text-center font-medium py-4">Too many failed attempts.<br />Try again in 24 hours.</div>
           ) : (
@@ -137,9 +133,9 @@ export default function PrvtLogin() {
             </form>
           )}
         </div>
-        <footer className="mt-8 text-xs text-zinc-500 text-center opacity-80">
+        {/* <footer className="mt-8 text-xs text-zinc-500 text-center opacity-80">
           <p>Tip: Only you can access this area. <span className="hidden md:inline">Contact the site owner if you believe this is an error.</span></p>
-        </footer>
+        </footer> */}
       </div>
     </main>
   );

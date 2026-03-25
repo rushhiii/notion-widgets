@@ -13,7 +13,7 @@ const handler = NextAuth({
                 if (
                     //   credentials?.username === "rtuisrhtih@12050912!%" &&
                     //   credentials?.password === "dobidobi"
-                    credentials?.username === "rushi" &&
+                    credentials?.username === "rushisys" &&
                     credentials?.password === "dobi"
 
 
