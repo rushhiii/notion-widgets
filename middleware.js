@@ -1,18 +1,21 @@
 import { NextResponse } from 'next/server'
 
 export function middleware(request) {
-  // Only protect /prvt and its subpages
-  if (request.nextUrl.pathname.startsWith('/prvt')) {
-    const authHeader = request.headers.get('authorization')
-    const username = 'rtuisrhtih@12050912!%'
-    // const password = 'LUGYjgvgkUVOtu^%*68UBKVH9Y)*69t7GH8-95676^&^U&&(%$#jrn'
-    const password = 'dobidobi'
-    const expected = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+  const url = request.nextUrl;
+  const isPrvt = url.pathname.startsWith('/prvt');
+  const isLogin = url.pathname === '/prvt/login';
+  const isNotFound = url.pathname === '/prvt/not-found';
+  const cookie = request.cookies.get('prvtAuth');
 
-    if (authHeader !== expected) {
-      // Redirect to custom login page for /prvt
-      return NextResponse.redirect(new URL('/prvt/login', request.url));
-    }
+  // If user is already authenticated, block access to login page
+  if (isLogin && cookie?.value === '1') {
+    return NextResponse.redirect(new URL('/prvt', request.url));
   }
-  return NextResponse.next()
+
+  // If not authenticated and not on login or not-found, redirect to login
+  if (isPrvt && !isLogin && !isNotFound && cookie?.value !== '1') {
+    return NextResponse.redirect(new URL('/prvt/login', request.url));
+  }
+
+  return NextResponse.next();
 }
