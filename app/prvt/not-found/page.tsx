@@ -19,7 +19,7 @@ export default function NotFound() {
           <div className="text-[7rem] md:text-[20rem] font-extrabold text-white/80 leading-none mb-2 select-none" style={{letterSpacing: '-0.005em'}}>404</div>
           <div className="text-base md:text-lg text-zinc-400 mb-6 text-center max-w-md">
             Authentication required.<br/>
-            <span className="text-xs md:text-sm text-zinc-500">You do not have Admin's permission.</span>
+            <span className="text-xs md:text-sm text-zinc-500">You do not have Admin&apos;s permission.</span>
           </div>
           <Link href="/" className=" inline-flex items-center rounded-xl px-5 py-2.5 text-base font-medium text-white/80 border-zinc-800 bg-zinc-950/80 hover:text-white transition shadow-md">
           {/* rounded-3xl border border-zinc-800 bg-zinc-950/80 p-10 backdrop-blur shadow-xl */}

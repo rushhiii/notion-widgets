@@ -10,7 +10,6 @@ export default function PrvtLogin() {
   const [error, setError] = useState("");
   const [attempts, setAttempts] = useState(0);
   const [blocked, setBlocked] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
