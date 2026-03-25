@@ -15,8 +15,12 @@ export default function PrvtLogin() {
   const router = useRouter();
 
   useEffect(() => {
-    // If already logged in, redirect to /prvt (but only if not already there)
-    if (session) {
+    // Redirect users to their own info pages after login
+    if (session?.user?.id === "nina") {
+      router.replace("/prvt/nina");
+    } else if (session?.user?.id === "nishi") {
+      router.replace("/prvt/nishi");
+    } else if (session) {
       router.replace("/prvt");
     }
     // Block logic
@@ -37,7 +41,13 @@ export default function PrvtLogin() {
     });
     if (res?.ok) {
       // Force reload to ensure session is picked up
-      window.location.replace("/prvt");
+      if (username === "nina") {
+        window.location.replace("/prvt/nina");
+      } else if (username === "nishi") {
+        window.location.replace("/prvt/nishi");
+      } else {
+        window.location.replace("/prvt");
+      }
     } else {
       setAttempts(a => {
         const next = a + 1;

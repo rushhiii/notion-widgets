@@ -8,6 +8,10 @@
 import React, { useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import DdayWidget from "@/components/widgets/DdayWidget";
+import { ClockWidget } from "@/components/widgets/ClockWidget";
+import { QuoteWidget } from "@/components/widgets/QuoteWidget";
+import { WeatherWidget } from "@/components/widgets/WeatherWidget";
 
 // Card hover effect hook (copied from HomePage)
 function useCardHover() {
@@ -17,34 +21,65 @@ function useCardHover() {
   React.useEffect(() => {
     if (cardRef.current && !hasHovered) {
       const rect = cardRef.current.getBoundingClientRect();
-      setMousePos({
-        x: Math.floor(Math.random() * (rect.width - 60) + 30),
-        y: Math.floor(Math.random() * (rect.height - 60) + 30),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-    setHasHovered(true);
-  }
-
-  const cardBg = {
-    background:
-      `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),` +
-      `rgba(17,17,23,.8)`
-  };
-  return { cardRef, handleMouseMove, cardBg };
-}
-
-export default function PrvtPage() {
-  const { data: session, status } = useSession();
+      return (
+        <main className="landing relative h-screen w-full overflow-hidden bg-zinc-950 px-6 py-0 text-zinc-100">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.2),transparent_55%)]" />
+          <div className="relative mx-auto flex h-full w-full px-0 py-10 max-w-6xl flex-col overflow-y-auto scrollbar-hide">
+            <header className="mb-7">
+              <div className="flex justify-between items-center">
+                <p className="badge inline-flex rounded-full border px-3 py-1 text-xs font-medium tracking-wide">
+                  Private Dashboard
+                </p>
+                <div className="relative group">
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/prvt/login" })}
+                    className="rounded-full bg-[#22222D00] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-0 text-xs font-medium tracking-wide text-white"
+                    aria-label="Logout"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="size-7 fill-[#E0DBFD]">
+                      <path d="M569 337C578.4 327.6 578.4 312.4 569 303.1L425 159C418.1 152.1 407.8 150.1 398.8 153.8C389.8 157.5 384 166.3 384 176L384 256L272 256C245.5 256 224 277.5 224 304L224 336C224 362.5 245.5 384 272 384L384 384L384 464C384 473.7 389.8 482.5 398.8 486.2C407.8 489.9 418.1 487.9 425 481L569 337zM224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </header>
+            {/* Widgets and content go here */}
+            <div className="flex flex-col gap-8 mt-6">
+              {/* DdayWidget is visible to all logged-in users */}
+              <DdayWidget />
+              {/* Admin sees all widgets */}
+              {session?.user?.role === "admin" && (
+                <>
+                  <ClockWidget />
+                  <QuoteWidget />
+                  <WeatherWidget />
+                  {/* <div className="p-4 rounded-xl bg-violet-900/30 border border-violet-700 text-violet-100">
+                    <strong>Admin Access:</strong> You can see all widgets because you are admin.
+                  </div> */}
+                </>
+              )}
+              {/* User: nina sees only ClockWidget */}
+              {session?.user?.id === "nina" && (
+                <>
+                  <ClockWidget />
+                  <div className="p-4 rounded-xl bg-blue-900/30 border border-blue-700 text-blue-100">
+                    <strong>Nina:</strong> You can see the clock widget.
+                  </div>
+                </>
+              )}
+              {/* User: nishi sees only QuoteWidget */}
+              {session?.user?.id === "nishi" && (
+                <>
+                  <QuoteWidget />
+                  <div className="p-4 rounded-xl bg-blue-900/30 border border-blue-700 text-blue-100">
+                    <strong>Nishi:</strong> You can see the quote widget.
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </main>
+      );
 
   if (status === "loading") {
     return <div className="flex items-center bg-zinc-950 text-zinc-100 justify-center min-h-screen text-lg">Loading...</div>;
@@ -74,7 +109,6 @@ export default function PrvtPage() {
                 onClick={() => signOut({ callbackUrl: "/prvt/login" })}
                 className="rounded-full bg-[#22222D00] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-0 text-xs font-medium tracking-wide text-white"
                 aria-label="Logout"
-                // title="Logout"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="size-7 fill-[#E0DBFD]">
                   <path d="M569 337C578.4 327.6 578.4 312.4 569 303.1L425 159C418.1 152.1 407.8 150.1 398.8 153.8C389.8 157.5 384 166.3 384 176L384 256L272 256C245.5 256 224 277.5 224 304L224 336C224 362.5 245.5 384 272 384L384 384L384 464C384 473.7 389.8 482.5 398.8 486.2C407.8 489.9 418.1 487.9 425 481L569 337zM224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160z" />
@@ -86,7 +120,7 @@ export default function PrvtPage() {
             </div>
           </div>
           <h1 className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
-            Welcome to Your Private Widgets
+            {session?.user?.name ? `Greetings ${session.user.name}, welcome to your private access` : 'Welcome to Your Private Widgets'}
           </h1>
           <p className="lead mt-3 max-w-3xl text-sm md:text-base">
             This is your private dashboard. Only authenticated users can see this page. Add your private widgets and content here.

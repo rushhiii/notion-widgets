@@ -10,15 +10,26 @@ const handler = NextAuth({
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
+                // Admin user (anime one)
                 if (
-                    //   credentials?.username === "rtuisrhtih@12050912!%" &&
-                    //   credentials?.password === "dobidobi"
                     credentials?.username === "rushisys" &&
                     credentials?.password === "dobi"
-
-
                 ) {
-                    return { id: "admin", name: "Admin" };
+                    return { id: "admin", name: "Admin", role: "admin" };
+                }
+                // User: nina
+                if (
+                    credentials?.username === "nina" &&
+                    credentials?.password === "nina123"
+                ) {
+                    return { id: "nina", name: "Nina", role: "user" };
+                }
+                // User: nishi
+                if (
+                    credentials?.username === "nishi" &&
+                    credentials?.password === "nishi123"
+                ) {
+                    return { id: "nishi", name: "Nishi", role: "user" };
                 }
                 return null;
             },
