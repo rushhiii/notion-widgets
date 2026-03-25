@@ -1,6 +1,50 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Private Page | Rn. Widgets",
+  icons: {
+    icon: "/icons/ees.png",
+  },
+};
 "use client";
+
+import React, { useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+
+// Card hover effect hook (copied from HomePage)
+function useCardHover() {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [hasHovered, setHasHovered] = useState(false);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 80, y: 80 });
+  React.useEffect(() => {
+    if (cardRef.current && !hasHovered) {
+      const rect = cardRef.current.getBoundingClientRect();
+      setMousePos({
+        x: Math.floor(Math.random() * (rect.width - 60) + 30),
+        y: Math.floor(Math.random() * (rect.height - 60) + 30),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    setHasHovered(true);
+  }
+
+  const cardBg = {
+    background:
+      `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),` +
+      `rgba(17,17,23,.8)`
+  };
+  return { cardRef, handleMouseMove, cardBg };
+}
 
 export default function PrvtPage() {
   const { data: session, status } = useSession();
@@ -44,22 +88,32 @@ export default function PrvtPage() {
         </header>
         <section className="grid flex-1 grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {/* Example private widgets or links */}
-          <article className="landing-card flex flex-col rounded-3xl border p-6 backdrop-blur">
-            <h2 className="text-2xl font-semibold text-white">Secret Widget</h2>
-            <p className="mt-2 text-sm text-zinc-400">This widget is only visible to you.</p>
-            <div className="mt-5 space-y-2 text-sm">
-              <p className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300">/prvt/secret</p>
-            </div>
-            <div className="mt-auto pt-6 flex items-center gap-3">
-              <Link
-                href="/prvt/secret"
-                className="cta inline-flex flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition"
+          {(() => {
+            const { cardRef, handleMouseMove, cardBg } = useCardHover();
+            return (
+              <article
+                ref={cardRef}
+                className="landing-card flex flex-col rounded-3xl border p-6 backdrop-blur"
+                style={cardBg}
+                onMouseMove={handleMouseMove}
               >
-                Open Secret
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 ml-1 lucide lucide-square-arrow-up-right-icon lucide-square-arrow-up-right"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 8h8v8" /><path d="m8 16 8-8" /></svg>
-              </Link>
-            </div>
-          </article>
+                <h2 className="text-2xl font-semibold text-white">Secret Widget</h2>
+                <p className="mt-2 text-sm text-zinc-400">This widget is only visible to you.</p>
+                <div className="mt-5 space-y-2 text-sm">
+                  <p className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300">/prvt/secret</p>
+                </div>
+                <div className="mt-auto pt-6 flex items-center gap-3">
+                  <Link
+                    href="/prvt/secret"
+                    className="cta inline-flex flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition"
+                  >
+                    Open Secret
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 ml-1 lucide lucide-square-arrow-up-right-icon lucide-square-arrow-up-right"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 8h8v8" /><path d="m8 16 8-8" /></svg>
+                  </Link>
+                </div>
+              </article>
+            );
+          })()}
           {/* Add more private widgets or links here */}
         </section>
       </div>

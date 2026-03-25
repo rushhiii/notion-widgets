@@ -345,7 +345,8 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const defaultTotalText = pickTextColor(totalTextOverride, defaultTotal.text);
   const defaultMegaText = pickTextColor(megaTextOverride, defaultMega.text);
   const defaultOverviewText = pickTextColor(overviewTextOverride, defaultOverview.text);
-  const titleColor = pickColor(titleColorOverride ?? "yellow", globalColor).text;
+  // Use accent color (badge background) for title, not text color
+  const titleAccentColor = pickColor(titleColorOverride ?? "yellow", globalColor).bg;
   const pageBackground = pickColor(backgroundOverride, { bg: "#0f172a", text: "#ffffff" }).bg;
 
   const alignItems = alignParam === "center" ? "center" : alignParam === "right" ? "flex-end" : "flex-start";
@@ -480,6 +481,15 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
     }
   }
 
+  // Animation: fade-in for background/title, then badges
+  const [showBg, setShowBg] = useState(false);
+  const [showBadges, setShowBadges] = useState(false);
+  useEffect(() => {
+    setShowBg(true);
+    const badgeTimeout = setTimeout(() => setShowBadges(true), 420); // bg/title fade in first
+    return () => clearTimeout(badgeTimeout);
+  }, []);
+
   return (
     <div
       style={{
@@ -491,16 +501,22 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
         fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif",
         background: pageBackground,
         textAlign,
+        minHeight: 180,
+        opacity: showBg ? 1 : 0,
+        transition: 'opacity 0.7s cubic-bezier(.4,0,.2,1)',
       }}
     >
       {showDateLabel && (
         <div
           style={{
-            color: titleColor,
+            color: titleAccentColor,
             display: "flex",
             flexDirection: "column",
             gap: 2,
             padding: "4px 0",
+            opacity: showBg ? 1 : 0,
+            transform: showBg ? 'translateY(0)' : 'translateY(12px)',
+            transition: 'opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1)',
           }}
         >
           <span
@@ -529,7 +545,7 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
           )}
         </div>
       )}
-      {badges.map((badge) => (
+      {badges.map((badge, i) => (
         <div
           key={badge.key}
           style={{
@@ -544,6 +560,9 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
             color: badge.color.text,
             backgroundColor: badge.color.bg,
             boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+            opacity: showBadges ? 1 : 0,
+            transform: showBadges ? 'translateY(0)' : 'translateY(16px)',
+            transition: `opacity 0.7s cubic-bezier(.4,0,.2,1) ${i * 0.09 + 0.42}s, transform 0.7s cubic-bezier(.4,0,.2,1) ${i * 0.09 + 0.42}s`,
           }}
         >
           {badge.text}

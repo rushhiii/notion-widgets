@@ -226,29 +226,40 @@ export function WeatherWidget({ embedParams }: { embedParams?: EmbedParams }) {
     ? `${data.name}${data.country ? `, ${data.country}` : ""}`
     : displayLocation;
 
+
+  // Animation: fade/slide-in for weather card content
+  const [showContent, setShowContent] = useState(false);
+  useEffect(() => {
+    setShowContent(true);
+  }, []);
+
   if (!paramsReady) return null;
 
   return (
     <WidgetContainer
       theme="light"
       className="bg-transparent"
-      // contentClassName="w-full"
-      // heightClassName="min-h-[200px]"
       contentClassName="w-full"
       heightClassName="min-h-[200px]"
     >
       <div
-        // className="flex w-full flex-col gap-4 rounded-2xl border p-6 shadow-sm"
         className="flex w-full flex-col gap-4 p-6"
-        style={{ backgroundColor: themeBg, color: themeText, borderColor: themeAccent, alignItems, textAlign }}
+        style={{
+          backgroundColor: themeBg,
+          color: themeText,
+          borderColor: themeAccent,
+          alignItems,
+          textAlign,
+          opacity: showContent ? 1 : 0,
+          transform: showContent ? 'translateY(0)' : 'translateY(24px)',
+          transition: 'opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1)',
+        }}
       >
         {modeParam === "minimal" ? (
-          // <div className="flex w-full items-center justify-between gap-6 md:gap-10">
           <div className="flex w-full items-center justify-evenly gap-6 md:gap-10">
             <div className="flex text-lg font-semibold" style={{ color: themeAccent }}>
               {placeLabel}
             </div>
-            {/* <div className="flex flex-1 items-center justify-center"> */}
             <div className="flex items-center justify-center">
               {(() => {
                 const Icon = pickIcon(data?.icon);

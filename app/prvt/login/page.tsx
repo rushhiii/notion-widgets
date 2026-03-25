@@ -1,6 +1,6 @@
 "use client";
 import { signIn, useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export default function PrvtLogin() {
@@ -10,6 +10,9 @@ export default function PrvtLogin() {
   const [error, setError] = useState("");
   const [attempts, setAttempts] = useState(0);
   const [blocked, setBlocked] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -50,12 +53,42 @@ export default function PrvtLogin() {
     router.replace("/prvt/not-found");
   }
 
+  // Dynamic card background style
+  const cardBg = hovered
+    ? {
+        background: `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),
+          radial-gradient(circle at 80% 10%,rgba(186,162,255,.06),transparent 32%),
+          rgba(17,17,23,.8)`
+      }
+    : {
+        background: `radial-gradient(circle at 20% 20%,rgba(255,255,255,.02),transparent 30%),
+          radial-gradient(circle at 80% 10%,rgba(186,162,255,.06),transparent 32%),
+          rgba(17,17,23,.8)`
+      };
+
+  // Mouse move handler
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }
+
   return (
     <main className="relative min-h-screen w-full bg-zinc-950 flex items-center justify-center overflow-hidden">
       {/* Subtle radial gradient background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.18),transparent_60%)] pointer-events-none z-0" />
       <div className="relative z-10 flex flex-col items-center justify-center w-full px-4 py-10">
-        <div className="landing-card flex flex-col w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-900/80 backdrop-blur p-8 shadow-xl">
+        <div
+          ref={cardRef}
+          className="landing-card flex flex-col w-full max-w-md rounded-3xl border border-zinc-800 backdrop-blur p-8 shadow-xl transition-colors duration-300"
+          style={cardBg}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onMouseMove={handleMouseMove}
+        >
           <h1 className="text-3xl font-semibold text-white mb-2 text-center tracking-tight">Private Login</h1>
           <p className="text-zinc-400 text-center mb-6 text-sm">Access to this section is restricted. Please log in to continue.</p>
           {blocked ? (

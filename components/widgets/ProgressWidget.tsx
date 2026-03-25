@@ -40,7 +40,7 @@ const DEFAULTS = {
   title: "My Progress",
   label: "Orbs Collected",
   goal: 23300,
-  progress: 5000,
+  progress: 15700,
   prefix: "💠",
   suffix: "",
   accent: "#3b82f6",
@@ -49,7 +49,7 @@ const DEFAULTS = {
   background: "#f6f8ff",
   layoutMode: "linear" as LayoutMode,
   fontFamily: "var(--font-plus-jakarta), 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
-  themeName: "serif",
+  themeName: "midnight",
 };
 
 const THEME_PRESETS: Record<
@@ -200,7 +200,7 @@ function FancySelect({
 
       {open && (
         <div
-          className={`absolute left-0 z-20 mt-2 w-fit min-w-full overflow-hidden rounded-lg border border-white/10 bg-zinc-900/95 shadow-2xl backdrop-blur ${dropdownClassName}`}
+          className={`absolute z-20 mt-2 w-fit min-w-full overflow-hidden rounded-lg border border-white/10 bg-zinc-900/95 shadow-2xl backdrop-blur ${dropdownClassName}`}
         >
           <div className="max-h-56 w-[100%] overflow-y-auto scrollbar-hide">
             {options.map((opt) => {
@@ -253,13 +253,19 @@ function ProgressPreview({
   onAdjustBar,
   bars,
 }: PreviewProps) {
+  // Animation: fade/slide-in for preview container and each bar row
+  const [showPreview, setShowPreview] = useState(false);
+  useEffect(() => {
+    setShowPreview(true);
+  }, []);
+
   const baseBar = { id: "base", label, progress, goal, milestones: defaultMilestones() };
   const rows = bars.length ? bars : [baseBar];
   const labelText = (label || "").trim();
   const transparent = fullPage && isEmbedView;
   const isMidnight = themeName === "midnight";
   const containerClass = transparent
-    ? "flex w-[100vw] flex-col gap-3 p-2 sm:p-6"
+    ? "flex w-full flex-col gap-3 p-2 sm:p-6"
     : isMidnight
       ? "flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-transparent bg-[#0c0f1f] px-7 py-6 shadow-sm"
       : "flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/90 px-7 py-6 shadow-sm";
@@ -270,7 +276,9 @@ function ProgressPreview({
     backgroundImage: transparent || isMidnight
       ? undefined
       : "radial-gradient(circle at 25% 25%, rgba(59,130,246,0.08), transparent 45%)",
-    transition: "background-color 180ms ease, color 180ms ease, border-color 180ms ease",
+    transition: "background-color 180ms ease, color 180ms ease, border-color 180ms ease, opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1)",
+    opacity: showPreview ? 1 : 0,
+    transform: showPreview ? 'translateY(0)' : 'translateY(24px)',
   } as const;
 
   return (
@@ -291,7 +299,7 @@ function ProgressPreview({
       )}
 
       <div className="flex flex-col gap-3">
-        {rows.map((row) => {
+        {rows.map((row, i) => {
           const safeGoal = Math.max(row.goal || 0, 1);
           const pct = clampNumber((row.progress / safeGoal) * 100, 0, 100);
           const milestones = row.milestones ?? defaultMilestones();
@@ -299,6 +307,13 @@ function ProgressPreview({
             .filter((m) => Number.isFinite(m.value))
             .map((m) => ({ ...m, pct: clampNumber((m.value / safeGoal) * 100, 0, 100) }))
             .sort((a, b) => a.value - b.value);
+
+          // Animation: fade/slide-in for each bar row
+          const rowAnim = {
+            opacity: showPreview ? 1 : 0,
+            transform: showPreview ? 'translateY(0)' : 'translateY(16px)',
+            transition: `opacity 0.7s cubic-bezier(.4,0,.2,1) ${i * 0.09}s, transform 0.7s cubic-bezier(.4,0,.2,1) ${i * 0.09}s`,
+          };
 
           if (layoutMode === "circular") {
             const size = 240;
@@ -309,7 +324,7 @@ function ProgressPreview({
             const arc = (pct / 100) * circumference;
 
             return (
-              <div key={row.id} className="space-y-3 rounded-2xl border border-white/10 bg-white/70 p-4 shadow-sm" style={{ background: transparent ? background : "rgba(255,255,255,0.7)" }}>
+              <div key={row.id} className="space-y-3 rounded-2xl border border-white/10 bg-white/70 p-4 shadow-sm" style={{ background: transparent ? background : "rgba(255,255,255,0.7)", ...rowAnim }}>
                 {row.label.trim() !== "" && (
                   <div className="flex items-center justify-between text-sm font-semibold" style={{ color: text }}>
                     <span>{row.label.trim()}</span>
