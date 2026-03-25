@@ -7,13 +7,18 @@ export function middleware(request) {
   const isNotFound = url.pathname === '/prvt/not-found';
   const cookie = request.cookies.get('prvtAuth');
 
-  // If user is already authenticated, block access to login page
-  if (isLogin && cookie?.value === '1') {
-    return NextResponse.redirect(new URL('/prvt', request.url));
+  // Allow unauthenticated access to /prvt/login and /prvt/not-found
+  if (isLogin || isNotFound) {
+    return NextResponse.next();
   }
 
-  // If not authenticated and not on login or not-found, redirect to login
-  if (isPrvt && !isLogin && !isNotFound && cookie?.value !== '1') {
+  // If user is already authenticated, block access to login page
+  if (isPrvt && cookie?.value === '1') {
+    return NextResponse.next();
+  }
+
+  // If not authenticated and trying to access any other /prvt page, redirect to login
+  if (isPrvt && cookie?.value !== '1') {
     return NextResponse.redirect(new URL('/prvt/login', request.url));
   }
 
