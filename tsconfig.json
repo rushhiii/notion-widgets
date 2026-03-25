@@ -29,7 +29,8 @@
     }
   },
   "include": [
-    "**/*.ts",
+     "**/*.ts",
+     "app/prvt/**/*",
     "**/*.tsx",
     ".next/types/**/*.ts",
     "next-env.d.ts",
