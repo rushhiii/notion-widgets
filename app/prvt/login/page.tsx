@@ -1,10 +1,10 @@
 "use client";
-
+import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function PrvtLogin() {
-
+  const { data: session, status } = useSession();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -12,30 +12,30 @@ export default function PrvtLogin() {
   const [blocked, setBlocked] = useState(false);
   const router = useRouter();
 
-  // Check if blocked
   useEffect(() => {
+    if (session) router.push("/prvt");
+    // Block logic
     const blockedUntil = localStorage.getItem("prvtBlockedUntil");
     if (blockedUntil && Date.now() < Number(blockedUntil)) {
       setBlocked(true);
       setTimeout(() => router.replace("/prvt/not-found"), 1000);
     }
-  }, [router]);
+  }, [session, router]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    // Hardcoded credentials (must match middleware)
-    const validUser = "rtuisrhtih@12050912!%";
-    const validPass = "dobidobi";
-    if (username === validUser && password === validPass) {
-      // Set cookie for 7 days
-      document.cookie = `prvtAuth=1; path=/; max-age=${60 * 60 * 24 * 7}`;
+    const res = await signIn("credentials", {
+      username,
+      password,
+      redirect: false,
+    });
+    if (res?.ok) {
       router.push("/prvt");
     } else {
       setAttempts(a => {
         const next = a + 1;
         if (next >= 2) {
-          // Block for 24 hours
           localStorage.setItem("prvtBlockedUntil", String(Date.now() + 24 * 60 * 60 * 1000));
           setBlocked(true);
           setTimeout(() => router.replace("/prvt/not-found"), 1000);

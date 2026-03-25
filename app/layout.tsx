@@ -8,6 +8,7 @@ import {
   fontSora,
   fontSpaceGrotesk,
 } from "./fonts";
+import AuthProvider from "../components/AuthProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -16,12 +17,7 @@ export const metadata: Metadata = {
   },
   description: "Static, embeddable Notion widgets built with Next.js",
   icons: {
-    // icon: "/icons/es.png",
     icon: "/icons/ees.png",
-    // icon: "/icons/n_icon.png",
-    // icon: "/icons/r_icon.png",
-    // icon: "/icons/rr_icon.png",
-    // icon: "/icons/w_icon.png",
   },
 };
 
@@ -36,7 +32,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       className={`h-full bg-transparent ${fontSpaceGrotesk.variable} ${fontSora.variable} ${fontPlusJakarta.variable} ${fontManrope.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable}`}
     >
       <body className="h-full bg-transparent antialiased" suppressHydrationWarning>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
