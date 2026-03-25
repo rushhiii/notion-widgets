@@ -80,8 +80,7 @@ export default function PrvtLogin() {
           ref={cardRef}
           className="landing-card flex flex-col w-full max-w-md rounded-3xl border border-zinc-800 backdrop-blur p-8 shadow-xl transition-colors duration-300"
           style={cardBg}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
+          // onMouseEnter and onMouseLeave removed: hovered state no longer exists
           onMouseMove={handleMouseMove}
         >
           <h1 className="text-3xl font-semibold text-white mb-7 text-center tracking-tight">Private Login</h1>
