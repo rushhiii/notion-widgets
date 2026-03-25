@@ -51,42 +51,63 @@ export default function PrvtLogin() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Private Login</h1>
-      {blocked ? (
-        <div className="text-red-600">Too many failed attempts. Try again in 24 hours.</div>
-      ) : (
-        <form className="flex flex-col gap-4 w-80" onSubmit={handleSubmit}>
-          <input
-            className="border rounded px-3 py-2"
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            required
-          />
-          <input
-            className="border rounded px-3 py-2"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-          <div className="flex gap-2">
-            <button className="bg-black text-white rounded px-3 py-2" type="submit">
-              Login
-            </button>
-            <button className="bg-gray-300 text-black rounded px-3 py-2" type="button" onClick={handleCancel}>
-              Cancel
-            </button>
-          </div>
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-          {attempts > 0 && attempts < 2 && (
-            <div className="text-sm text-gray-500">Attempt {attempts} of 2</div>
+    <main className="relative min-h-screen w-full bg-zinc-950 flex items-center justify-center overflow-hidden">
+      {/* Subtle radial gradient background */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.18),transparent_60%)] pointer-events-none z-0" />
+      <div className="relative z-10 flex flex-col items-center justify-center w-full px-4 py-10">
+        <div className="landing-card flex flex-col w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-900/80 backdrop-blur p-8 shadow-xl">
+          <h1 className="text-3xl font-semibold text-white mb-2 text-center tracking-tight">Private Login</h1>
+          <p className="text-zinc-400 text-center mb-6 text-sm">Access to this section is restricted. Please log in to continue.</p>
+          {blocked ? (
+            <div className="text-red-500 text-center font-medium py-4">Too many failed attempts.<br />Try again in 24 hours.</div>
+          ) : (
+            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+              <input
+                className="rounded-xl border border-zinc-800 bg-zinc-950/70 px-4 py-3 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                required
+                autoComplete="username"
+              />
+              <input
+                className="rounded-xl border border-zinc-800 bg-zinc-950/70 px-4 py-3 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+              <div className="flex gap-3 mt-2">
+                <button
+                  className="cta flex-1 inline-flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2 transition shadow"
+                  type="submit"
+                  disabled={blocked}
+                >
+                  Login
+                </button>
+                <button
+                  className="flex-1 inline-flex items-center justify-center rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium px-4 py-2 transition border border-zinc-700"
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={blocked}
+                >
+                  Cancel
+                </button>
+              </div>
+              {error && <div className="text-red-500 text-center text-sm font-medium mt-2">{error}</div>}
+              {attempts > 0 && attempts < 2 && (
+                <div className="text-xs text-zinc-400 text-center">Attempt {attempts} of 2</div>
+              )}
+            </form>
           )}
-        </form>
-      )}
-    </div>
+        </div>
+        <footer className="mt-8 text-xs text-zinc-500 text-center opacity-80">
+          <p>Tip: Only you can access this area. <span className="hidden md:inline">Contact the site owner if you believe this is an error.</span></p>
+        </footer>
+      </div>
+    </main>
   );
 }
