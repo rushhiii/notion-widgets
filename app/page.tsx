@@ -4,45 +4,47 @@ import Link from "next/link";
 
 export const dynamic = "force-static";
 
-export default function HomePage() {
-  // For each card, track hover and mouse position
-  function useCardHover() {
-    const cardRef = useRef<HTMLDivElement>(null);
-    // Track if the card has ever been hovered
-    const [hasHovered, setHasHovered] = useState(false);
-    // Store the last mouse position (SSR-safe: fixed initial value)
-    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 80, y: 80 });
-    // On mount (client only), set a random position if never hovered
-    React.useEffect(() => {
-      if (cardRef.current && !hasHovered) {
-        const rect = cardRef.current.getBoundingClientRect();
-        setMousePos({
-          x: Math.floor(Math.random() * (rect.width - 60) + 30),
-          y: Math.floor(Math.random() * (rect.height - 60) + 30),
-        });
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
-    function handleMouseMove(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-      if (!cardRef.current) return;
+// For each card, track hover and mouse position
+function useCardHover() {
+  const cardRef = useRef<HTMLDivElement>(null);
+  // Track if the card has ever been hovered
+  const [hasHovered, setHasHovered] = useState(false);
+  // Store the last mouse position (SSR-safe: fixed initial value)
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 80, y: 80 });
+  // On mount (client only), set a random position if never hovered
+  React.useEffect(() => {
+    if (cardRef.current && !hasHovered) {
       const rect = cardRef.current.getBoundingClientRect();
       setMousePos({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: Math.floor(Math.random() * (rect.width - 60) + 30),
+        y: Math.floor(Math.random() * (rect.height - 60) + 30),
       });
-      setHasHovered(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    // Always use the last mousePos (even after mouse leave)
-    const cardBg = {
-      background:
-        `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),` +
-        `rgba(17,17,23,.8)`
-    };
-
-    return { cardRef, handleMouseMove, cardBg };
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    setHasHovered(true);
   }
+
+  // Always use the last mousePos (even after mouse leave)
+  const cardBg = {
+    background:
+      `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),` +
+      `rgba(17,17,23,.8)`
+  };
+
+  return { cardRef, handleMouseMove, cardBg };
+}
+
+export default function HomePage() {
 
   // Card data for mapping
   const cards = [
@@ -117,7 +119,7 @@ export default function HomePage() {
             <p className="badge inline-flex rounded-full border px-3 py-1 text-xs font-medium tracking-wide">
               Notion Widget Suite
             </p>
-            <a aria-label="GitHub repository" target="_blank" rel="noopener noreferrer" href="https://github.com/rushhiii/notion-widgets" className="rounded-full bg-[#22222dcc] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-3 my-1 text-xs font-medium tracking-wide">
+            <a aria-label="GitHub repository" target="_blank" rel="noopener noreferrer" href="https://github.com/rushhiii/notion-widgets" className="rounded-full bg-[#22222dcc] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-1 text-xs font-medium tracking-wide">
               <svg viewBox="0 0 20 20" className="size-7 fill-[#E0DBFD]">
                 <path d="M10 0C4.475 0 0 4.475 0 10a9.994 9.994 0 006.838 9.488c.5.087.687-.213.687-.476 0-.237-.013-1.024-.013-1.862-2.512.463-3.162-.612-3.362-1.175-.113-.287-.6-1.175-1.025-1.412-.35-.188-.85-.65-.013-.663.788-.013 1.35.725 1.538 1.025.9 1.512 2.337 1.087 2.912.825.088-.65.35-1.088.638-1.338-2.225-.25-4.55-1.112-4.55-4.937 0-1.088.387-1.987 1.025-2.688-.1-.25-.45-1.274.1-2.65 0 0 .837-.262 2.75 1.026a9.28 9.28 0 012.5-.338c.85 0 1.7.112 2.5.337 1.912-1.3 2.75-1.024 2.75-1.024.55 1.375.2 2.4.1 2.65.637.7 1.025 1.587 1.025 2.687 0 3.838-2.337 4.688-4.562 4.938.362.312.675.912.675 1.85 0 1.337-.013 2.412-.013 2.75 0 .262.188.574.688.474A10.016 10.016 0 0020 10c0-5.525-4.475-10-10-10z">
                 </path>
@@ -134,50 +136,63 @@ export default function HomePage() {
         </header>
 
         <section className="grid flex-1 grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {cards.map((card, idx) => {
-            const { cardRef, handleMouseMove, cardBg } = useCardHover();
-            return (
-              <article
-                key={card.title}
-                ref={cardRef}
-                className="landing-card flex flex-col rounded-3xl border p-6 backdrop-blur transition-colors duration-300"
-                style={cardBg}
-                onMouseMove={handleMouseMove}
-              >
-                <h2 className="text-2xl font-semibold text-white">{card.title}</h2>
-                <p className="mt-2 text-sm text-zinc-400">{card.desc}</p>
-                <div className="mt-5 space-y-2 text-sm">
-                  {card.links.map((l, i) => (
-                    <p key={i} className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300 overflow-hidden overflow-x-auto scrollbar-hide">
-                      {l.label}
-                    </p>
-                  ))}
-                </div>
-                <div className="mt-auto pt-6 flex items-center gap-3">
-                  {card.actions.map((a, i) => (
-                    a.url ? (
-                      <Link
-                        key={i}
-                        href={a.url}
-                        target="_blank"
-                        className="cta inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition"
-                      >
-                        {a.label}
-                        {a.label === "View" || a.label === "Open Clock" ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 ml-1 lucide lucide-square-arrow-up-right-icon lucide-square-arrow-up-right"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 8h8v8" /><path d="m8 16 8-8" /></svg>
-                        ) : null}
-                      </Link>
-                    ) : null
-                  ))}
-                </div>
-              </article>
-            );
-          })}
+          {cards.map((card) => (
+            <Card key={card.title} card={card} />
+          ))}
         </section>
         <footer className="mt-6 text-xs text-zinc-500 space-y-1">
           <p>Tip: In Notion, type /embed and paste any widget URL.</p>
         </footer>
       </div>
     </main>
+  );
+}
+
+// Card component moved outside HomePage for correct hook usage
+type CardProps = {
+  card: {
+    title: string;
+    desc: string;
+    links: { label: string; url: string | null }[];
+    actions: { label: string; url: string | null }[];
+  };
+};
+
+function Card({ card }: CardProps) {
+  const { cardRef, handleMouseMove, cardBg } = useCardHover();
+  return (
+    <article
+      ref={cardRef}
+      className="landing-card flex flex-col rounded-3xl border p-6 backdrop-blur transition-colors duration-300"
+      style={cardBg}
+      onMouseMove={handleMouseMove}
+    >
+      <h2 className="text-2xl font-semibold text-white">{card.title}</h2>
+      <p className="mt-2 text-sm text-zinc-400">{card.desc}</p>
+      <div className="mt-5 space-y-2 text-sm">
+        {card.links.map((l, i) => (
+          <p key={i} className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300 overflow-hidden overflow-x-auto scrollbar-hide">
+            {l.label}
+          </p>
+        ))}
+      </div>
+      <div className="mt-auto pt-6 flex items-center gap-3">
+        {card.actions.map((a, i) => (
+          a.url ? (
+            <Link
+              key={i}
+              href={a.url}
+              target="_blank"
+              className="cta inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition"
+            >
+              {a.label}
+              {a.label === "View" || a.label === "Open Clock" ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 ml-1 lucide lucide-square-arrow-up-right-icon lucide-square-arrow-up-right"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 8h8v8" /><path d="m8 16 8-8" /></svg>
+              ) : null}
+            </Link>
+          ) : null
+        ))}
+      </div>
+    </article>
   );
 }
