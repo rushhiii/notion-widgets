@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-export const authOptions = {
+const handler = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -10,7 +10,6 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Replace with your own secure check
         if (
           credentials?.username === "rtuisrhtih@12050912!%" &&
           credentials?.password === "dobidobi"
@@ -21,13 +20,8 @@ export const authOptions = {
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/prvt/login",
-  },
-};
+  session: { strategy: "jwt" },
+  pages: { signIn: "/prvt/login" },
+});
 
-const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
