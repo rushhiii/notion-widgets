@@ -15,7 +15,10 @@ export default function PrvtLogin() {
   const router = useRouter();
 
   useEffect(() => {
-    if (session) router.push("/prvt");
+    // If already logged in, redirect to /prvt (but only if not already there)
+    if (session) {
+      router.replace("/prvt");
+    }
     // Block logic
     const blockedUntil = localStorage.getItem("prvtBlockedUntil");
     if (blockedUntil && Date.now() < Number(blockedUntil)) {
@@ -33,7 +36,8 @@ export default function PrvtLogin() {
       redirect: false,
     });
     if (res?.ok) {
-      router.push("/prvt");
+      // Force reload to ensure session is picked up
+      window.location.replace("/prvt");
     } else {
       setAttempts(a => {
         const next = a + 1;
