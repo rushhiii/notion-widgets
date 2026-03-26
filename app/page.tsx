@@ -119,7 +119,7 @@ export default function HomePage() {
             <p className="badge inline-flex rounded-full border px-3 py-1 text-xs font-medium tracking-wide">
               Notion Widget Suite
             </p>
-            <div className="relative group">
+            <div className="relative group flex item-center">
               {/* title="Visit repo" */}
               <a aria-label="GitHub repository" target="_blank" rel="noopener noreferrer" href="https://github.com/rushhiii/notion-widgets" className="rounded-full bg-[#22222dcc] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-1 text-xs font-medium tracking-wide">
                 <svg viewBox="0 0 20 20" className="size-7 fill-[#E0DBFD]">
