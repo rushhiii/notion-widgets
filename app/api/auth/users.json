@@ -1,0 +1,23 @@
+[
+  {
+    "id": "admin",
+    "username": "rushisys",
+    "password": "dobi",
+    "name": "Rushi",
+    "role": "admin"
+  },
+  {
+    "id": "nina",
+    "username": "nina",
+    "password": "nina123",
+    "name": "Nina",
+    "role": "user"
+  },
+  {
+    "id": "nishi",
+    "username": "nishi",
+    "password": "nishi123",
+    "name": "Nishi",
+    "role": "user"
+  }
+]

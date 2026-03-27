@@ -1,13 +1,9 @@
-
-
-
-
-
 "use client";
 
 import React, { useRef, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+
 
 export default function PrvtPage() {
   const { data: session, status } = useSession();
@@ -36,7 +32,6 @@ export default function PrvtPage() {
           <div className="flex justify-between items-center">
             {/* <div className="flex items-center gap-3"> */}
             <p className="badge inline-flex rounded-full border px-3 py-1 text-xs font-medium bg-white/40 tracking-wide">
-              {/* {session?.user?.name ? `${session.user.name} Dashboard` : 'Admin\'s Dashboard'} */}
               {"Admin's Dashboard"}
             </p>
               {/* <button
@@ -47,9 +42,9 @@ export default function PrvtPage() {
                 Account
               </button> */}
             {/* </div> */}
-            <div className="relative group ">
+            <div className="relative group rounded-full">
               {/* <button
-                onClick={() => signOut({ callbackUrl: "/prvt/login" })}
+                onClick={() => signOut({ callbackUrl: "/prvt/signout" })}
                 className="rounded-full bg-[#22222D00] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-0 text-xs font-medium tracking-wide text-white"
                 aria-label="Logout"
               >
@@ -61,10 +56,10 @@ export default function PrvtPage() {
                 Logout
               </div> */}
 
-              <div className="relative flex items-center">
+              <div className="relative flex items-center rounded-full">
                 <button
                   onClick={() => setShowAccountModal(true)}
-                  className="rounded-full bg-[#22222D00] opacity-70 h-max w-max transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-0 text-xs font-medium tracking-wide text-white"
+                  className="rounded-full bg-[#22222D00] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-auto text-xs font-medium tracking-wide text-white"
                   aria-label="Account Settings"
                   onMouseEnter={e => e.currentTarget.nextElementSibling?.classList.add('opacity-100','pointer-events-auto')}
                   onMouseLeave={e => e.currentTarget.nextElementSibling?.classList.remove('opacity-100','pointer-events-auto')}
@@ -81,35 +76,23 @@ export default function PrvtPage() {
             </div>
           </div>
                 {/* Account Modal */}
-                {showAccountModal && (
+                {showAccountModal && session?.user && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
                     <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-md shadow-2xl relative">
                       <button
-                        className="absolute top-2 right-4 text-zinc-400 hover:text-white text-xxl"
+                        className="absolute top-2 right-5 text-zinc-400 hover:text-white text-4xl"
                         onClick={() => setShowAccountModal(false)}
                         aria-label="Close"
                       >
                         &times;
                       </button>
-                      <h2 className="text-xl font-bold mb-4 text-violet-200">Account Settings</h2>
-                      <form className="flex flex-col gap-4">
-                        <label className="flex flex-col gap-1">
-                          <span className="text-sm text-zinc-300">Display Name</span>
-                          <input type="text" className="rounded-lg px-3 py-2 bg-zinc-900 border border-zinc-700 text-zinc-100" defaultValue={session?.user?.name || ""} />
-                        </label>
-                        <label className="flex flex-col gap-1">
-                          <span className="text-sm text-zinc-300">Username</span>
-                          <input type="text" className="rounded-lg px-3 py-2 bg-zinc-900 border border-zinc-700 text-zinc-100" defaultValue={session?.user?.id || ""} />
-                        </label>
-                        <label className="flex flex-col gap-1">
-                          <span className="text-sm text-zinc-300">Password</span>
-                          <input type="password" className="rounded-lg px-3 py-2 bg-zinc-900 border border-zinc-700 text-zinc-100" placeholder="New password" autoComplete="new-password" />
-                        </label>
-                        <button type="submit" className="mt-2 bg-violet-700 hover:bg-violet-800 text-white px-4 py-2 rounded-xl font-semibold transition">Save Changes</button>
-                      </form>
+                      <h2 className="text-2xl font-bold mb-6 text-violet-200 text-center tracking-tight">Account Settings</h2>
+                      <AccountSettingsForm session={session} setShowAccountModal={setShowAccountModal} />
                     </div>
                   </div>
                 )}
+                {/* End Account Modal */}
+
           <h1 className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
             {session?.user?.name ? `Greetings ${session.user.name}, welcome to your private access` : 'Welcome to Your Private Widgets'}
           </h1>
@@ -126,5 +109,154 @@ export default function PrvtPage() {
   
       </div>
     </main>
+  );
+}
+
+// --- AccountSettingsForm must be at top-level, not inside any block ---
+export function AccountSettingsForm({ session, setShowAccountModal }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const nameRef = useRef();
+  const passwordRef = useRef();
+  // Use a controlled input for username, initialize from session when modal opens
+  // Use a ref for username input, and force re-mount on session.user.username change
+  const usernameRef = useRef();
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    const name = nameRef.current.value.trim();
+    const usernameVal = usernameRef.current?.value.trim() || "";
+    const password = passwordRef.current.value;
+    if (!usernameVal) {
+      setError("Username is required.");
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch("/api/user/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: session.user.id, name, username: usernameVal, password }),
+      });
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        setError("Server error: Invalid JSON response");
+        setLoading(false);
+        return;
+      }
+      if (!res.ok) {
+        setError((data && data.error ? data.error : "Failed to update user") + (data && data.details ? ": " + data.details : ""));
+      } else {
+        setSuccess("Account updated! You will be logged out to apply changes.");
+        setTimeout(() => {
+          signOut({ callbackUrl: "/prvt/signout", redirect: false }).then(() => {
+            window.location.replace("/prvt/signout");
+          });
+        }, 1800);
+      }
+    } catch (e) {
+      setError("Server error: " + (e.message || e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <label className="flex flex-col gap-1">
+        <span className="text-sm text-zinc-300">Display Name</span>
+        <input ref={nameRef} type="text" className="rounded-lg px-3 py-2 bg-zinc-900 border border-zinc-700 text-zinc-100 focus:border-violet-600 focus:ring-2 focus:ring-violet-700 outline-none transition" defaultValue={session?.user?.name || ""} />
+      </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-sm text-zinc-300">Username</span>
+          <input
+            ref={usernameRef}
+            type="text"
+            required
+            className="rounded-lg px-3 py-2 bg-zinc-900 border border-zinc-700 text-zinc-100 focus:border-violet-600 focus:ring-2 focus:ring-violet-700 outline-none transition"
+            defaultValue={session?.user?.username || ""}
+            key={session?.user?.username || "username-field"}
+          />
+        </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-sm text-zinc-300">Password</span>
+        <input ref={passwordRef} type="password" className="rounded-lg px-3 py-2 bg-zinc-900 border border-zinc-700 text-zinc-100 focus:border-violet-600 focus:ring-2 focus:ring-violet-700 outline-none transition" placeholder="New password" autoComplete="new-password" />
+      </label>
+      {error && <div className="text-red-400 text-sm font-medium text-center mt-1">{error}</div>}
+      {success && <div className="text-green-400 text-sm font-medium text-center mt-1">{success}</div>}
+      <div className="flex gap-2 mt-4">
+        <button type="submit" disabled={loading} className="flex-1 bg-violet-700 hover:bg-violet-800 text-white px-4 py-2 rounded-xl font-semibold transition shadow-md disabled:opacity-60 disabled:cursor-not-allowed">
+          {loading ? "Saving..." : "Save Changes"}
+        </button>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/prvt/signout" })}
+          className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-red-700 text-red-200 hover:text-white px-4 py-2 rounded-xl font-semibold transition shadow-md border border-red-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="size-5 fill-red-200 group-hover:fill-white">
+            <path d="M569 337C578.4 327.6 578.4 312.4 569 303.1L425 159C418.1 152.1 407.8 150.1 398.8 153.8C389.8 157.5 384 166.3 384 176L384 256L272 256C245.5 256 224 277.5 224 304L224 336C224 362.5 245.5 384 272 384L384 384L384 464C384 473.7 389.8 482.5 398.8 486.2C407.8 489.9 418.1 487.9 425 481L569 337zM224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160z" />
+          </svg>
+          Logout
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// --- SignOutModal: visually matches login card ---
+
+function SignOutModal({ onClose }) {
+  const [mousePos, setMousePos] = useState({ x: 120, y: 60 });
+  const cardRef = useRef(null);
+  function handleMouseMove(e) {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  }
+  const cardBg = {
+    background:
+      `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),` +
+      `rgba(17,17,23,.92)`
+  };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.18),transparent_60%)] pointer-events-none z-0" />
+      <div
+        ref={cardRef}
+        className="relative z-10 flex flex-col w-full max-w-md rounded-3xl border border-zinc-800 backdrop-blur p-8 shadow-xl transition-colors duration-300 bg-zinc-950"
+        style={cardBg}
+        onMouseMove={handleMouseMove}
+      >
+        <button
+          className="absolute top-2 right-5 text-zinc-400 hover:text-white text-4xl"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          &times;
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-violet-200 text-center tracking-tight">Sign Out</h2>
+        <p className="text-zinc-300 text-center mb-6">Are you sure you want to sign out?</p>
+        <div className="flex gap-3 mt-2">
+          <button
+            className="cta flex-1 inline-flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2 transition shadow"
+            onClick={() => { signOut({ callbackUrl: "/prvt/signout" }); }}
+          >
+            Sign Out
+          </button>
+          <button
+            className="flex-1 inline-flex items-center justify-center rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium px-4 py-2 transition border border-zinc-700"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
