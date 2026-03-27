@@ -8,9 +8,9 @@ import AccountSettingsForm from "./AccountSettingsForm";
 
 
 
-export default function Page() {
-  return <AccountSettingsForm />;
-}
+// export default function Page() {
+//   return <AccountSettingsForm />;
+// }
 
 
 export default function PrvtPage() {
