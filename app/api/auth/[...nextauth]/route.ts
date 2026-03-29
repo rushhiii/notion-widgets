@@ -22,6 +22,24 @@ const handler = NextAuth({
                         credentials?.username === adminUser &&
                         credentials?.password === adminPass
                     ) {
+                        // Ensure the admin exists in the DB so profile updates work
+                        const dbUrl = process.env.DATABASE_URL;
+                        if (dbUrl) {
+                            try {
+                                const sql = neon(dbUrl);
+                                await sql`
+                                  INSERT INTO users (id, name, username, password, role)
+                                  VALUES ('admin', ${adminName}, ${adminUser}, ${adminPass}, 'admin')
+                                  ON CONFLICT (id) DO UPDATE
+                                    SET name = EXCLUDED.name,
+                                        username = EXCLUDED.username,
+                                        password = EXCLUDED.password,
+                                        role = EXCLUDED.role
+                                `;
+                            } catch (err) {
+                                console.error("Failed to upsert admin in DB", err);
+                            }
+                        }
                         return { id: "admin", name: adminName, role: "admin", username: credentials.username };
                     }
 
