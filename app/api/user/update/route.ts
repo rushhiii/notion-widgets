@@ -20,7 +20,8 @@ export async function POST(req: Request) {
         }
 
         const body = parsed as Partial<UpdateBody>;
-        const { id, name, username, password } = body;
+        const { id, name, username } = body;
+        const password = body.password && body.password.trim() !== "" ? body.password : null;
 
         if (!id || !username) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -41,15 +42,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Username already taken" }, { status: 409 });
         }
 
-        await sql`
+        const updated = (await sql`
             UPDATE users
             SET name = COALESCE(${name}, name), username = ${username}, password = COALESCE(${password}, password)
             WHERE id = ${id}
-        `;
-
-        const updated = (await sql`
-            SELECT id, name, username, role FROM users WHERE id = ${id}
+            RETURNING id, name, username, role
         `) as { id: string; name: string | null; username: string; role: string | null }[];
+
+        if (updated.length === 0) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
 
         return NextResponse.json({ success: true, user: updated[0] }, { status: 200 });
     } catch (e: unknown) {
