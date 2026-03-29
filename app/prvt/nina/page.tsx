@@ -1,73 +1,8 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { signOut } from "next-auth/react";
-import Link from "next/link";
-import DdayWidget from "@/components/widgets/DdayWidget";
-import { ClockWidget } from "@/components/widgets/ClockWidget";
-import { QuoteWidget } from "@/components/widgets/QuoteWidget";
-import NinaCustomWidget from "./custom-widget";
 import { useSession } from "next-auth/react";
 
-// Card hover effect hook (copied from HomePage)
-function useCardHover() {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [hasHovered, setHasHovered] = useState(false);
-  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 80, y: 80 });
-  React.useEffect(() => {
-    if (cardRef.current && !hasHovered) {
-      const rect = cardRef.current.getBoundingClientRect();
-      setMousePos({
-        x: Math.floor(Math.random() * (rect.width - 60) + 30),
-        y: Math.floor(Math.random() * (rect.height - 60) + 30),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-    setHasHovered(true);
-  }
-
-  const cardBg = {
-    background:
-      `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),` +
-      `rgba(127,29,29,.8)` // maroon background
-  };
-  return { cardRef, handleMouseMove, cardBg };
-}
-
-function PrivateLandingCard() {
-  const { cardRef, handleMouseMove, cardBg } = useCardHover();
-  return (
-    <article
-      ref={cardRef}
-      className="landing-card flex flex-col rounded-3xl border border-red-800 p-6 backdrop-blur"
-      style={cardBg}
-      onMouseMove={handleMouseMove}
-    >
-      <h2 className="text-2xl font-semibold text-white">Nina's Secret Widget</h2>
-      <p className="mt-2 text-sm text-red-200">This widget is only visible to you.</p>
-      <div className="mt-5 space-y-2 text-sm">
-        <p className="rounded-xl border border-red-800 bg-red-950/80 px-3 py-2 text-red-100">/prvt/nina/secret</p>
-      </div>
-      <div className="mt-auto pt-6 flex items-center gap-3">
-        <Link
-          href="/prvt/nina/secret"
-          className="cta inline-flex flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition bg-red-700 hover:bg-red-800"
-        >
-          Open Secret
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 ml-1 lucide lucide-square-arrow-up-right-icon lucide-square-arrow-up-right"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 8h8v8" /><path d="m8 16 8-8" /></svg>
-        </Link>
-      </div>
-    </article>
-  );
-}
 
 // Custom red shade for Nina's dashboard
 const ninaRed = {

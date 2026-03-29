@@ -1,27 +1,40 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, FormEvent } from "react";
+import { signOut } from "next-auth/react";
+import type { Session } from "next-auth";
 
+type SessionWithUser = Session & {
+  user: Session["user"] & { id: string; username?: string; role?: string };
+};
 
-// --- AccountSettingsForm must be at top-level, not inside any block ---
-// export function AccountSettingsForm({ session, setShowAccountModal }) {
-export default function AccountSettingsForm({ session, setShowAccountModal }) {
+type Props = {
+  session: SessionWithUser;
+  setShowAccountModal: (open: boolean) => void;
+};
+
+export default function AccountSettingsForm({ session, setShowAccountModal }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const nameRef = useRef();
-  const passwordRef = useRef();
+  const nameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   // Use a controlled input for username, initialize from session when modal opens
   // Use a ref for username input, and force re-mount on session.user.username change
-  const usernameRef = useRef();
+  const usernameRef = useRef<HTMLInputElement>(null);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setSuccess("");
     setLoading(true);
-    const name = nameRef.current.value.trim();
+    const name = nameRef.current?.value.trim() || "";
     const usernameVal = usernameRef.current?.value.trim() || "";
-    const password = passwordRef.current.value;
+    const password = passwordRef.current?.value || "";
+    if (!session?.user?.id) {
+      setError("Session missing user id. Please sign in again.");
+      setLoading(false);
+      return;
+    }
     if (!usernameVal) {
       setError("Username is required.");
       setLoading(false);
@@ -36,7 +49,7 @@ export default function AccountSettingsForm({ session, setShowAccountModal }) {
       let data;
       try {
         data = await res.json();
-      } catch (jsonErr) {
+      } catch {
         setError("Server error: Invalid JSON response");
         setLoading(false);
         return;
@@ -45,14 +58,16 @@ export default function AccountSettingsForm({ session, setShowAccountModal }) {
         setError((data && data.error ? data.error : "Failed to update user") + (data && data.details ? ": " + data.details : ""));
       } else {
         setSuccess("Account updated! You will be logged out to apply changes.");
+        if (setShowAccountModal) setShowAccountModal(false);
         setTimeout(() => {
-          signOut({ callbackUrl: "/prvt/signout", redirect: false }).then(() => {
+          signOut({ callbackUrl: "/prvt/signout", redirect: false }).finally(() => {
             window.location.replace("/prvt/signout");
           });
-        }, 1800);
+        }, 1200);
       }
     } catch (e) {
-      setError("Server error: " + (e.message || e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setError("Server error: " + msg);
     } finally {
       setLoading(false);
     }
@@ -87,7 +102,11 @@ export default function AccountSettingsForm({ session, setShowAccountModal }) {
         </button>
         <button
           type="button"
-          onClick={() => signOut({ callbackUrl: "/prvt/signout" })}
+          onClick={() => {
+            signOut({ callbackUrl: "/prvt/signout", redirect: false }).finally(() => {
+              window.location.replace("/prvt/signout");
+            });
+          }}
           className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-red-700 text-red-200 hover:text-white px-4 py-2 rounded-xl font-semibold transition shadow-md border border-red-700"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="size-5 fill-red-200 group-hover:fill-white">

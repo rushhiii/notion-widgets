@@ -1,47 +1,61 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import { NextResponse } from 'next/server';
+import { neon } from "@neondatabase/serverless";
+import { NextResponse } from "next/server";
+
+type UpdateBody = {
+  id: string;
+  name?: string;
+  username: string;
+  password?: string;
+};
 
 export async function POST(req: Request) {
-  try {
-    let body: any;
     try {
-      body = await req.json();
-    } catch (err: any) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request', details: err && err.message ? err.message : String(err) }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+        const parsed = await req.json().catch((err: unknown) => {
+            return { __error: err };
+        });
+        if ((parsed as { __error?: unknown }).__error) {
+            const err = (parsed as { __error: unknown }).__error;
+            const msg = err instanceof Error ? err.message : String(err);
+            return NextResponse.json({ error: "Invalid JSON in request", details: msg }, { status: 400 });
+        }
+
+        const body = parsed as Partial<UpdateBody>;
+        const { id, name, username, password } = body;
+
+        if (!id || !username) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        const dbUrl = process.env.DATABASE_URL;
+        if (!dbUrl) {
+            return NextResponse.json({ error: "DATABASE_URL is not set" }, { status: 500 });
+        }
+
+        const sql = neon(dbUrl);
+
+        // Ensure username uniqueness (exclude self)
+        const conflict = (await sql`
+            SELECT id FROM users WHERE username = ${username} AND id != ${id} LIMIT 1
+        `) as { id: string }[];
+        if (conflict.length > 0) {
+            return NextResponse.json({ error: "Username already taken" }, { status: 409 });
+        }
+
+        await sql`
+            UPDATE users
+            SET name = COALESCE(${name}, name), username = ${username}, password = COALESCE(${password}, password)
+            WHERE id = ${id}
+        `;
+
+        const updated = (await sql`
+            SELECT id, name, username, role FROM users WHERE id = ${id}
+        `) as { id: string; name: string | null; username: string; role: string | null }[];
+
+        return NextResponse.json({ success: true, user: updated[0] }, { status: 200 });
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: "Server error", details: msg }, { status: 500 });
     }
-    const { id, name, username, password } = body;
-    try {
-      if (!username) {
-        return NextResponse.json({ error: 'Missing username' }, { status: 400 });
-      }
-      const dbPath = path.join(process.cwd(), 'app', 'api', 'auth', 'users.db');
-      const db = new Database(dbPath);
-      console.log('USER UPDATE API: dbPath', dbPath);
-      // Check for username conflict (except for current user)
-      const conflict = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(username, id);
-      if (conflict) {
-        db.close();
-        return NextResponse.json({ error: 'Username already taken' }, { status: 409 });
-      }
-      // Update user (only update password if provided)
-      if (password && password.trim() !== "") {
-        db.prepare('UPDATE users SET name = ?, username = ?, password = ? WHERE id = ?').run(name, username, password, id);
-      } else {
-        db.prepare('UPDATE users SET name = ?, username = ? WHERE id = ?').run(name, username, id);
-      }
-      const user = db.prepare('SELECT id, name, username, role, password FROM users WHERE id = ?').get(id);
-      console.log('USER UPDATE API: updated user', user);
-      db.close();
-      return NextResponse.json({ success: true, user }, { status: 200 });
-    } catch (e: any) {
-      return NextResponse.json({ error: 'Server error', details: e && e.message ? e.message : String(e) }, { status: 500 });
-    }
-  } catch (e: any) {
-    return NextResponse.json({ error: 'Server error', details: e && e.message ? e.message : String(e) }, { status: 500 });
-  }
-};
+}
+
 export const dynamic = "force-dynamic";

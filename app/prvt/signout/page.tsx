@@ -40,7 +40,7 @@ function SignOutModal({ onClose }: { onClose: () => void }) {
         <div className="flex gap-3 mt-2">
           <button
             className="cta flex-1 inline-flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2 transition shadow"
-            onClick={() => { signOut({ callbackUrl: "/prvt/login" }); }}
+            onClick={() => { signOut({ callbackUrl: "/prvt/signout", redirect: false }).finally(() => { window.location.replace("/prvt/signout"); }); }}
           >
             Sign Out
           </button>

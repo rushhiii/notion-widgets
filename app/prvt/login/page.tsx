@@ -1,10 +1,13 @@
 "use client";
 import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
+import type { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 
 export default function PrvtLogin() {
   const { data: session } = useSession();
+  type SessionWithUser = Session & { user: Session["user"] & { id?: string; username?: string; role?: string } };
+  const typedSession = session as SessionWithUser | null;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -16,11 +19,11 @@ export default function PrvtLogin() {
 
   useEffect(() => {
     // Redirect users to their own info pages after login
-    if (session?.user?.id === "nina") {
+    if (typedSession?.user?.id === "nina") {
       router.replace("/prvt/nina");
-    } else if (session?.user?.id === "nishi") {
+    } else if (typedSession?.user?.id === "nishi") {
       router.replace("/prvt/nishi");
-    } else if (session) {
+    } else if (typedSession) {
       router.replace("/prvt");
     }
     // Block logic
@@ -29,7 +32,7 @@ export default function PrvtLogin() {
       setBlocked(true);
       setTimeout(() => router.replace("/prvt/not-found"), 1000);
     }
-  }, [session, router]);
+  }, [typedSession, router]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

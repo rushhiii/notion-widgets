@@ -1,9 +1,8 @@
 "use client";
 import { QuoteWidget } from "@/components/widgets/QuoteWidget";
-import DdayWidget from "@/components/widgets/DdayWidget";
 import { useSession, signOut } from "next-auth/react";
 import React, { useRef, useState } from "react";
-import NishiCustomWidget from "./custom-widget";
+import type { Session } from "next-auth";
 
 
 // Custom blue shade for Nishi's dashboard
@@ -15,8 +14,13 @@ const nishiBlue = {
   text: "#dbeafe", // blue-50
 };
 
+type SessionWithUser = Session & {
+  user: Session["user"] & { id: string; username?: string; role?: string };
+};
+
 export default function NishiPage() {
   const { data: session, status } = useSession();
+  const typedSession = session as SessionWithUser | null;
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [greeting, setGreeting] = useState("");
   React.useEffect(() => {
@@ -38,7 +42,7 @@ export default function NishiPage() {
     return <div className="flex items-center bg-blue-950 text-zinc-100 justify-center min-h-screen text-lg">Loading...</div>;
   }
 
-  if (!session) {
+  if (!typedSession) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-blue-950 text-zinc-100">
         <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
@@ -61,7 +65,7 @@ export default function NishiPage() {
                 className="badge inline-flex rounded-full border px-3 py-1 text-xs font-medium tracking-wide"
                 style={{ background: nishiBlue.bg, borderColor: nishiBlue.accent, color: nishiBlue.accentLight }}
               >
-                {session?.user?.name ? `${session.user.name}'s Dashboard` : "User Dashboard"}
+                {typedSession?.user?.name ? `${typedSession.user.name}'s Dashboard` : "User Dashboard"}
               </p>
               <div className="relative flex items-center rounded-full">
                 <button
@@ -86,7 +90,7 @@ export default function NishiPage() {
                         &times;
                       </button>
                       <h2 className="text-2xl font-bold mb-6 text-blue-200 text-center tracking-tight">Account Settings</h2>
-                      <NishiAccountSettingsForm session={session} setShowAccountModal={setShowAccountModal} />
+                      <NishiAccountSettingsForm session={typedSession} setShowAccountModal={setShowAccountModal} />
                     </div>
                   </div>
                 )}
@@ -96,7 +100,7 @@ export default function NishiPage() {
             className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl"
             style={{ color: nishiBlue.accentLight, textShadow: `0 2px 8px ${nishiBlue.bgLight}` }}
           >
-            {session?.user?.name ? `${greeting} ${session.user.name}, welcome to your private access` : 'Welcome to Your Private Widgets'}
+            {typedSession?.user?.name ? `${greeting} ${typedSession.user.name}, welcome to your private access` : 'Welcome to Your Private Widgets'}
           </h1>
           <p className="lead mt-3 max-w-3xl text-sm md:text-base text-blue-200">
             This is your private dashboard. Only authenticated users can see this page. Add your private widgets and content here.
@@ -112,22 +116,32 @@ export default function NishiPage() {
   );
 }
 
-function NishiAccountSettingsForm({ session, setShowAccountModal }) {
+type AccountFormProps = {
+  session: SessionWithUser;
+  setShowAccountModal: (open: boolean) => void;
+};
+
+function NishiAccountSettingsForm({ session, setShowAccountModal }: AccountFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const nameRef = useRef();
-  const passwordRef = useRef();
-  const usernameRef = useRef();
+  const nameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const usernameRef = useRef<HTMLInputElement>(null);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setSuccess("");
     setLoading(true);
-    const name = nameRef.current.value.trim();
+    const name = nameRef.current?.value.trim() || "";
     const usernameVal = usernameRef.current?.value.trim() || "";
-    const password = passwordRef.current.value;
+    const password = passwordRef.current?.value || "";
+    if (!session?.user?.id) {
+      setError("Session missing user id. Please sign in again.");
+      setLoading(false);
+      return;
+    }
     if (!usernameVal) {
       setError("Username is required.");
       setLoading(false);
@@ -142,7 +156,7 @@ function NishiAccountSettingsForm({ session, setShowAccountModal }) {
       let data;
       try {
         data = await res.json();
-      } catch (jsonErr) {
+      } catch {
         setError("Server error: Invalid JSON response");
         setLoading(false);
         return;
@@ -151,12 +165,16 @@ function NishiAccountSettingsForm({ session, setShowAccountModal }) {
         setError((data && data.error ? data.error : "Failed to update user") + (data && data.details ? ": " + data.details : ""));
       } else {
         setSuccess("Account updated! You will be logged out to apply changes.");
+        if (setShowAccountModal) setShowAccountModal(false);
         setTimeout(() => {
-          signOut({ callbackUrl: "/prvt/signout" });
-        }, 1800);
+          signOut({ callbackUrl: "/prvt/signout", redirect: false }).finally(() => {
+            window.location.replace("/prvt/signout");
+          });
+        }, 1200);
       }
     } catch (e) {
-      setError("Server error: " + (e.message || e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setError("Server error: " + msg);
     } finally {
       setLoading(false);
     }
@@ -191,14 +209,22 @@ function NishiAccountSettingsForm({ session, setShowAccountModal }) {
         </button>
         {/* <button
           type="button"
-          onClick={() => signOut({ callbackUrl: "/prvt/signout" })}
+          onClick={() => {
+            signOut({ callbackUrl: "/prvt/signout", redirect: false }).finally(() => {
+              window.location.replace("/prvt/signout");
+            });
+          }}
           className="flex-1 flex items-center justify-center gap-2 bg-blue-800 hover:bg-red-700 text-red-200 hover:text-white px-4 py-2 rounded-xl font-semibold transition shadow-md border border-red-700"
         >
           Logout
         </button> */}
        <button
           type="button"
-          onClick={() => signOut({ callbackUrl: "/prvt/signout" })}
+          onClick={() => {
+            signOut({ callbackUrl: "/prvt/signout", redirect: false }).finally(() => {
+              window.location.replace("/prvt/signout");
+            });
+          }}
           className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-red-700 text-red-200 hover:text-white px-4 py-2 rounded-xl font-semibold transition shadow-md border border-red-700"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="size-5 fill-red-200 group-hover:fill-white">

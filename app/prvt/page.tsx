@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import AccountSettingsForm from "./AccountSettingsForm";
+import type { Session } from "next-auth";
 
 
 
@@ -13,8 +14,13 @@ import AccountSettingsForm from "./AccountSettingsForm";
 // }
 
 
+type SessionWithUser = Session & {
+  user: Session["user"] & { id: string; username?: string; role?: string };
+};
+
 export default function PrvtPage() {
   const { data: session, status } = useSession();
+  const typedSession = session as SessionWithUser | null;
   // Account modal state must be defined at the top
   const [showAccountModal, setShowAccountModal] = useState(false);
 
@@ -22,7 +28,7 @@ export default function PrvtPage() {
     return <div className="flex items-center bg-zinc-950 text-zinc-100 justify-center min-h-screen text-lg">Loading...</div>;
   }
 
-  if (!session) {
+  if (!typedSession) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-zinc-100">
         <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
@@ -84,7 +90,7 @@ export default function PrvtPage() {
             </div>
           </div>
                 {/* Account Modal */}
-                {showAccountModal && session?.user && (
+                {showAccountModal && typedSession?.user && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
                     <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-md shadow-2xl relative">
                       <button
@@ -95,14 +101,14 @@ export default function PrvtPage() {
                         &times;
                       </button>
                       <h2 className="text-2xl font-bold mb-6 text-violet-200 text-center tracking-tight">Account Settings</h2>
-                      <AccountSettingsForm session={session} setShowAccountModal={setShowAccountModal} />
+                      <AccountSettingsForm session={typedSession} setShowAccountModal={setShowAccountModal} />
                     </div>
                   </div>
                 )}
                 {/* End Account Modal */}
 
           <h1 className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
-            {session?.user?.name ? `Greetings ${session.user.name}, welcome to your private access` : 'Welcome to Your Private Widgets'}
+            {typedSession?.user?.name ? `Greetings ${typedSession.user.name}, welcome to your private access` : 'Welcome to Your Private Widgets'}
           </h1>
           <p className="lead mt-3 max-w-3xl text-sm md:text-base">
             This is your private dashboard. Only authenticated users can see this page. Add your private widgets and content here.
@@ -117,57 +123,5 @@ export default function PrvtPage() {
   
       </div>
     </main>
-  );
-}
-
-// --- SignOutModal: visually matches login card ---
-
-function SignOutModal({ onClose }) {
-  const [mousePos, setMousePos] = useState({ x: 120, y: 60 });
-  const cardRef = useRef(null);
-  function handleMouseMove(e) {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  }
-  const cardBg = {
-    background:
-      `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),` +
-      `rgba(17,17,23,.92)`
-  };
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.18),transparent_60%)] pointer-events-none z-0" />
-      <div
-        ref={cardRef}
-        className="relative z-10 flex flex-col w-full max-w-md rounded-3xl border border-zinc-800 backdrop-blur p-8 shadow-xl transition-colors duration-300 bg-zinc-950"
-        style={cardBg}
-        onMouseMove={handleMouseMove}
-      >
-        <button
-          className="absolute top-2 right-5 text-zinc-400 hover:text-white text-4xl"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          &times;
-        </button>
-        <h2 className="text-2xl font-bold mb-6 text-violet-200 text-center tracking-tight">Sign Out</h2>
-        <p className="text-zinc-300 text-center mb-6">Are you sure you want to sign out?</p>
-        <div className="flex gap-3 mt-2">
-          <button
-            className="cta flex-1 inline-flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2 transition shadow"
-            onClick={() => { signOut({ callbackUrl: "/prvt/signout" }); }}
-          >
-            Sign Out
-          </button>
-          <button
-            className="flex-1 inline-flex items-center justify-center rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium px-4 py-2 transition border border-zinc-700"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }
