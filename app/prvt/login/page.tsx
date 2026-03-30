@@ -27,11 +27,7 @@ export default function PrvtLogin() {
       router.replace("/prvt");
     }
     // Block logic
-    const blockedUntil = localStorage.getItem("prvtBlockedUntil");
-    if (blockedUntil && Date.now() < Number(blockedUntil)) {
-      setBlocked(true);
-      setTimeout(() => router.replace("/prvt/not-found"), 1000);
-    }
+    // Block/lockout disabled for testing
   }, [typedSession, router]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -52,15 +48,7 @@ export default function PrvtLogin() {
         window.location.replace("/prvt");
       }
     } else {
-      setAttempts(a => {
-        const next = a + 1;
-        if (next >= 2) {
-          localStorage.setItem("prvtBlockedUntil", String(Date.now() + 24 * 60 * 60 * 1000));
-          setBlocked(true);
-          setTimeout(() => router.replace("/prvt/not-found"), 1000);
-        }
-        return next;
-      });
+      setAttempts(a => a + 1);
       setError("Invalid username or password");
     }
   }
@@ -102,9 +90,7 @@ export default function PrvtLogin() {
         >
           <h1 className="text-3xl font-semibold text-white mb-7 text-center tracking-tight">Private Login</h1>
           {/* <p className="text-zinc-400 text-center mb-6 text-sm">Access to this section is restricted. Please log in to continue.</p> */}
-          {blocked ? (
-            <div className="text-red-500 text-center font-medium py-4">Too many failed attempts.<br />Try again in 24 hours.</div>
-          ) : (
+          {blocked ? null : (
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
               <input
                 className="rounded-xl border border-zinc-800 bg-zinc-950/70 px-4 py-3 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
@@ -142,8 +128,8 @@ export default function PrvtLogin() {
                 </button>
               </div>
               {error && <div className="text-red-500 text-center text-sm font-medium mt-2">{error}</div>}
-              {attempts > 0 && attempts < 2 && (
-                <div className="text-xs text-zinc-400 text-center">Attempt {attempts} of 2</div>
+              {attempts > 0 && (
+                <div className="text-xs text-zinc-400 text-center">Attempt {attempts}</div>
               )}
             </form>
           )}
