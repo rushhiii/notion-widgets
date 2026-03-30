@@ -32,7 +32,7 @@ function parseTimeParam(raw: string | null): number | null {
 export function TimerWidget() {
   const searchParams = useSearchParams();
 
-  const sizeFromQuery = parseIntParam(searchParams.get("size"), 75, 75, 120);
+  const sizeFromQuery = parseIntParam(searchParams.get("size"), 999, 70, 120);
   const themeFromQuery = (searchParams.get("theme")?.trim().toLowerCase() as ThemeName) || "default";
   const durationFromQuery = parseTimeParam(searchParams.get("t"));
   const autoStart = parseBool(searchParams.get("start"), false);
@@ -47,9 +47,12 @@ export function TimerWidget() {
   const [showControls, setShowControls] = useState<boolean>(controlsFromQuery);
   const [copied, setCopied] = useState<boolean>(false);
   const copyTimeout = useRef<number | null>(null);
+  const hideNavTimer = useRef<number | null>(null);
+  const [showNav, setShowNav] = useState<boolean>(true);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("timer_size");
+    const shared = window.localStorage.getItem("fc_size");
+    const stored = shared ?? window.localStorage.getItem("timer_size");
     if (stored) {
       const n = Number(stored);
       if (Number.isFinite(n)) setSize(n);
@@ -62,6 +65,7 @@ export function TimerWidget() {
 
   useEffect(() => {
     window.localStorage.setItem("timer_size", String(size));
+    window.localStorage.setItem("fc_size", String(size));
   }, [size]);
 
   useEffect(() => {
@@ -113,6 +117,9 @@ export function TimerWidget() {
       if (copyTimeout.current) {
         window.clearTimeout(copyTimeout.current);
       }
+      if (hideNavTimer.current) {
+        window.clearTimeout(hideNavTimer.current);
+      }
     };
   }, []);
 
@@ -127,6 +134,26 @@ export function TimerWidget() {
   };
 
   const scale = Math.min(Math.max(size, 25), 120);
+
+  const scheduleHideNav = () => {
+    if (hideNavTimer.current) window.clearTimeout(hideNavTimer.current);
+    hideNavTimer.current = window.setTimeout(() => setShowNav(false), 2200);
+  };
+
+  const clearHideNav = () => {
+    if (hideNavTimer.current) {
+      window.clearTimeout(hideNavTimer.current);
+      hideNavTimer.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (showNav) {
+      scheduleHideNav();
+    } else {
+      clearHideNav();
+    }
+  }, [showNav]);
 
   const [minDisplay, secDisplay] = useMemo(() => {
     const m = Math.floor(remaining / 60)
@@ -181,7 +208,14 @@ export function TimerWidget() {
           </div>
         </div>
 
-        <div className="fc-nav">
+        <div
+          className={`fc-nav ${showNav ? "is-visible" : ""}`}
+          onMouseEnter={() => {
+            setShowNav(true);
+            clearHideNav();
+          }}
+          onMouseLeave={scheduleHideNav}
+        >
           <a className="fc-nav-btn" href="/clock" aria-label="Home" title="Clock">
             <Home size={18} strokeWidth={1.6} />
           </a>
@@ -199,56 +233,61 @@ export function TimerWidget() {
           </button>
         </div>
 
-        {showControls && (
-          <>
-            <div className="fc-panel-backdrop" onClick={() => setShowControls(false)} />
+        <div
+          className="fc-nav-hover-zone"
+          onMouseEnter={() => {
+            setShowNav(true);
+            clearHideNav();
+          }}
+          onMouseLeave={scheduleHideNav}
+        />
 
-            <div className="fc-panel-dock">
-              <div className="fc-dock-slider">
-                <input
-                  className="fc-slider"
-                  type="range"
-                  min={25}
-                  max={120}
-                  step={3}
-                  value={scale}
-                  onChange={(e) => setSize(Number(e.target.value))}
-                  aria-label="Size"
-                />
-              </div>
-              <div className="fc-dock-slider" style={{ minWidth: 160 }}>
-                <input
-                  className="fc-slider"
-                  type="range"
-                  min={1}
-                  max={60}
-                  step={1}
-                  value={Math.floor(durationSeconds / 60)}
-                  onChange={(e) => updateDuration(Number(e.target.value))}
-                  aria-label="Duration minutes"
-                />
-              </div>
-              <button className="fc-chip" onClick={() => setIsRunning(true)} disabled={isRunning || remaining === 0}>
-                Start
-              </button>
-              <button className="fc-chip" onClick={() => setIsRunning(false)} disabled={!isRunning}>
-                Pause
-              </button>
-              <button
-                className="fc-chip"
-                onClick={() => {
-                  setIsRunning(false);
-                  setRemaining(durationSeconds);
-                }}
-              >
-                Reset
-              </button>
-              <button className="fc-nav-btn" aria-label="Copy embed" onClick={copyEmbed}>
-                <Link2 size={18} strokeWidth={1.6} />
-              </button>
-            </div>
-          </>
-        )}
+        {showControls && <div className="fc-panel-backdrop" onClick={() => setShowControls(false)} />}
+
+        <div className={`fc-panel-dock ${showControls ? "is-visible" : ""}`}>
+          <div className="fc-dock-slider">
+            <input
+              className="fc-slider"
+              type="range"
+              min={25}
+              max={120}
+              step={3}
+              value={scale}
+              onChange={(e) => setSize(Number(e.target.value))}
+              aria-label="Size"
+            />
+          </div>
+          <div className="fc-dock-slider" style={{ minWidth: 160 }}>
+            <input
+              className="fc-slider"
+              type="range"
+              min={1}
+              max={60}
+              step={1}
+              value={Math.floor(durationSeconds / 60)}
+              onChange={(e) => updateDuration(Number(e.target.value))}
+              aria-label="Duration minutes"
+            />
+          </div>
+          <button className="fc-chip" onClick={() => setIsRunning(true)} disabled={isRunning || remaining === 0}>
+            Start
+          </button>
+          <button className="fc-chip" onClick={() => setIsRunning(false)} disabled={!isRunning}>
+            Pause
+          </button>
+          <button
+            className="fc-chip"
+            onClick={() => {
+              setIsRunning(false);
+              setRemaining(durationSeconds);
+            }}
+          >
+            Reset
+          </button>
+          <button className="fc-nav-btn" aria-label="Copy embed" onClick={copyEmbed}>
+            <Link2 size={18} strokeWidth={1.6} />
+          </button>
+        </div>
 
         {copied && <div className="fc-toast">Embed link copied</div>}
       </div>

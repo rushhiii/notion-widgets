@@ -35,7 +35,7 @@ export function ClockWidget() {
   const searchParams = useSearchParams();
   const [now, setNow] = useState<Date | null>(null);
 
-  const sizeFromQuery = parseIntParam(searchParams.get("size"), 9999, 61, 120);
+  const sizeFromQuery = parseIntParam(searchParams.get("size"), 75, 50, 120);
   const formatFromQuery = searchParams.get("format") === "24";
   const secondsFromQuery = parseBool(searchParams.get("seconds"), true);
   const controlsFromQuery = parseBool(searchParams.get("controls"), false);
@@ -57,6 +57,7 @@ export function ClockWidget() {
   const [showNav, setShowNav] = useState<boolean>(true);
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const [autoScale, setAutoScale] = useState(1);
+  const [isVertical, setIsVertical] = useState(false);
 
   useEffect(() => {
     setNow(new Date());
@@ -131,6 +132,7 @@ export function ClockWidget() {
       const base = 860;
       const factor = Math.min(1, width / base);
       setAutoScale(Number(factor.toFixed(3)) || 1);
+      setIsVertical(width < 620);
     });
     observer.observe(surfaceRef.current);
     return () => observer.disconnect();
@@ -158,7 +160,7 @@ export function ClockWidget() {
 
   const scheduleHideNav = () => {
     if (hideNavTimer.current) window.clearTimeout(hideNavTimer.current);
-    hideNavTimer.current = window.setTimeout(() => setShowNav(false), 500);
+    hideNavTimer.current = window.setTimeout(() => setShowNav(false), 800);
   };
 
   const clearHideNav = () => {
@@ -228,7 +230,10 @@ export function ClockWidget() {
       <div className="fc-surface" ref={surfaceRef}>
         <div className="fc-line" aria-hidden />
 
-        <div className={showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"} style={{ transform: `scale(${scale / 100})`, transformOrigin: "center" }}>
+        <div
+          className={`${showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"} ${isVertical ? "is-vertical" : ""}`}
+          style={{ transform: `scale(${scale / 100})`, transformOrigin: "center" }}
+        >
           <div className="fc-holder">
             <FlipDigit value={currentTime?.hour ?? ""} pad={false} />
             {!is24h && <h2>{currentTime?.period}</h2>}

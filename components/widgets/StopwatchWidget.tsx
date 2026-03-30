@@ -48,7 +48,7 @@ function formatHMS(totalSeconds: number): [string, string, string] {
 export function StopwatchWidget() {
   const searchParams = useSearchParams();
 
-  const sizeFromQuery = parseIntParam(searchParams.get("size"), 75, 75, 120);
+  const sizeFromQuery = parseIntParam(searchParams.get("size"), 999, 61, 120);
   const themeFromQuery = (searchParams.get("theme")?.trim().toLowerCase() as ThemeName) || "default";
   const startFromQuery = parseBool(searchParams.get("start"), false);
   const initialTime = parseTimeParam(searchParams.get("t")) ?? 0;
@@ -63,9 +63,12 @@ export function StopwatchWidget() {
   const [showSeconds, setShowSeconds] = useState<boolean>(true);
   const [copied, setCopied] = useState<boolean>(false);
   const copyTimeout = useRef<number | null>(null);
+  const hideNavTimer = useRef<number | null>(null);
+  const [showNav, setShowNav] = useState<boolean>(true);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("stopwatch_size");
+    const shared = window.localStorage.getItem("fc_size");
+    const stored = shared ?? window.localStorage.getItem("stopwatch_size");
     if (stored) {
       const n = Number(stored);
       if (Number.isFinite(n)) setSize(n);
@@ -80,6 +83,7 @@ export function StopwatchWidget() {
 
   useEffect(() => {
     window.localStorage.setItem("stopwatch_size", String(size));
+    window.localStorage.setItem("fc_size", String(size));
   }, [size]);
 
   useEffect(() => {
@@ -123,6 +127,9 @@ export function StopwatchWidget() {
       if (copyTimeout.current) {
         window.clearTimeout(copyTimeout.current);
       }
+      if (hideNavTimer.current) {
+        window.clearTimeout(hideNavTimer.current);
+      }
     };
   }, []);
 
@@ -137,6 +144,26 @@ export function StopwatchWidget() {
   };
 
   const scale = Math.min(Math.max(size, 25), 120);
+
+  const scheduleHideNav = () => {
+    if (hideNavTimer.current) window.clearTimeout(hideNavTimer.current);
+    hideNavTimer.current = window.setTimeout(() => setShowNav(false), 2200);
+  };
+
+  const clearHideNav = () => {
+    if (hideNavTimer.current) {
+      window.clearTimeout(hideNavTimer.current);
+      hideNavTimer.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (showNav) {
+      scheduleHideNav();
+    } else {
+      clearHideNav();
+    }
+  }, [showNav]);
 
   const [hoursDisplay, minDisplay, secDisplay] = useMemo(() => formatHMS(elapsed), [elapsed]);
 
@@ -207,7 +234,14 @@ export function StopwatchWidget() {
           </button>
         </div>
 
-        <div className="fc-nav">
+        <div
+          className={`fc-nav ${showNav ? "is-visible" : ""}`}
+          onMouseEnter={() => {
+            setShowNav(true);
+            clearHideNav();
+          }}
+          onMouseLeave={scheduleHideNav}
+        >
           <a className="fc-nav-btn" href="/clock" aria-label="Home" title="Clock">
             <Home size={18} strokeWidth={1.6} />
           </a>
@@ -242,45 +276,50 @@ export function StopwatchWidget() {
           </button>
         </div>
 
-        {showControls && (
-          <>
-            <div className="fc-panel-backdrop" onClick={() => setShowControls(false)} />
+        <div
+          className="fc-nav-hover-zone"
+          onMouseEnter={() => {
+            setShowNav(true);
+            clearHideNav();
+          }}
+          onMouseLeave={scheduleHideNav}
+        />
 
-            <div className="fc-panel-dock">
-              <div className="fc-dock-slider">
-                <input
-                  className="fc-slider"
-                  type="range"
-                  min={25}
-                  max={120}
-                  step={3}
-                  value={scale}
-                  onChange={(e) => setSize(Number(e.target.value))}
-                  aria-label="Size"
-                />
-              </div>
-              <button className="fc-inline-btn" aria-label={isRunning ? "Pause" : "Start"} onClick={() => setIsRunning((v) => !v)}>
-                {isRunning ? <Pause size={18} strokeWidth={1.6} /> : <Play size={18} strokeWidth={1.6} />}
-              </button>
-              <button
-                className="fc-inline-btn"
-                aria-label="Reset"
-                onClick={() => {
-                  setIsRunning(false);
-                  setElapsed(0);
-                }}
-              >
-                <RotateCcw size={18} strokeWidth={1.6} />
-              </button>
-              <button className={showSeconds ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowSeconds((v) => !v)}>
-                <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
-              </button>
-              <button className="fc-nav-btn" aria-label="Copy embed" onClick={copyEmbed}>
-                <Link2 size={18} strokeWidth={1.6} />
-              </button>
-            </div>
-          </>
-        )}
+        {showControls && <div className="fc-panel-backdrop" onClick={() => setShowControls(false)} />}
+
+        <div className={`fc-panel-dock ${showControls ? "is-visible" : ""}`}>
+          <div className="fc-dock-slider">
+            <input
+              className="fc-slider"
+              type="range"
+              min={25}
+              max={120}
+              step={3}
+              value={scale}
+              onChange={(e) => setSize(Number(e.target.value))}
+              aria-label="Size"
+            />
+          </div>
+          <button className="fc-inline-btn" aria-label={isRunning ? "Pause" : "Start"} onClick={() => setIsRunning((v) => !v)}>
+            {isRunning ? <Pause size={18} strokeWidth={1.6} /> : <Play size={18} strokeWidth={1.6} />}
+          </button>
+          <button
+            className="fc-inline-btn"
+            aria-label="Reset"
+            onClick={() => {
+              setIsRunning(false);
+              setElapsed(0);
+            }}
+          >
+            <RotateCcw size={18} strokeWidth={1.6} />
+          </button>
+          <button className={showSeconds ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowSeconds((v) => !v)}>
+            <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
+          </button>
+          <button className="fc-nav-btn" aria-label="Copy embed" onClick={copyEmbed}>
+            <Link2 size={18} strokeWidth={1.6} />
+          </button>
+        </div>
 
         {copied && <div className="fc-toast">Embed link copied</div>}
       </div>
