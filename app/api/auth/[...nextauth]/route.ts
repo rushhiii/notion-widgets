@@ -16,7 +16,8 @@ const handler = NextAuth({
                     const adminUser = process.env.ADMIN_USERNAME;
                     const adminPass = process.env.ADMIN_PASSWORD;
                     const adminNameRaw = process.env.ADMIN_NAME || "Admin";
-                    const adminName = adminNameRaw.toUpperCase();
+                    const cap = (v: string) => (v.length ? v[0].toUpperCase() + v.slice(1) : v);
+                    const adminName = cap(adminNameRaw);
                     if (
                         adminUser &&
                         adminPass &&
@@ -41,7 +42,8 @@ const handler = NextAuth({
                                 `) as { id: string; name: string | null; username: string; role: string | null }[];
                                 const found = row[0];
                                 if (found) {
-                                    return { id: found.id, name: (found.name || adminName).toUpperCase(), role: found.role || "admin", username: found.username };
+                                    const nameVal = found.name || adminName;
+                                    return { id: found.id, name: cap(nameVal), role: found.role || "admin", username: found.username };
                                 }
                             } catch (err) {
                                 console.error("Failed to ensure admin in DB", err);
@@ -55,11 +57,11 @@ const handler = NextAuth({
                     const dbUrl = process.env.DATABASE_URL;
                     if (isSpecialUser && dbUrl && credentials?.password) {
                         try {
-                            const sql = neon(dbUrl);
-                            const upper = credentials.username.toUpperCase();
+                                                        const sql = neon(dbUrl);
+                                                        const capName = cap(credentials.username);
                             await sql`
                               INSERT INTO users (id, name, username, password, role)
-                              VALUES (${credentials.username}, ${upper}, ${credentials.username}, ${credentials.password}, 'user')
+                                                            VALUES (${credentials.username}, ${capName}, ${credentials.username}, ${credentials.password}, 'user')
                               ON CONFLICT (id) DO UPDATE
                                 SET name = EXCLUDED.name,
                                     username = EXCLUDED.username,
