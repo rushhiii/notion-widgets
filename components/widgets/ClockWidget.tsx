@@ -132,7 +132,7 @@ export function ClockWidget() {
       const base = 860;
       const factor = Math.min(1, width / base);
       setAutoScale(Number(factor.toFixed(3)) || 1);
-      setIsVertical(width < 620);
+      setIsVertical(width < 500);
     });
     observer.observe(surfaceRef.current);
     return () => observer.disconnect();

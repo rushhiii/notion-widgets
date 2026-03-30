@@ -907,7 +907,10 @@
 @media (max-width: 640px) {
   .fc-surface {
     justify-content: flex-start;
-    padding-top: 18px;
+  gap: 0;
+    /* padding-top: 18px; */
+    padding: 0;
+    min-height: fit-content;
   }
 
   .fc-container {
