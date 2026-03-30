@@ -17,9 +17,13 @@ const ninaRed = {
 
 export default function NinaPage() {
   const { data: session } = useSession();
-  type SessionWithUser = Session & { user: Session["user"] & { id?: string; username?: string; role?: string } };
+  type SessionWithUser = Session & { user: Session["user"] & { id: string; username?: string; role?: string } };
   const typedSession = session as SessionWithUser | null;
-  const displayName = ((typedSession?.user?.name || typedSession?.user?.username || "").trim()) || "User";
+  const sessionForForm = typedSession?.user?.id
+    ? ({ ...typedSession, user: { ...typedSession.user, id: typedSession.user.id } } as SessionWithUser)
+    : null;
+  const displayRaw = ((typedSession?.user?.name || typedSession?.user?.username || "").trim()) || "User";
+  const displayName = displayRaw.length ? displayRaw[0].toUpperCase() + displayRaw.slice(1) : "User";
   const [showAccountModal, setShowAccountModal] = useState(false);
   // Dynamic greeting based on time, with live update
   const [greeting, setGreeting] = useState("");
@@ -46,10 +50,12 @@ export default function NinaPage() {
             <p className="badge inline-flex rounded-full border px-3 py-1 text-xs font-medium bg-white/40 tracking-wide" style={{ background: ninaRed.bg, borderColor: ninaRed.accent, color: ninaRed.accentLight }}>
               {`${displayName}\'s Dashboard`}
             </p>
-            <div className="relative group">
+            <div className="relative group rounded-full">
+              {/* Logout button (kept for reference, hidden by default) */}
+              {/*
               <button
                 onClick={() => signOut({ callbackUrl: "/prvt/login" })}
-                className="rounded-full transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-0 text-xs font-medium tracking-wide text-white"
+                className="rounded-full bg-[#0000] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-0 text-xs font-medium tracking-wide text-white"
                 aria-label="Logout"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="size-7" style={{ fill: ninaRed.accentLight }}>
@@ -59,18 +65,25 @@ export default function NinaPage() {
               <div className="pointer-events-none absolute -right-0 top-0 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 bg-red-900 text-white text-xs px-4 py-1 rounded-lg shadow-lg border border-red-700 select-none min-w-max max-w-xs whitespace-nowrap">
                 Logout
               </div>
-            </div>
-            <div className="relative group">
-              <button
-                onClick={() => setShowAccountModal(true)}
-                className="rounded-full transition duration-300 ease-in-out bg-red-900/50 hover:bg-red-800/70 text-white text-xs font-semibold px-3 py-2 border border-red-700 shadow"
-                aria-label="Account settings"
-              >
-                Account
-              </button>
-              <div className="pointer-events-none absolute -right-0 top-0 translate-y-8 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-red-900 text-white text-xs px-3 py-1 rounded-lg shadow border border-red-700 select-none whitespace-nowrap">
-                Account Settings
+              */}
+
+              <div className="relative flex items-center rounded-full">
+                <button
+                  onClick={() => setShowAccountModal(true)}
+                  className="rounded-full bg-[#0000] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-auto text-xs font-medium tracking-wide text-white"
+                  aria-label="Account Settings"
+                  onMouseEnter={e => e.currentTarget.nextElementSibling?.classList.add('opacity-100','pointer-events-auto')}
+                  onMouseLeave={e => e.currentTarget.nextElementSibling?.classList.remove('opacity-100','pointer-events-auto')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="size-8" style={{ fill: ninaRed.accentLight }}>
+                    <path d="M463 448.2C440.9 409.8 399.4 384 352 384L288 384C240.6 384 199.1 409.8 177 448.2C212.2 487.4 263.2 512 320 512C376.8 512 427.8 487.3 463 448.2zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320zM320 336C359.8 336 392 303.8 392 264C392 224.2 359.8 192 320 192C280.2 192 248 224.2 248 264C248 303.8 280.2 336 320 336z"/>
+                  </svg>
+                </button>
+                <div className="pointer-events-none absolute right-9 top-1 opacity-0 transition-all duration-200 border border-red-700 bg-red-900/70 text-red-100 text-xs px-4 py-1 rounded-lg shadow-lg select-none min-w-max max-w-xs whitespace-nowrap">
+                  Account Settings
+                </div>
               </div>
+
             </div>
           </div>
           <h1 className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl" style={{ color: ninaRed.accentLight }}>
@@ -80,7 +93,7 @@ export default function NinaPage() {
             This is your private dashboard. Only you can see this page. Add your private widgets and content here.
           </p>
         </header>
-        {showAccountModal && typedSession?.user?.id && (
+        {showAccountModal && sessionForForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
             <div className="relative w-full max-w-md rounded-2xl border border-red-700 bg-[#2a0f0f] shadow-2xl overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(220,38,38,0.18),transparent_55%)]" />
@@ -93,7 +106,9 @@ export default function NinaPage() {
                   &times;
                 </button>
                 <h2 className="text-xl font-bold mb-4 text-red-100 text-center tracking-tight">Account Settings</h2>
-                <AccountSettingsForm session={typedSession as any} setShowAccountModal={setShowAccountModal} />
+                <div className="[&>form]:flex [&>form]:flex-col [&>form]:gap-4 [&>form_label_span]:text-red-200 [&>form_input]:bg-[#161012] [&>form_input]:border [&>form_input]:border-red-800 [&>form_input]:text-red-50 [&>form_input]:focus:border-red-400 [&>form_input]:focus:ring-red-500">
+                  <AccountSettingsForm session={sessionForForm} setShowAccountModal={setShowAccountModal} />
+                </div>
               </div>
             </div>
           </div>

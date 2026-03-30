@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import AccountSettingsForm from "./AccountSettingsForm";
@@ -23,6 +23,24 @@ export default function PrvtPage() {
   const typedSession = session as SessionWithUser | null;
   // Account modal state must be defined at the top
   const [showAccountModal, setShowAccountModal] = useState(false);
+  const displayRaw = ((typedSession?.user?.name || typedSession?.user?.username || "").trim()) || "User";
+  const displayName = displayRaw.length ? displayRaw[0].toUpperCase() + displayRaw.slice(1) : "User";
+  const [greeting, setGreeting] = useState("");
+
+  useEffect(() => {
+    function getGreeting() {
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour < 12) return "Good Morning";
+      if (hour >= 12 && hour < 17) return "Good Afternoon";
+      if (hour >= 17 && hour < 21) return "Good Evening";
+      if (hour >= 21 || hour === 0) return "Good Night";
+      if (hour >= 1 && hour < 5) return "Good Midnight";
+      return "Greetings";
+    }
+    setGreeting(getGreeting());
+    const interval = setInterval(() => setGreeting(getGreeting()), 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (status === "loading") {
     return <div className="flex items-center bg-zinc-950 text-zinc-100 justify-center min-h-screen text-lg">Loading...</div>;
@@ -108,7 +126,7 @@ export default function PrvtPage() {
                 {/* End Account Modal */}
 
           <h1 className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
-            {typedSession?.user?.name ? `Greetings ${typedSession.user.name}, welcome to your private access` : 'Welcome to Your Private Widgets'}
+            {`${greeting || "Greetings"} ${displayName}, welcome to your private access`}
           </h1>
           <p className="lead mt-3 max-w-3xl text-sm md:text-base">
             This is your private dashboard. Only authenticated users can see this page. Add your private widgets and content here.
