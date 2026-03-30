@@ -57,7 +57,7 @@ export default function AccountSettingsForm({ session, setShowAccountModal }: Pr
       if (!res.ok) {
         setError((data && data.error ? data.error : "Failed to update user") + (data && data.details ? ": " + data.details : ""));
       } else {
-        setSuccess("Account updated! You will be logged out to apply changes.");
+        setSuccess("Account updated. You will be redirected to sign out—log back in to see changes.");
         if (setShowAccountModal) setShowAccountModal(false);
         setTimeout(() => {
           signOut({ callbackUrl: "/prvt/login" });

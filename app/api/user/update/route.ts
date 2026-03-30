@@ -22,6 +22,7 @@ export async function POST(req: Request) {
         const body = parsed as Partial<UpdateBody>;
         const { id, name, username } = body;
         const password = body.password && body.password.trim() !== "" ? body.password : null;
+        const upperName = typeof name === "string" ? name.toUpperCase() : name;
 
         if (!id || !username) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
 
         let updated = (await sql`
             UPDATE users
-            SET name = COALESCE(${name}, name), username = ${username}, password = COALESCE(${password}, password)
+            SET name = COALESCE(NULLIF(${upperName}, ''), name), username = ${username}, password = COALESCE(${password}, password)
             WHERE id = ${id}
             RETURNING id, name, username, role
         `) as { id: string; name: string | null; username: string; role: string | null }[];
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
         if (updated.length === 0) {
             updated = (await sql`
                 UPDATE users
-                SET name = COALESCE(${name}, name), password = COALESCE(${password}, password)
+                SET name = COALESCE(NULLIF(${upperName}, ''), name), password = COALESCE(${password}, password)
                 WHERE username = ${username}
                 RETURNING id, name, username, role
             `) as { id: string; name: string | null; username: string; role: string | null }[];

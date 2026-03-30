@@ -15,7 +15,8 @@ const handler = NextAuth({
                     // Admin user (env-based; set ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_NAME in env)
                     const adminUser = process.env.ADMIN_USERNAME;
                     const adminPass = process.env.ADMIN_PASSWORD;
-                    const adminName = process.env.ADMIN_NAME || "Admin";
+                    const adminNameRaw = process.env.ADMIN_NAME || "Admin";
+                    const adminName = adminNameRaw.toUpperCase();
                     if (
                         adminUser &&
                         adminPass &&
@@ -30,24 +31,50 @@ const handler = NextAuth({
                                 await sql`
                                   INSERT INTO users (id, name, username, password, role)
                                   VALUES ('admin', ${adminName}, ${adminUser}, ${adminPass}, 'admin')
-                                  ON CONFLICT (id) DO UPDATE
-                                    SET name = EXCLUDED.name,
-                                        username = EXCLUDED.username,
-                                        password = EXCLUDED.password,
-                                        role = EXCLUDED.role
+                                  ON CONFLICT (id) DO NOTHING
                                 `;
+                                const row = (await sql`
+                                  SELECT id, name, username, role
+                                  FROM users
+                                  WHERE id = 'admin'
+                                  LIMIT 1
+                                `) as { id: string; name: string | null; username: string; role: string | null }[];
+                                const found = row[0];
+                                if (found) {
+                                    return { id: found.id, name: (found.name || adminName).toUpperCase(), role: found.role || "admin", username: found.username };
+                                }
                             } catch (err) {
-                                console.error("Failed to upsert admin in DB", err);
+                                console.error("Failed to ensure admin in DB", err);
                             }
                         }
                         return { id: "admin", name: adminName, role: "admin", username: credentials.username };
+                    }
+
+                    // Ensure special demo users exist (nina, nishi)
+                    const isSpecialUser = credentials?.username && ["nina", "nishi"].includes(credentials.username);
+                    const dbUrl = process.env.DATABASE_URL;
+                    if (isSpecialUser && dbUrl && credentials?.password) {
+                        try {
+                            const sql = neon(dbUrl);
+                            const upper = credentials.username.toUpperCase();
+                            await sql`
+                              INSERT INTO users (id, name, username, password, role)
+                              VALUES (${credentials.username}, ${upper}, ${credentials.username}, ${credentials.password}, 'user')
+                              ON CONFLICT (id) DO UPDATE
+                                SET name = EXCLUDED.name,
+                                    username = EXCLUDED.username,
+                                    password = EXCLUDED.password,
+                                    role = EXCLUDED.role
+                            `;
+                        } catch (err) {
+                            console.error("Failed to ensure special user", err);
+                        }
                     }
 
                     // All other users: check Postgres via Neon
                     if (!credentials?.username || !credentials?.password) {
                         return null;
                     }
-                    const dbUrl = process.env.DATABASE_URL;
                     if (!dbUrl) {
                         console.error("DATABASE_URL is not set");
                         return null;
