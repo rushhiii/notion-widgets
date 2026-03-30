@@ -60,10 +60,8 @@ export default function AccountSettingsForm({ session, setShowAccountModal }: Pr
         setSuccess("Account updated! You will be logged out to apply changes.");
         if (setShowAccountModal) setShowAccountModal(false);
         setTimeout(() => {
-          signOut({ callbackUrl: "/prvt/signout", redirect: false }).finally(() => {
-            window.location.replace("/prvt/signout");
-          });
-        }, 1200);
+          signOut({ callbackUrl: "/prvt/login" });
+        }, 900);
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
