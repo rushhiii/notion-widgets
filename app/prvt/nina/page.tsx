@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
+import type { Session } from "next-auth";
+import AccountSettingsForm from "../AccountSettingsForm";
 
 
 // Custom red shade for Nina's dashboard
@@ -15,6 +17,10 @@ const ninaRed = {
 
 export default function NinaPage() {
   const { data: session } = useSession();
+  type SessionWithUser = Session & { user: Session["user"] & { id?: string; username?: string; role?: string } };
+  const typedSession = session as SessionWithUser | null;
+  const displayName = ((typedSession?.user?.name || typedSession?.user?.username || "").trim()) || "User";
+  const [showAccountModal, setShowAccountModal] = useState(false);
   // Dynamic greeting based on time, with live update
   const [greeting, setGreeting] = useState("");
   React.useEffect(() => {
@@ -38,7 +44,7 @@ export default function NinaPage() {
         <header className="mb-7">
           <div className="flex justify-between items-center ">
             <p className="badge inline-flex rounded-full border px-3 py-1 text-xs font-medium bg-white/40 tracking-wide" style={{ background: ninaRed.bg, borderColor: ninaRed.accent, color: ninaRed.accentLight }}>
-              {session?.user?.name ? `${session.user.name} Dashboard` : 'Nina Dashboard'}
+              {`${displayName}\'s Dashboard`}
             </p>
             <div className="relative group">
               <button
@@ -54,14 +60,44 @@ export default function NinaPage() {
                 Logout
               </div>
             </div>
+            <div className="relative group">
+              <button
+                onClick={() => setShowAccountModal(true)}
+                className="rounded-full transition duration-300 ease-in-out bg-red-900/50 hover:bg-red-800/70 text-white text-xs font-semibold px-3 py-2 border border-red-700 shadow"
+                aria-label="Account settings"
+              >
+                Account
+              </button>
+              <div className="pointer-events-none absolute -right-0 top-0 translate-y-8 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-red-900 text-white text-xs px-3 py-1 rounded-lg shadow border border-red-700 select-none whitespace-nowrap">
+                Account Settings
+              </div>
+            </div>
           </div>
           <h1 className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl" style={{ color: ninaRed.accentLight }}>
-            {`${greeting}${session?.user?.name ? " "+session.user.name : "!"}, welcome to your private access`}
+            {`${greeting} ${displayName}, welcome to your private access`}
           </h1>
           <p className="lead mt-3 max-w-3xl text-sm md:text-base" style={{ color: ninaRed.text }}>
             This is your private dashboard. Only you can see this page. Add your private widgets and content here.
           </p>
         </header>
+        {showAccountModal && typedSession?.user?.id && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+            <div className="relative w-full max-w-md rounded-2xl border border-red-700 bg-[#2a0f0f] shadow-2xl overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(220,38,38,0.18),transparent_55%)]" />
+              <div className="relative p-6">
+                <button
+                  className="absolute top-2 right-4 text-red-200 hover:text-white text-3xl"
+                  onClick={() => setShowAccountModal(false)}
+                  aria-label="Close"
+                >
+                  &times;
+                </button>
+                <h2 className="text-xl font-bold mb-4 text-red-100 text-center tracking-tight">Account Settings</h2>
+                <AccountSettingsForm session={typedSession as any} setShowAccountModal={setShowAccountModal} />
+              </div>
+            </div>
+          </div>
+        )}
         <section className="flex flex-col gap-8 mt-6">
           {/* <DdayWidget />
           <ClockWidget />
