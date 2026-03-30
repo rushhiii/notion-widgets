@@ -42,12 +42,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Username already taken" }, { status: 409 });
         }
 
-        const updated = (await sql`
+        let updated = (await sql`
             UPDATE users
             SET name = COALESCE(${name}, name), username = ${username}, password = COALESCE(${password}, password)
             WHERE id = ${id}
             RETURNING id, name, username, role
         `) as { id: string; name: string | null; username: string; role: string | null }[];
+
+        // Fallback: if no row matched by id (e.g., legacy rows with different ids), try matching by username
+        if (updated.length === 0) {
+            updated = (await sql`
+                UPDATE users
+                SET name = COALESCE(${name}, name), password = COALESCE(${password}, password)
+                WHERE username = ${username}
+                RETURNING id, name, username, role
+            `) as { id: string; name: string | null; username: string; role: string | null }[];
+        }
 
         if (updated.length === 0) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
