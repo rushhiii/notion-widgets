@@ -35,9 +35,9 @@ export function ClockWidget() {
   const searchParams = useSearchParams();
   const [now, setNow] = useState<Date | null>(null);
 
-  const sizeFromQuery = parseIntParam(searchParams.get("size"), 75, 75, 120);
+  const sizeFromQuery = parseIntParam(searchParams.get("size"), 9999, 61, 120);
   const formatFromQuery = searchParams.get("format") === "24";
-  const secondsFromQuery = parseBool(searchParams.get("seconds"), false);
+  const secondsFromQuery = parseBool(searchParams.get("seconds"), true);
   const controlsFromQuery = parseBool(searchParams.get("controls"), false);
   const themeFromQuery = (searchParams.get("theme")?.trim().toLowerCase() as ThemeName) || "default";
 
@@ -52,6 +52,11 @@ export function ClockWidget() {
   const [showControls, setShowControls] = useState<boolean>(controlsFromQuery);
   const [copied, setCopied] = useState<boolean>(false);
   const copyTimeout = useRef<number | null>(null);
+  const hidePanelTimer = useRef<number | null>(null);
+  const hideNavTimer = useRef<number | null>(null);
+  const [showNav, setShowNav] = useState<boolean>(true);
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const [autoScale, setAutoScale] = useState(1);
 
   useEffect(() => {
     setNow(new Date());
@@ -80,7 +85,7 @@ export function ClockWidget() {
     const storedTheme = window.localStorage.getItem("fc_theme") as ThemeName | null;
     if (storedTheme && THEME_ORDER.includes(storedTheme)) setThemeName(storedTheme);
     const storedControls = window.localStorage.getItem("fc_controls");
-    if (storedControls === "true") setShowControls(true);
+    if (storedControls === "true") setShowControls(false);
   }, []);
 
   useEffect(() => {
@@ -108,8 +113,68 @@ export function ClockWidget() {
       if (copyTimeout.current) {
         window.clearTimeout(copyTimeout.current);
       }
+      if (hidePanelTimer.current) {
+        window.clearTimeout(hidePanelTimer.current);
+      }
+      if (hideNavTimer.current) {
+        window.clearTimeout(hideNavTimer.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!surfaceRef.current || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width ?? 0;
+      if (!width) return;
+      // const base = showSeconds ? 860 : 720;
+      const base = 860;
+      const factor = Math.min(1, width / base);
+      setAutoScale(Number(factor.toFixed(3)) || 1);
+    });
+    observer.observe(surfaceRef.current);
+    return () => observer.disconnect();
+  }, [showSeconds]);
+
+  const scheduleHidePanel = () => {
+    if (hidePanelTimer.current) window.clearTimeout(hidePanelTimer.current);
+    hidePanelTimer.current = window.setTimeout(() => setShowControls(false), 2600);
+  };
+
+  const clearHidePanel = () => {
+    if (hidePanelTimer.current) {
+      window.clearTimeout(hidePanelTimer.current);
+      hidePanelTimer.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (showControls) {
+      scheduleHidePanel();
+    } else {
+      clearHidePanel();
+    }
+  }, [showControls]);
+
+  const scheduleHideNav = () => {
+    if (hideNavTimer.current) window.clearTimeout(hideNavTimer.current);
+    hideNavTimer.current = window.setTimeout(() => setShowNav(false), 500);
+  };
+
+  const clearHideNav = () => {
+    if (hideNavTimer.current) {
+      window.clearTimeout(hideNavTimer.current);
+      hideNavTimer.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (showNav) {
+      scheduleHideNav();
+    } else {
+      clearHideNav();
+    }
+  }, [showNav]);
 
   const currentTime = useMemo(() => {
     if (!now) return null;
@@ -155,14 +220,15 @@ export function ClockWidget() {
     }
   };
 
-  const scale = Math.min(Math.max(size, 25), 120);
+  const baseScale = Math.min(Math.max(size, 25), 120);
+  const scale = baseScale * autoScale;
 
   return (
     <div className="fc-root" style={rootStyle}>
-      <div className="fc-surface">
+      <div className="fc-surface" ref={surfaceRef}>
         <div className="fc-line" aria-hidden />
 
-        <div className={showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"} style={{ transform: `scale(${scale / 100})` }}>
+        <div className={showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"} style={{ transform: `scale(${scale / 100})`, transformOrigin: "center" }}>
           <div className="fc-holder">
             <FlipDigit value={currentTime?.hour ?? ""} pad={false} />
             {!is24h && <h2>{currentTime?.period}</h2>}
@@ -179,7 +245,14 @@ export function ClockWidget() {
           )}
         </div>
 
-        <div className="fc-nav">
+        <div
+          className={`fc-nav ${showNav ? "is-visible" : ""}`}
+          onMouseEnter={() => {
+            setShowNav(true);
+            clearHideNav();
+          }}
+          onMouseLeave={scheduleHideNav}
+        >
           <a className="fc-nav-btn" href="/timer" aria-label="Timer" title="Timer">
             <Timer size={18} strokeWidth={1.6} />
           </a>
@@ -197,81 +270,91 @@ export function ClockWidget() {
           </button>
         </div>
 
-        {showControls && (
-          <>
-            <div className="fc-panel-backdrop" onClick={() => setShowControls(false)} />
+        <div
+          className="fc-nav-hover-zone"
+          onMouseEnter={() => {
+            setShowNav(true);
+            clearHideNav();
+          }}
+          onMouseLeave={scheduleHideNav}
+        />
 
-            <div className="fc-panel fc-panel-floating" role="dialog" aria-modal>
-              <button className="fc-nav-btn fc-panel-close" aria-label="Close settings" onClick={() => setShowControls(false)}>
-                <X size={18} strokeWidth={1.8} />
-              </button>
-              <div className="fc-panel-themes-only">
-                <div className="fc-themes fc-themes-compact">
-                  {themeList.map((name) => {
-                    const t = THEMES[name];
-                    return (
-                      <button
-                        key={name}
-                        className="fc-theme-swatch"
-                        style={{ background: `linear-gradient(135deg, ${t.background}, ${t.holder})`, color: t.text }}
-                        onClick={() => setThemeName(name)}
-                        aria-label={name}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+        {showControls && <div className="fc-panel-backdrop" onClick={() => setShowControls(false)} />}
 
-            <div className="fc-panel-dock">
-              <div className="fc-dock-slider">
-                {/* <SizeIcon /> */}
-                <input
-                  className="fc-slider"
-                  type="range"
-                  min={25}
-                  max={120}
-                  step={3}
-                  value={scale}
-                  onChange={(e) => setSize(Number(e.target.value))}
-                />
-              </div>
-              <button className="fc-pill-toggle" onClick={() => setIs24h((v) => !v)}>
-                <span className="fc-pill-text">12</span>
-                <input type="checkbox" checked={is24h} readOnly />
-                <span className="fc-pill-text">24</span>
-              </button>
-              <button className={showSeconds ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowSeconds((v) => !v)}>
-                <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
-              </button>
-              {/* <button className="fc-nav-btn" aria-label="Fullscreen" onClick={handleFullscreen}>
-                <FullscreenIcon active={isFullscreen} />
-              </button> */}
-              <button
-                className="fc-nav-btn embed-copy"
-                aria-label="Copy embed"
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set("size", String(scale));
-                  url.searchParams.set("format", is24h ? "24" : "12");
-                  url.searchParams.set("seconds", String(showSeconds ? 1 : 0));
-                  url.searchParams.set("theme", themeName);
-                  url.searchParams.set("controls", showControls ? "1" : "0");
-                  navigator.clipboard
-                    .writeText(url.toString())
-                    .then(() => {
-                      setCopied(true);
-                      if (copyTimeout.current) window.clearTimeout(copyTimeout.current);
-                      copyTimeout.current = window.setTimeout(() => setCopied(false), 1200);
-                    })
-                    .catch(() => undefined);
-                }}
-              >
-                <Link2 size={18} strokeWidth={1.6} />
-              </button>
+        <div
+          className={`fc-panel fc-panel-floating ${showControls ? "is-visible" : ""}`}
+          role="dialog"
+          aria-modal
+          onMouseEnter={clearHidePanel}
+          onMouseLeave={scheduleHidePanel}
+        >
+          <button className="fc-nav-btn fc-panel-close" aria-label="Close settings" onClick={() => setShowControls(false)}>
+            <X size={18} strokeWidth={1.8} />
+          </button>
+          <div className="fc-panel-themes-only">
+            <div className="fc-themes fc-themes-compact">
+              {themeList.map((name) => {
+                const t = THEMES[name];
+                return (
+                  <button
+                    key={name}
+                    className="fc-theme-swatch"
+                    style={{ background: `linear-gradient(135deg, ${t.background}, ${t.holder})`, color: t.text }}
+                    onClick={() => setThemeName(name)}
+                    aria-label={name}
+                  />
+                );
+              })}
             </div>
-          </>
-        )}
+          </div>
+        </div>
+
+        <div className={`fc-panel-dock ${showControls ? "is-visible" : ""}`} onMouseEnter={clearHidePanel} onMouseLeave={scheduleHidePanel}>
+          <div className="fc-dock-slider">
+            {/* <SizeIcon /> */}
+            <input
+              className="fc-slider"
+              type="range"
+              min={25}
+              max={120}
+              step={3}
+              value={baseScale}
+              onChange={(e) => setSize(Number(e.target.value))}
+            />
+          </div>
+          <button className="fc-pill-toggle" onClick={() => setIs24h((v) => !v)}>
+            <span className="fc-pill-text">12</span>
+            <input type="checkbox" checked={is24h} readOnly />
+            <span className="fc-pill-text">24</span>
+          </button>
+          <button className={showSeconds ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowSeconds((v) => !v)}>
+            <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
+          </button>
+          <button
+            className="fc-nav-btn embed-copy"
+            aria-label="Copy embed"
+            onClick={() => {
+              const url = new URL(window.location.href);
+              url.searchParams.set("size", String(scale));
+              url.searchParams.set("format", is24h ? "24" : "12");
+              url.searchParams.set("seconds", String(showSeconds ? 1 : 0));
+              url.searchParams.set("theme", themeName);
+              url.searchParams.set("controls", showControls ? "1" : "0");
+              navigator.clipboard
+                .writeText(url.toString())
+                .then(() => {
+                  setCopied(true);
+                  if (copyTimeout.current) window.clearTimeout(copyTimeout.current);
+                  copyTimeout.current = window.setTimeout(() => setCopied(false), 1200);
+                })
+                .catch(() => undefined);
+            }}
+          >
+            <Link2 size={18} strokeWidth={1.6} />
+          </button>
+        </div>
+
+        <div className="fc-panel-hover-zone" onMouseEnter={() => setShowControls(true)} />
 
         {copied && <div className="fc-toast">Embed link copied</div>}
       </div>
