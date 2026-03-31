@@ -94,7 +94,7 @@ function normalizePage(page) {
   const tagsProperty = pickProperty(properties, ["tags", "tag list", "labels"]);
   const pinnedProperty = pickProperty(properties, ["pinned", "pin"]);
   const personalProperty = pickProperty(properties, ["personal", "private"]);
-  const showProperty = pickProperty(properties, ["note", "show", "visible", "display"]);
+  const showProperty = pickProperty(properties, [ "show", "visible", "display"]);
 
   const fallbackSelect = firstPropertyOfType(properties, "select");
   const fallbackMultiSelect = firstPropertyOfType(properties, "multi_select");

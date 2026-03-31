@@ -20,7 +20,7 @@ export const THEMES: Record<ThemeName, { background: string; holder: string; tex
   purple: { background: "#0f0a1f", holder: "#17112b", text: "#d8c7ff" },
   teal: { background: "#0c1a1a", holder: "#132222", text: "#c0fff5" },
   sunset: { background: "#1a0f0c", holder: "#241512", text: "#ffc7a3" },
-  transparent: { background: "transparent", holder: "#101010", text: "#e5e7eb" },
+  transparent: { background: "#000000000", holder: "#101010", text: "#e5e7eb" },
   theme1: { background: "#0F140F", holder: "#1A1F1A", text: "#C4EBC1" },
   theme2: { background: "#131315", holder: "#1B1C20", text: "#C5C8F8" },
   theme3: { background: "#1B1616", holder: "#271E1E", text: "#EF6666" },
