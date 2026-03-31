@@ -93,6 +93,8 @@ const THEME_PRESETS: Record<
   },
 };
 
+const STORAGE_KEY = "progress_widget_progress";
+
 let milestoneId = 0;
 function nextId() {
   milestoneId += 1;
@@ -617,12 +619,40 @@ export function ProgressWidget() {
   const [selectedBarId, setSelectedBarId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Array<{ label: string; progress: number; goal?: number }>;
+      if (!Array.isArray(saved) || !saved.length) return;
+      setBars((current) =>
+        current.map((bar, idx) => {
+          const hit = saved.find((s) => s.label === bar.label);
+          if (!hit) return bar;
+          const nextProgress = clampNumber(hit.progress);
+          const nextGoal = Number.isFinite(hit.goal) ? clampNumber(hit.goal || bar.goal, 1) : bar.goal;
+          if (idx === 0) setProgress(nextProgress);
+          return { ...bar, progress: nextProgress, goal: nextGoal };
+        }),
+      );
+    } catch (err) {
+      console.error("progress load failed", err);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!bars.length) return;
     const exists = bars.some((bar) => bar.id === selectedBarId);
     if (!selectedBarId || !exists) {
       setSelectedBarId(bars[0].id);
     }
   }, [bars, selectedBarId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const payload = bars.map((b) => ({ label: b.label, progress: b.progress, goal: b.goal }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }, [bars]);
 
   useEffect(() => {
     setTitle(initial.title);
