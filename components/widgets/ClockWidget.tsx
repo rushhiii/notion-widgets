@@ -132,7 +132,8 @@ export function ClockWidget() {
       const base = 860;
       const factor = Math.min(1, width / base);
       setAutoScale(Number(factor.toFixed(3)) || 1);
-      setIsVertical(width < 760);
+      // setIsVertical(width < 760);
+      setIsVertical(width < 300);
     });
     observer.observe(surfaceRef.current);
     return () => observer.disconnect();
@@ -227,11 +228,11 @@ export function ClockWidget() {
 
   return (
     <div className="fc-root" style={rootStyle}>
-      <div className="fc-surface" ref={surfaceRef}>
+      <div className={`fc-surface ${isVertical ? "is-vertical" : ""}`} ref={surfaceRef}>
         <div className="fc-line" aria-hidden />
 
         <div
-          className={`${showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"} ${isVertical ? "is-vertical" : ""}`}
+          className={showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"}
           style={{ transform: `scale(${scale / 100})`, transformOrigin: "center" }}
         >
           <div className="fc-holder">
