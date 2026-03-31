@@ -490,14 +490,17 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
     return () => clearTimeout(badgeTimeout);
   }, []);
 
+  const containerPadding = mode === "overview" ? "4vw": 8;
+  const containerAlign = mode === "overview" ? alignItems : alignItems;
+
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
         gap: 8,
-        alignItems,
-        padding: 8,
+        alignItems: containerAlign,
+        padding: containerPadding,
         fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif",
         background: pageBackground,
         textAlign,
