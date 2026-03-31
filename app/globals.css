@@ -56,28 +56,6 @@
 @tailwind components;
 @tailwind utilities;
 
-.landing {
-  font-family: "Inter", "SF Pro Display", system-ui, -apple-system, sans-serif;
-  letter-spacing: 0.01em;
-}
-
-.landing h1,
-.landing h2,
-.hero-title {
-  font-family: "Libre Baskerville", "Times New Roman", serif;
-  letter-spacing: -0.01em;
-}
-
-.hero-title {
-  font-style: italic;
-  font-weight: 700;
-  background: linear-gradient(120deg, #f7f2ff 0%, #f0e6ff 40%, #c8b8ff 100%);
-  -webkit-background-clip: text;
-  color: transparent;
-  text-shadow: 0 10px 40px rgba(125, 108, 255, 0.22);
-  line-height: 1.08;
-  padding-block: 0.12em;
-}
 
 .landing h2 {
   line-height: 1.12;
@@ -183,18 +161,22 @@
 
 .fc-line {
   /* width: min(96vw, 1100px); */
-  width: 100%;
+  width: 100vw;
   height: 0.7vh;
   background: var(--holder);
   /* background: linear-gradient(90deg, transparent 0%, var(--holder) 12%, var(--holder) 88%, transparent 100%); */
-  z-index: 12;
+  z-index: 2;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  border-radius: 999px;
+  /* border-radius: 999px; */
   animation: fc-fade-in 160ms ease forwards;
-  z-index: 2;
+  /* z-index: 2999; */
+}
+
+.fc-root[data-theme="transparent"] .fc-line {
+  display: none;
 }
 
 .fc-container {
@@ -255,14 +237,34 @@
 .fc-surface.is-vertical .fc-holder::before {
   content: "";
   position: absolute;
+  display: block;
   left: 0;
   right: 0;
   top: 50%;
   /* height: 2px; */
   background: var(--line, var(--holder));
+  /* background: var(--line, var(--text)); */
   /* opacity: 0.65; */
+  /* height: clamp(0.4vh, 0.6vh, 0.11vh); */
   height: 0.4vh;
   pointer-events: none;
+  /* width: 100%; */
+  max-width: 100vw;
+  z-index: 99;
+
+}
+
+.fc-root[data-theme="transparent"] .fc-holder::before {
+  content: "";
+  position: absolute;
+  left: 0%;
+  right: 0%;
+  top: 50%;
+  background: var(--text);
+  /* height: clamp(0.4vh, 0.6vh, 0.11vh); */
+  height: 0.7vh;
+  pointer-events: none;
+  /* width: 111%; */
   /* max-width: 100vw; */
   z-index: 99;
 
@@ -347,16 +349,35 @@
   position: absolute;
   /* bottom: 16px;
   left: 18px; */
-  bottom: 7%;
-  left: 3.1rem;
+  bottom: 3%;
+  left: 3rem;
   margin: 0;
   color: var(--text);
   /* font-size: clamp(24px, 4.4vw, 48px); */
   font-size: clamp(3vw, 4vw, 4vw);
   font-weight: 700;
-  font-family: Arial, Helvetica !important;
+  /* font-family: Arial, Helvetica !important; */
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
+  letter-spacing: 0.04em;
+  /* letter-spacing: -0.2rem; */
+}
+
+.fc-aux-label {
+ position: absolute;
+  /* right: -14rem; */
+  bottom: 1rem;
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(3vw, 4vw, 4vw);
+  font-weight: 700;
+  /* font-family: Arial, Helvetica !important; */
+    font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0.04em;
+  /* letter-spacing: -0.2rem; */
+    text-transform: uppercase;
+
 }
 
 .fc-flip-container {

@@ -40,6 +40,7 @@ export function ClockWidget() {
   const secondsFromQuery = parseBool(searchParams.get("seconds"), true);
   const controlsFromQuery = parseBool(searchParams.get("controls"), false);
   const themeFromQuery = (searchParams.get("theme")?.trim().toLowerCase() as ThemeName) || "default";
+  const dayFromQuery = parseBool(searchParams.get("day"), false);
 
   const timezoneParam = searchParams.get("tz") ?? "America/Toronto";
   const timezone = isValidTimeZone(timezoneParam) ? timezoneParam : "America/Toronto";
@@ -47,6 +48,7 @@ export function ClockWidget() {
   const [size, setSize] = useState<number>(sizeFromQuery);
   const [is24h, setIs24h] = useState<boolean>(formatFromQuery);
   const [showSeconds, setShowSeconds] = useState<boolean>(secondsFromQuery);
+  const [showDay, setShowDay] = useState<boolean>(dayFromQuery);
   const [themeName, setThemeName] = useState<ThemeName>(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [showControls, setShowControls] = useState<boolean>(controlsFromQuery);
@@ -87,6 +89,9 @@ export function ClockWidget() {
     if (storedTheme && THEME_ORDER.includes(storedTheme)) setThemeName(storedTheme);
     const storedControls = window.localStorage.getItem("fc_controls");
     if (storedControls === "true") setShowControls(false);
+    const storedDay = window.localStorage.getItem("fc_day");
+    if (storedDay === "true") setShowDay(true);
+    if (storedDay === "false") setShowDay(false);
   }, []);
 
   useEffect(() => {
@@ -108,6 +113,10 @@ export function ClockWidget() {
   useEffect(() => {
     window.localStorage.setItem("fc_controls", String(showControls));
   }, [showControls]);
+
+  useEffect(() => {
+    window.localStorage.setItem("fc_day", String(showDay));
+  }, [showDay]);
 
   useEffect(() => {
     return () => {
@@ -203,6 +212,11 @@ export function ClockWidget() {
     return parts;
   }, [now, is24h, timezone]);
 
+  const dayName = useMemo(() => {
+    if (!now) return "";
+    return now.toLocaleDateString("en-US", { weekday: "long", timeZone: timezone });
+  }, [now, timezone]);
+
   const themeVars = THEMES[themeName];
   const toggleTheme = () => setThemeName((prev) => (prev === "light" ? "default" : "light"));
   const themeList = useMemo(() => THEME_ORDER.filter((name) => name !== "light"), []);
@@ -227,14 +241,15 @@ export function ClockWidget() {
   const scale = baseScale * autoScale;
 
   return (
-    <div className="fc-root" style={rootStyle}>
+    <div className="fc-root" style={rootStyle} data-theme={themeName}>
       <div className={`fc-surface ${isVertical ? "is-vertical" : ""}`} ref={surfaceRef}>
         <div className="fc-line" aria-hidden />
 
         <div
           className={showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"}
-          style={{ transform: `scale(${scale / 100})`, transformOrigin: "center" }}
+          style={{ transform: `scale(${scale / 100})`, transformOrigin: "center", position: "relative" }}
         >
+
           <div className="fc-holder">
             <FlipDigit value={currentTime?.hour ?? ""} pad={false} />
             {!is24h && <h2>{currentTime?.period}</h2>}
@@ -247,6 +262,15 @@ export function ClockWidget() {
           {showSeconds && (
             <div className="fc-holder" id="seconds_holder">
               <FlipDigit value={currentTime?.second ?? ""} />
+            </div>
+          )}
+
+          {showDay && dayName && (
+            <div
+              className="fc-aux-label"
+              style={{ right: showSeconds ? "-14rem" : "3rem" }}
+            >
+              {dayName}
             </div>
           )}
         </div>
@@ -336,6 +360,9 @@ export function ClockWidget() {
           <button className={showSeconds ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowSeconds((v) => !v)}>
             <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
           </button>
+          <button className={showDay ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowDay((v) => !v)}>
+            <span className={showDay ? "fc-sec-badge is-active" : "fc-sec-badge"}>DAY</span>
+          </button>
           <button
             className="fc-nav-btn embed-copy"
             aria-label="Copy embed"
@@ -346,6 +373,7 @@ export function ClockWidget() {
               url.searchParams.set("seconds", String(showSeconds ? 1 : 0));
               url.searchParams.set("theme", themeName);
               url.searchParams.set("controls", showControls ? "1" : "0");
+              url.searchParams.set("day", showDay ? "1" : "0");
               navigator.clipboard
                 .writeText(url.toString())
                 .then(() => {
@@ -360,7 +388,20 @@ export function ClockWidget() {
           </button>
         </div>
 
-        <div className="fc-panel-hover-zone" onMouseEnter={() => setShowControls(true)} />
+        <div
+          title="toggle settings"
+          className="fc-panel-hover-zone"
+          role="button"
+          tabIndex={0}
+          aria-label="Close settings"
+          onClick={() => setShowControls(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setShowControls(false);
+            }
+          }}
+        />
 
         {copied && <div className="fc-toast">Embed link copied</div>}
       </div>

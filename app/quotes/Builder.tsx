@@ -95,7 +95,15 @@ function defaultsForTheme(theme: ThemeKey) {
 }
 
 export function QuotesBuilder() {
-  const [category, setCategory] = useState("");
+  const [authors, setAuthors] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [sourceTypes, setSourceTypes] = useState<string[]>([]);
+  const [mode, setMode] = useState<"daily" | "random" | "interval" | "flashcard">("daily");
+  const [startIndex, setStartIndex] = useState(0);
+  const [query, setQuery] = useState("");
+  const [showPinned, setShowPinned] = useState(false);
+  const [showPersonal, setShowPersonal] = useState(false);
   const [source, setSource] = useState<"auto" | "local" | "notion">("auto");
   const [theme, setTheme] = useState<ThemeKey>("dark");
   const [rotate, setRotate] = useState(false);
@@ -109,15 +117,25 @@ export function QuotesBuilder() {
   const [pageTransparent, setPageTransparent] = useState(false);
   const [copied, setCopied] = useState(false);
   const sourceQuotes = useMemo<Quote[]>(() => getQuotes(source), [source]);
-  const availableCategories = useMemo<FancyOption[]>(() => {
-    const cats = Array.from(
-      new Set(
-        sourceQuotes
-          .map((q) => (q.category || "").trim().toLowerCase())
-          .filter(Boolean),
-      ),
-    ).sort();
-    return [{ value: "", label: "All categories" }, ...cats.map((c) => ({ value: c, label: c }))];
+
+  const availableAuthors = useMemo<FancyOption[]>(() => {
+    const vals = Array.from(new Set(sourceQuotes.map((q) => (q.author || "").trim()).filter(Boolean))).sort();
+    return vals.map((v) => ({ value: v, label: v }));
+  }, [sourceQuotes]);
+
+  const availableTags = useMemo<FancyOption[]>(() => {
+    const vals = Array.from(new Set(sourceQuotes.flatMap((q) => q.tags || []).filter(Boolean))).sort();
+    return vals.map((v) => ({ value: v, label: v }));
+  }, [sourceQuotes]);
+
+  const availableLanguages = useMemo<FancyOption[]>(() => {
+    const vals = Array.from(new Set(sourceQuotes.map((q) => (q.language || "").trim()).filter(Boolean))).sort();
+    return [{ value: "", label: "Any language" }, ...vals.map((v) => ({ value: v, label: v }))];
+  }, [sourceQuotes]);
+
+  const availableSourceTypes = useMemo<FancyOption[]>(() => {
+    const vals = Array.from(new Set(sourceQuotes.map((q) => (q.sourceType || "").trim()).filter(Boolean))).sort();
+    return [{ value: "", label: "Any source" }, ...vals.map((v) => ({ value: v, label: v }))];
   }, [sourceQuotes]);
 
   useEffect(() => {
@@ -129,7 +147,15 @@ export function QuotesBuilder() {
   }, [theme]);
 
   const reset = () => {
-    setCategory("");
+    setAuthors([]);
+    setTags([]);
+    setLanguages([]);
+    setSourceTypes([]);
+    setMode("daily");
+    setStartIndex(0);
+    setQuery("");
+    setShowPinned(false);
+    setShowPersonal(false);
     setSource("auto");
     setTheme("dark");
     setRotate(false);
@@ -148,8 +174,16 @@ export function QuotesBuilder() {
     const p = new URLSearchParams();
     p.set("embed", "1");
     p.set("theme", theme);
-    if (category.trim()) p.set("category", category.trim());
+    if (authors.length) p.set("authors", authors.join(","));
+    if (tags.length) p.set("tags", tags.join(","));
+    if (languages.length) p.set("languages", languages.join(","));
+    if (sourceTypes.length) p.set("sourcetypes", sourceTypes.join(","));
     if (source !== "auto") p.set("source", source);
+    p.set("mode", mode);
+    if (startIndex > 0) p.set("index", String(startIndex));
+    if (query.trim()) p.set("q", query.trim());
+    if (showPinned) p.set("pinned", "1");
+    if (showPersonal) p.set("personal", "1");
     if (rotate) p.set("rotate", "1");
     if (interval !== 10) p.set("interval", String(interval));
     if (bg) p.set("bg", bg.replace("#", ""));
@@ -160,11 +194,32 @@ export function QuotesBuilder() {
     if (pageMatch) p.set("pagematch", "1");
     if (pageTransparent) p.set("pagetransparent", "1");
     return p;
-  }, [category, source, theme, rotate, interval, bg, border, text, accent, pageBg, pageMatch, pageTransparent]);
+  }, [source, theme, rotate, interval, bg, border, text, accent, pageBg, pageMatch, pageTransparent]);
 
   const livePreviewParams = useMemo(
-    () => ({ category, source, theme, rotate, interval, bg, border, text, accent, pageBg: pageMatch ? undefined : pageBg, pageMatch, pageTransparent }),
-    [category, source, theme, rotate, interval, bg, border, text, accent, pageBg, pageMatch, pageTransparent]
+    () => ({
+      authors: authors.join(","),
+      tags: tags.join(","),
+      languages: languages.join(","),
+      sourceTypes: sourceTypes.join(","),
+      source,
+      theme,
+      rotate,
+      interval,
+      mode,
+      startIndex,
+      q: query,
+      showPinned,
+      showPersonal,
+      bg,
+      border,
+      text,
+      accent,
+      pageBg: pageMatch ? undefined : pageBg,
+      pageMatch,
+      pageTransparent,
+    }),
+    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, pageTransparent]
   );
 
   const copyLink = () => {
@@ -200,14 +255,132 @@ export function QuotesBuilder() {
 
           <div className="grid grid-cols-1 gap-3">
             <label className="space-y-1 text-sm">
-              <span className="text-zinc-300">Category filter</span>
-              <FancySelect
-                value={category}
-                onChange={(val) => setCategory(val)}
-                options={availableCategories}
-                placeholder="Select category"
+              <span className="text-zinc-300">Authors</span>
+              <div className="flex flex-wrap gap-2">
+                {availableAuthors.map((opt) => (
+                  <button
+                    key={opt.value}
+                    className={`rounded-full border px-3 py-1 text-xs ${authors.includes(opt.value.toLowerCase()) ? "border-white/70 bg-white/15" : "border-white/10 bg-white/5"}`}
+                    onClick={() =>
+                      setAuthors((prev) => {
+                        const val = opt.value.toLowerCase();
+                        return prev.includes(val) ? prev.filter((a) => a !== val) : [...prev, val];
+                      })
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </label>
+
+            {/* <label className="space-y-1 text-sm">
+              <span className="text-zinc-300">Tags</span>
+              <div className="flex flex-wrap gap-2">
+                {availableTags.map((opt) => (
+                  <button
+                    key={opt.value}
+                    className={`rounded-full border px-3 py-1 text-xs ${tags.includes(opt.value.toLowerCase()) ? "border-white/70 bg-white/15" : "border-white/10 bg-white/5"}`}
+                    onClick={() =>
+                      setTags((prev) => {
+                        const val = opt.value.toLowerCase();
+                        return prev.includes(val) ? prev.filter((t) => t !== val) : [...prev, val];
+                      })
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </label> */}
+
+            <label className="space-y-1 text-sm">
+              <span className="text-zinc-300">Languages</span>
+              <div className="flex flex-wrap gap-2">
+                {availableLanguages.slice(1).map((opt) => (
+                  <button
+                    key={opt.value}
+                    className={`rounded-full border px-3 py-1 text-xs ${languages.includes(opt.value.toLowerCase()) ? "border-white/70 bg-white/15" : "border-white/10 bg-white/5"}`}
+                    onClick={() =>
+                      setLanguages((prev) => {
+                        const val = opt.value.toLowerCase();
+                        return prev.includes(val) ? prev.filter((l) => l !== val) : [...prev, val];
+                      })
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </label>
+
+            <label className="space-y-1 text-sm">
+              <span className="text-zinc-300">Source types</span>
+              <div className="flex flex-wrap gap-2">
+                {availableSourceTypes.slice(1).map((opt) => (
+                  <button
+                    key={opt.value}
+                    className={`rounded-full border px-3 py-1 text-xs ${sourceTypes.includes(opt.value.toLowerCase()) ? "border-white/70 bg-white/15" : "border-white/10 bg-white/5"}`}
+                    onClick={() =>
+                      setSourceTypes((prev) => {
+                        const val = opt.value.toLowerCase();
+                        return prev.includes(val) ? prev.filter((l) => l !== val) : [...prev, val];
+                      })
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </label>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Mode</span>
+                <FancySelect
+                  value={mode}
+                  onChange={(val) => setMode(val as typeof mode)}
+                  options={[
+                    { value: "daily", label: "Daily" },
+                    { value: "random", label: "Random" },
+                    { value: "interval", label: "Interval" },
+                    { value: "flashcard", label: "Flashcard" },
+                  ]}
+                />
+              </label>
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Start index</span>
+                <input
+                  type="number"
+                  min={0}
+                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                  value={startIndex}
+                  onChange={(e) => setStartIndex(Math.max(0, Number(e.target.value) || 0))}
+                />
+              </label>
+            </div>
+
+            <label className="space-y-1 text-sm">
+              <span className="text-zinc-300">Search text</span>
+              <input
+                type="text"
+                className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search quote/author"
               />
             </label>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-white/10" checked={showPinned} onChange={(e) => setShowPinned(e.target.checked)} />
+                Pinned only
+              </label>
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-white/10" checked={showPersonal} onChange={(e) => setShowPersonal(e.target.checked)} />
+                Personal only
+              </label>
+            </div>
 
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Source</span>

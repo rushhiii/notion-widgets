@@ -47,6 +47,24 @@ function getPlainText(property) {
   return "";
 }
 
+function getCheckbox(property) {
+  if (!property) return null;
+  if (property.type === "checkbox") return Boolean(property.checkbox);
+  return null;
+}
+
+function getSelectOrMultiSelectValues(property) {
+  if (!property) return [];
+  if (property.type === "multi_select") {
+    return (property.multi_select ?? []).map((item) => item.name?.trim()).filter(Boolean);
+  }
+  if (property.type === "select") {
+    const name = property.select?.name?.trim();
+    return name ? [name] : [];
+  }
+  return [];
+}
+
 function pickProperty(properties, candidates) {
   const propertyEntries = Object.entries(properties ?? {});
 
@@ -58,6 +76,10 @@ function pickProperty(properties, candidates) {
   return null;
 }
 
+function firstPropertyOfType(properties, type) {
+  return Object.values(properties ?? {}).find((property) => property?.type === type) ?? null;
+}
+
 function normalizePage(page) {
   const properties = page.properties ?? {};
 
@@ -67,14 +89,44 @@ function normalizePage(page) {
 
   const authorProperty = pickProperty(properties, ["author", "speaker", "by"]);
   const categoryProperty = pickProperty(properties, ["category", "tag", "type"]);
+  const languageProperty = pickProperty(properties, ["language", "lang"]);
+  const sourceTypeProperty = pickProperty(properties, ["source type", "sourcetype", "source"]);
+  const tagsProperty = pickProperty(properties, ["tags", "tag list", "labels"]);
+  const pinnedProperty = pickProperty(properties, ["pinned", "pin"]);
+  const personalProperty = pickProperty(properties, ["personal", "private"]);
+  const showProperty = pickProperty(properties, ["note", "show", "visible", "display"]);
+
+  const fallbackSelect = firstPropertyOfType(properties, "select");
+  const fallbackMultiSelect = firstPropertyOfType(properties, "multi_select");
 
   const text = getPlainText(textProperty);
   if (!text) return null;
 
+  const languageValues = getSelectOrMultiSelectValues(languageProperty);
+  const sourceTypeValues = getSelectOrMultiSelectValues(sourceTypeProperty);
+  const tagValues = getSelectOrMultiSelectValues(tagsProperty);
+
+  const resolvedCategory = categoryProperty || fallbackSelect;
+  const resolvedLanguageValues = languageValues.length ? languageValues : getSelectOrMultiSelectValues(fallbackSelect);
+  const resolvedSourceTypeValues = sourceTypeValues.length
+    ? sourceTypeValues
+    : getSelectOrMultiSelectValues(sourceTypeProperty || fallbackSelect);
+  const resolvedTagValues = tagValues.length ? tagValues : getSelectOrMultiSelectValues(tagsProperty || fallbackMultiSelect);
+
+  const pinned = getCheckbox(pinnedProperty);
+  const personal = getCheckbox(personalProperty);
+  const show = getCheckbox(showProperty);
+
   return {
     text,
     author: getPlainText(authorProperty) || "Unknown",
-    category: (getPlainText(categoryProperty) || "general").toLowerCase(),
+    category: (getPlainText(resolvedCategory) || "general").toLowerCase(),
+    language: resolvedLanguageValues[0]?.toLowerCase(),
+    sourceType: resolvedSourceTypeValues[0]?.toLowerCase(),
+    tags: resolvedTagValues.map((t) => t.toLowerCase()),
+    pinned: pinned ?? false,
+    personal: personal ?? false,
+    show: show ?? true,
   };
 }
 

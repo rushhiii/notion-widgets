@@ -6,7 +6,12 @@ export type Quote = {
   text: string;
   author: string;
   category: QuoteCategory;
+  sourceType?: string;
+  language?: string;
+  tags?: string[];
   show?: boolean;
+  pinned?: boolean;
+  personal?: boolean;
 };
 
 export const QUOTES: Quote[] = [
@@ -53,13 +58,22 @@ export const QUOTES: Quote[] = [
 ];
 
 function sanitizeQuote(input: Partial<Quote>): Quote | null {
-  if (input.show === false) return null;
   const text = (input.text ?? "").trim();
   const author = (input.author ?? "").trim() || "Unknown";
   const category = (input.category ?? "general").trim().toLowerCase() || "general";
-
   if (!text) return null;
-  return { text, author, category };
+
+  return {
+    text,
+    author,
+    category,
+    sourceType: input.sourceType?.trim().toLowerCase() || undefined,
+    language: input.language?.trim().toLowerCase() || undefined,
+    tags: input.tags?.map((t) => t.trim().toLowerCase()).filter(Boolean),
+    show: input.show !== false,
+    pinned: Boolean(input.pinned),
+    personal: Boolean(input.personal),
+  };
 }
 
 export const NOTION_QUOTES: Quote[] = (notionQuotes as Partial<Quote>[])
