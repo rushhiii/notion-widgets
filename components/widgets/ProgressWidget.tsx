@@ -617,7 +617,9 @@ export function ProgressWidget() {
       : [{ id: nextId(), label: "Progress", progress: initial.progress, goal: initial.goal, milestones: defaultMilestones() }],
   );
   const [selectedBarId, setSelectedBarId] = useState<string | null>(null);
-  const [hydratedFromStorage, setHydratedFromStorage] = useState(false);
+  const [storageApplied, setStorageApplied] = useState(false);
+  const [storageAttempted, setStorageAttempted] = useState(false);
+  const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -636,10 +638,12 @@ export function ProgressWidget() {
           return { ...bar, progress: nextProgress, goal: nextGoal };
         }),
       );
-      setHydratedFromStorage(true);
+      setStorageApplied(true);
     } catch (err) {
       console.error("progress load failed", err);
     }
+    setStorageAttempted(true);
+    setStorageReady(true);
   }, []);
 
   useEffect(() => {
@@ -652,12 +656,14 @@ export function ProgressWidget() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!storageReady) return;
     const payload = bars.map((b) => ({ label: b.label, progress: b.progress, goal: b.goal }));
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }, [bars]);
+  }, [bars, storageReady]);
 
   useEffect(() => {
-    if (hydratedFromStorage) return;
+    if (!storageAttempted) return;
+    if (storageApplied) return;
     setTitle(initial.title);
     setLabel(initial.label);
     setGoal(initial.goal);
@@ -684,7 +690,7 @@ export function ProgressWidget() {
       : [{ id: nextId(), label: "Progress", progress: initial.progress, goal: initial.goal, milestones: defaultMilestones() }];
     setBars(nextBars);
     setSelectedBarId(nextBars[0]?.id ?? null);
-  }, [initial, hydratedFromStorage]);
+  }, [initial, storageApplied, storageAttempted]);
 
   const showBuilder = initial.showBuilder;
 
