@@ -366,7 +366,8 @@
 .fc-aux-label {
  position: absolute;
   /* right: -14rem; */
-  bottom: 1rem;
+  bottom: 3%;
+  right: 3rem;
   margin: 0;
   color: var(--text);
   font-size: clamp(3vw, 4vw, 4vw);

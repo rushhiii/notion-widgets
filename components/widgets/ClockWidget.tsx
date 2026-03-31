@@ -257,22 +257,31 @@ export function ClockWidget() {
 
           <div className="fc-holder">
             <FlipDigit value={currentTime?.minute ?? ""} />
+            {showDay && dayName && !showSeconds && (
+              <div
+                className="fc-aux-label"
+                // style={{ right: showSeconds ? "-14rem" : "3rem" }}
+              >
+                {dayName}
+              </div>
+            )}
           </div>
 
           {showSeconds && (
             <div className="fc-holder" id="seconds_holder">
               <FlipDigit value={currentTime?.second ?? ""} />
+              {showDay && dayName && showSeconds && (
+                <div
+                  className="fc-aux-label"
+                  // style={{ right:  }}
+                >
+                  {dayName}
+                </div>
+              )}
             </div>
           )}
 
-          {showDay && dayName && (
-            <div
-              className="fc-aux-label"
-              style={{ right: showSeconds ? "-14rem" : "3rem" }}
-            >
-              {dayName}
-            </div>
-          )}
+
         </div>
 
         <div
