@@ -363,21 +363,24 @@
   /* letter-spacing: -0.2rem; */
 }
 
-.fc-aux-label {
- position: absolute;
+.fc-aux-label h2 {
+  position: absolute;
   /* right: -14rem; */
-  bottom: 3%;
+  /* bottom: ; */
+  left: unset;
   right: 3rem;
+  /* transform: translateX(50%); */
+  /* right: 0; */
   margin: 0;
   color: var(--text);
   font-size: clamp(3vw, 4vw, 4vw);
   font-weight: 700;
   /* font-family: Arial, Helvetica !important; */
-    font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   letter-spacing: 0.04em;
   /* letter-spacing: -0.2rem; */
-    text-transform: uppercase;
+  text-transform: uppercase;
 
 }
 
@@ -993,7 +996,14 @@
 
   .fc-holder h2 {
     left: 14px;
-    bottom: 10px;
+    bottom: 7px;
+  }
+
+  .fc-aux-label h2 {
+    left: unset;
+    right: 14px;
+    bottom: 7px;
+
   }
 
   .fc-nav {

@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import { Link2, Maximize2, Menu, Minimize2, Moon, Sun, Timer, TimerReset, X } from "lucide-react";
 
-import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
+import { THEME_ORDER, THEMES, resolveThemeVars, type ThemeName } from "./theme";
 
 function isValidTimeZone(timeZone: string): boolean {
   try {
@@ -217,7 +217,7 @@ export function ClockWidget() {
     return now.toLocaleDateString("en-US", { weekday: "long", timeZone: timezone });
   }, [now, timezone]);
 
-  const themeVars = THEMES[themeName];
+  const themeVars = resolveThemeVars(themeName);
   const toggleTheme = () => setThemeName((prev) => (prev === "light" ? "default" : "light"));
   const themeList = useMemo(() => THEME_ORDER.filter((name) => name !== "light"), []);
 
@@ -257,12 +257,13 @@ export function ClockWidget() {
 
           <div className="fc-holder">
             <FlipDigit value={currentTime?.minute ?? ""} />
-            {showDay && dayName && !showSeconds && (
+            {/* {showDay && dayName && !showSeconds && ( */}
+            {showDay && dayName && (
               <div
                 className="fc-aux-label"
                 // style={{ right: showSeconds ? "-14rem" : "3rem" }}
               >
-                {dayName}
+                <h2>{dayName}</h2>
               </div>
             )}
           </div>
@@ -270,16 +271,18 @@ export function ClockWidget() {
           {showSeconds && (
             <div className="fc-holder" id="seconds_holder">
               <FlipDigit value={currentTime?.second ?? ""} />
-              {showDay && dayName && showSeconds && (
+                  {showDay && dayName && showSeconds && (
                 <div
                   className="fc-aux-label"
-                  // style={{ right:  }}
+                // style={{ right: showSeconds ? "-14rem" : "3rem" }}
                 >
-                  {dayName}
+                <h2>{dayName}</h2>
                 </div>
               )}
             </div>
           )}
+
+        
 
 
         </div>

@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 export type ThemeName =
   | "default"
   | "light"
@@ -47,3 +49,75 @@ export const THEME_ORDER: ThemeName[] = [
   "theme7",
   "theme8",
 ];
+
+export function resolveThemeVars(theme: ThemeName): { background: string; holder: string; text: string } {
+  const base = THEMES[theme];
+  if (!base) return THEMES.default;
+
+  if (theme === "transparent") {
+    const isDark = detectNotionDark();
+    if (isDark) {
+      return { background: "#191919", holder: "#101010", text: "#e5e7eb" };
+    }
+    return { background: "#f6f6f7", holder: "#ffffff", text: "#111214" };
+  }
+
+  return base;
+}
+
+function detectByComputedBg(): boolean | null {
+  const el = document.documentElement || document.body;
+  if (!el) return null;
+  const bg = getComputedStyle(el).backgroundColor;
+  const parts = bg.match(/\d+/g)?.map(Number) ?? [];
+  if (parts.length < 3) return null;
+  const [r, g, b] = parts;
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luminance < 140;
+}
+
+export function detectNotionDark(): boolean {
+  if (typeof window === "undefined") return false;
+  const root = document.documentElement;
+  const body = document.body;
+  if (root?.dataset?.theme === "dark" || body?.dataset?.theme === "dark") return true;
+  if (root?.dataset?.theme === "light" || body?.dataset?.theme === "light") return false;
+  if (root?.classList.contains("notion-dark-theme") || body?.classList.contains("notion-dark-theme")) return true;
+  if (root?.classList.contains("notion-light-theme") || body?.classList.contains("notion-light-theme")) return false;
+
+  const inferred = detectByComputedBg();
+  if (inferred !== null) return inferred;
+
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+}
+
+export function useNotionTheme(): boolean {
+  const [isDark, setIsDark] = useState(detectNotionDark);
+
+  useEffect(() => {
+    const onChange = () => setIsDark(detectNotionDark());
+
+    const mql = window.matchMedia?.("(prefers-color-scheme: dark)");
+    mql?.addEventListener("change", onChange);
+
+    const observer = new MutationObserver(onChange);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
+
+    if (document.body) {
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme"],
+      });
+    }
+
+    return () => {
+      mql?.removeEventListener("change", onChange);
+      observer.disconnect();
+    };
+  }, []);
+
+  return isDark;
+}
