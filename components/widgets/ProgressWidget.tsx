@@ -617,6 +617,7 @@ export function ProgressWidget() {
       : [{ id: nextId(), label: "Progress", progress: initial.progress, goal: initial.goal, milestones: defaultMilestones() }],
   );
   const [selectedBarId, setSelectedBarId] = useState<string | null>(null);
+  const [hydratedFromStorage, setHydratedFromStorage] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -635,6 +636,7 @@ export function ProgressWidget() {
           return { ...bar, progress: nextProgress, goal: nextGoal };
         }),
       );
+      setHydratedFromStorage(true);
     } catch (err) {
       console.error("progress load failed", err);
     }
@@ -655,6 +657,7 @@ export function ProgressWidget() {
   }, [bars]);
 
   useEffect(() => {
+    if (hydratedFromStorage) return;
     setTitle(initial.title);
     setLabel(initial.label);
     setGoal(initial.goal);
@@ -681,7 +684,7 @@ export function ProgressWidget() {
       : [{ id: nextId(), label: "Progress", progress: initial.progress, goal: initial.goal, milestones: defaultMilestones() }];
     setBars(nextBars);
     setSelectedBarId(nextBars[0]?.id ?? null);
-  }, [initial]);
+  }, [initial, hydratedFromStorage]);
 
   const showBuilder = initial.showBuilder;
 
