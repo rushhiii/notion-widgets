@@ -206,7 +206,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const quoteColor = textParam ?? (theme === "dark" ? "#e5e7eb" : "#0f172a");
   const authorColor = accentParam ?? (theme === "dark" ? "#a1a1aa" : "#475569");
   const pageBackground = pageTransparent
-    ? pageBgParam ?? (theme === "dark" ? "#191919" : "#2596be")
+    ? "#191919" // ignore pageBg/pageMatch when transparency is requested to keep Notion-like dark backdrop
     : pageMatch
       ? cardBackground
       : pageBgParam ?? (theme === "dark" ? "#191919" : "#2596be");
