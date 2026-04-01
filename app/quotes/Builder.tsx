@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Copy, RefreshCw, Info } from "lucide-react";
 import { QuoteWidget } from "@/components/widgets/QuoteWidget";
 import { getQuotes, Quote } from "@/lib/quotes";
@@ -100,7 +101,7 @@ export function QuotesBuilder() {
   const [languages, setLanguages] = useState<string[]>([]);
   const [sourceTypes, setSourceTypes] = useState<string[]>([]);
   const [mode, setMode] = useState<"daily" | "random" | "interval" | "flashcard">("daily");
-  const [startIndex, setStartIndex] = useState(0);
+  const [startIndex, setStartIndex] = useState(1);
   const [query, setQuery] = useState("");
   const [showPinned, setShowPinned] = useState(false);
   const [showPersonal, setShowPersonal] = useState(false);
@@ -116,12 +117,21 @@ export function QuotesBuilder() {
   const [pageMatch, setPageMatch] = useState(true);
   const [pageTransparent, setPageTransparent] = useState(false);
   const [copied, setCopied] = useState(false);
+  const searchParams = useSearchParams();
+  const adminParam = (searchParams.get("admin") ?? "").trim();
+  const ADMIN_SECRET = "dumbass";
+  const isAdminBypass = adminParam === ADMIN_SECRET;
   const sourceQuotes = useMemo<Quote[]>(() => getQuotes(source), [source]);
+
+  const restrictedAuthors = ["unknow", "unknown", "n/a", "rushi", "jane austen", "atticus", "emperor fushimi"];
+  const restrictedLanguages = ["hindi", "punjabi", "punjabi/hindi"];
+  const restrictedSourceTypes = ["poetry", "quote", "saying", "series", "song", "lines", "my thought"];
 
   const availableAuthors = useMemo<FancyOption[]>(() => {
     const vals = Array.from(new Set(sourceQuotes.map((q) => (q.author || "").trim()).filter(Boolean))).sort();
-    return vals.map((v) => ({ value: v, label: v }));
-  }, [sourceQuotes]);
+    const filtered = isAdminBypass ? vals : vals.filter((v) => !restrictedAuthors.includes(v.toLowerCase()));
+    return filtered.map((v) => ({ value: v, label: v }));
+  }, [sourceQuotes, isAdminBypass]);
 
   const availableTags = useMemo<FancyOption[]>(() => {
     const vals = Array.from(new Set(sourceQuotes.flatMap((q) => q.tags || []).filter(Boolean))).sort();
@@ -130,13 +140,15 @@ export function QuotesBuilder() {
 
   const availableLanguages = useMemo<FancyOption[]>(() => {
     const vals = Array.from(new Set(sourceQuotes.map((q) => (q.language || "").trim()).filter(Boolean))).sort();
-    return [{ value: "", label: "Any language" }, ...vals.map((v) => ({ value: v, label: v }))];
-  }, [sourceQuotes]);
+    const filtered = isAdminBypass ? vals : vals.filter((v) => !restrictedLanguages.includes(v.toLowerCase()));
+    return [{ value: "", label: "Any language" }, ...filtered.map((v) => ({ value: v, label: v }))];
+  }, [sourceQuotes, isAdminBypass]);
 
   const availableSourceTypes = useMemo<FancyOption[]>(() => {
     const vals = Array.from(new Set(sourceQuotes.map((q) => (q.sourceType || "").trim()).filter(Boolean))).sort();
-    return [{ value: "", label: "Any source" }, ...vals.map((v) => ({ value: v, label: v }))];
-  }, [sourceQuotes]);
+    const filtered = isAdminBypass ? vals : vals.filter((v) => !restrictedSourceTypes.includes(v.toLowerCase()));
+    return [{ value: "", label: "Any source" }, ...filtered.map((v) => ({ value: v, label: v }))];
+  }, [sourceQuotes, isAdminBypass]);
 
   useEffect(() => {
     const next = defaultsForTheme(theme);
@@ -152,7 +164,7 @@ export function QuotesBuilder() {
     setLanguages([]);
     setSourceTypes([]);
     setMode("daily");
-    setStartIndex(0);
+    setStartIndex(1);
     setQuery("");
     setShowPinned(false);
     setShowPersonal(false);
@@ -180,7 +192,7 @@ export function QuotesBuilder() {
     if (sourceTypes.length) p.set("sourcetypes", sourceTypes.join(","));
     if (source !== "auto") p.set("source", source);
     p.set("mode", mode);
-    if (startIndex > 0) p.set("index", String(startIndex));
+    if (startIndex > 1) p.set("index", String(startIndex));
     if (query.trim()) p.set("q", query.trim());
     if (showPinned) p.set("pinned", "1");
     if (showPersonal) p.set("personal", "1");
@@ -194,7 +206,7 @@ export function QuotesBuilder() {
     if (pageMatch) p.set("pagematch", "1");
     if (pageTransparent) p.set("pagetransparent", "1");
     return p;
-  }, [source, theme, rotate, interval, bg, border, text, accent, pageBg, pageMatch, pageTransparent]);
+  }, [authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, pageTransparent]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -367,7 +379,7 @@ export function QuotesBuilder() {
                 className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search quote/author"
+                placeholder="Search quotes"
               />
             </label>
 
