@@ -206,7 +206,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const quoteColor = textParam ?? (theme === "dark" ? "#e5e7eb" : "#0f172a");
   const authorColor = accentParam ?? (theme === "dark" ? "#a1a1aa" : "#475569");
   const pageBackground = pageTransparent
-    ? "transparent"
+    ? pageBgParam ?? (theme === "dark" ? "#191919" : "#2596be")
     : pageMatch
       ? cardBackground
       : pageBgParam ?? (theme === "dark" ? "#191919" : "#2596be");

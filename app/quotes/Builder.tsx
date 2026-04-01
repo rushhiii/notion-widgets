@@ -203,7 +203,7 @@ export function QuotesBuilder() {
     if (border) p.set("border", border.replace("#", ""));
     if (text) p.set("text", text.replace("#", ""));
     if (accent) p.set("accent", accent.replace("#", ""));
-    if (!pageTransparent && !pageMatch && pageBg) p.set("pagebg", pageBg.replace("#", ""));
+    if (pageBg) p.set("pagebg", pageBg.replace("#", ""));
     if (pageMatch) p.set("pagematch", "1");
     if (pageTransparent) p.set("pagetransparent", "1");
     return p;
