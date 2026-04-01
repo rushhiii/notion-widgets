@@ -69,7 +69,7 @@
 }
 
 .hero-title {
-  font-style: italic;
+  font-style:oblique;
   font-weight: 700;
   background: linear-gradient(120deg, #f7f2ff, #f0e6ff 40%, #c8b8ff);
   -webkit-background-clip: text;

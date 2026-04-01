@@ -40,6 +40,7 @@ Production-ready, static Notion widgets built with Next.js App Router, TypeScrip
 - [Deploy Your Own (Vercel Quickstart)](#deploy-your-own-vercel-quickstart)
 - [Adding a New Widget](#adding-a-new-widget)
 - [Notes](#notes)
+- [Contact / Requests](#contact--requests)
 
 ## Features
 
@@ -250,6 +251,7 @@ Examples:
 
 ## Recent Updates
 
+- Landing page hero and card headings now use Libre Baskerville with italic gradient hero text and tightened line-heights to match the design reference.
 - Added Suspense boundaries around pages that use `useSearchParams` so embeds/builds stay compliant: `/dday`, `/quotes`, `/weather`.
 - Weather builder now renders the live widget directly (no iframe) and only shows the text color picker in detailed layout.
 - D-Day builder groups background/text overrides side by side per unit for quicker color tuning.
@@ -293,3 +295,7 @@ The script writes normalized results to `lib/quotes.notion.json`, which keeps ru
 - No backend/database is used.
 - Widgets are static-compatible and optimized for Vercel.
 - Design intentionally stays minimal and clean for embed use-cases.
+
+## Contact / Requests
+
+Feature requests, collaboration ideas, or questions: open an issue or discussion on the repo, or reach out via the GitHub profile linked above.*** End Patch
