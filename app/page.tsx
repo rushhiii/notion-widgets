@@ -154,7 +154,7 @@ export default function HomePage() {
             </div>
 
           </div>
-          <h1 className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
+          <h1 className="hero-title mt-4 text-3xl tracking-tight md:text-5xl">
             Beautiful, embeddable widgets for Notion
           </h1>
           <p className="lead mt-3 max-w-3xl text-sm md:text-base">
@@ -195,7 +195,7 @@ function Card({ card }: CardProps) {
       style={cardBg}
       onMouseMove={handleMouseMove}
     >
-      <h2 className="text-2xl font-semibold text-white">{card.title}</h2>
+      <h2 className="text-2xl text-white">{card.title}</h2>
       <p className="mt-2 text-sm text-zinc-400">{card.desc}</p>
       <div className="mt-5 space-y-2 text-sm">
         {card.links.map((l, i) => (

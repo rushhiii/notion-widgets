@@ -56,6 +56,28 @@
 @tailwind components;
 @tailwind utilities;
 
+.landing {
+  font-family: Inter, SF Pro Display, system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.hero-title,
+.landing h1,
+.landing h2 {
+  font-family: "Libre Baskerville", "Times New Roman", serif;
+  letter-spacing: -0.01em;
+}
+
+.hero-title {
+  font-style: italic;
+  font-weight: 700;
+  background: linear-gradient(120deg, #f7f2ff, #f0e6ff 40%, #c8b8ff);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 10px 40px rgba(125, 108, 255, 0.22);
+  line-height: 1.08;
+  padding-block: 0.12em;
+}
 
 .landing h2 {
   line-height: 1.12;
