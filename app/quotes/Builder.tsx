@@ -186,6 +186,7 @@ export function QuotesBuilder() {
     const p = new URLSearchParams();
     p.set("embed", "1");
     p.set("theme", theme);
+    if (adminParam) p.set("admin", adminParam);
     if (authors.length) p.set("authors", authors.join(","));
     if (tags.length) p.set("tags", tags.join(","));
     if (languages.length) p.set("languages", languages.join(","));
@@ -206,7 +207,7 @@ export function QuotesBuilder() {
     if (pageMatch) p.set("pagematch", "1");
     if (pageTransparent) p.set("pagetransparent", "1");
     return p;
-  }, [authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, pageTransparent]);
+  }, [adminParam, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, pageTransparent]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -221,6 +222,7 @@ export function QuotesBuilder() {
       mode,
       startIndex,
       q: query,
+      admin: adminParam,
       showPinned,
       showPersonal,
       bg,
