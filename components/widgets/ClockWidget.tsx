@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import { Link2, Maximize2, Menu, Minimize2, Moon, Sun, Timer, TimerReset, X } from "lucide-react";
 
-import { THEME_ORDER, THEMES, resolveThemeVars, type ThemeName } from "./theme";
+import { THEME_ORDER, THEMES, useNotionTheme, type ThemeName } from "./theme";
 
 function isValidTimeZone(timeZone: string): boolean {
   try {
@@ -34,6 +34,7 @@ function parseIntParam(val: string | null, fallback: number, min = 0, max = 999)
 export function ClockWidget() {
   const searchParams = useSearchParams();
   const [now, setNow] = useState<Date | null>(null);
+  const isNotionDark = useNotionTheme();
 
   const sizeFromQuery = parseIntParam(searchParams.get("size"), 75, 50, 120);
   const formatFromQuery = searchParams.get("format") === "24";
@@ -41,6 +42,7 @@ export function ClockWidget() {
   const controlsFromQuery = parseBool(searchParams.get("controls"), false);
   const themeFromQuery = (searchParams.get("theme")?.trim().toLowerCase() as ThemeName) || "default";
   const dayFromQuery = parseBool(searchParams.get("day"), false);
+  const overlayFromQuery = parseBool(searchParams.get("overlay"), false);
 
   const timezoneParam = searchParams.get("tz") ?? "America/Toronto";
   const timezone = isValidTimeZone(timezoneParam) ? timezoneParam : "America/Toronto";
@@ -49,6 +51,7 @@ export function ClockWidget() {
   const [is24h, setIs24h] = useState<boolean>(formatFromQuery);
   const [showSeconds, setShowSeconds] = useState<boolean>(secondsFromQuery);
   const [showDay, setShowDay] = useState<boolean>(dayFromQuery);
+  const [overlayMode, setOverlayMode] = useState<boolean>(overlayFromQuery);
   const [themeName, setThemeName] = useState<ThemeName>(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [showControls, setShowControls] = useState<boolean>(controlsFromQuery);
@@ -92,6 +95,9 @@ export function ClockWidget() {
     const storedDay = window.localStorage.getItem("fc_day");
     if (storedDay === "true") setShowDay(true);
     if (storedDay === "false") setShowDay(false);
+    const storedOverlay = window.localStorage.getItem("fc_overlay");
+    if (storedOverlay === "true") setOverlayMode(true);
+    if (storedOverlay === "false") setOverlayMode(false);
   }, []);
 
   useEffect(() => {
@@ -117,6 +123,10 @@ export function ClockWidget() {
   useEffect(() => {
     window.localStorage.setItem("fc_day", String(showDay));
   }, [showDay]);
+
+  useEffect(() => {
+    window.localStorage.setItem("fc_overlay", String(overlayMode));
+  }, [overlayMode]);
 
   useEffect(() => {
     return () => {
@@ -217,7 +227,9 @@ export function ClockWidget() {
     return now.toLocaleDateString("en-US", { weekday: "long", timeZone: timezone });
   }, [now, timezone]);
 
-  const themeVars = resolveThemeVars(themeName);
+  const baseThemeVars = THEMES[themeName] ?? THEMES.default;
+  const overlayBg = isNotionDark ? "#191919" : "#2596be";
+  const themeVars = overlayMode ? { ...baseThemeVars, background: overlayBg } : baseThemeVars;
   const toggleTheme = () => setThemeName((prev) => (prev === "light" ? "default" : "light"));
   const themeList = useMemo(() => THEME_ORDER.filter((name) => name !== "light"), []);
 
@@ -241,7 +253,7 @@ export function ClockWidget() {
   const scale = baseScale * autoScale;
 
   return (
-    <div className="fc-root" style={rootStyle} data-theme={themeName}>
+    <div className="fc-root" style={rootStyle} data-theme={themeName} data-overlay={overlayMode ? "1" : "0"}>
       <div className={`fc-surface ${isVertical ? "is-vertical" : ""}`} ref={surfaceRef}>
         <div className="fc-line" aria-hidden />
 
@@ -333,6 +345,11 @@ export function ClockWidget() {
             <X size={18} strokeWidth={1.8} />
           </button>
           <div className="fc-panel-themes-only">
+            <div className="fc-theme-overlay-toggle">
+              {/* <button className={overlayMode ? "fc-chip is-active" : "fc-chip"} onClick={() => setOverlayMode((v) => !v)}>
+                <span className={overlayMode ? "fc-sec-badge is-active" : "fc-sec-badge"}>NOTION BG</span>
+              </button> */}
+            </div>
             <div className="fc-themes fc-themes-compact">
               {themeList.map((name) => {
                 const t = THEMES[name];
@@ -371,6 +388,14 @@ export function ClockWidget() {
           <button className={showSeconds ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowSeconds((v) => !v)}>
             <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
           </button>
+          <button
+            className={overlayMode ? "fc-chip is-active" : "fc-chip"}
+            onClick={() => setOverlayMode((v) => !v)}
+            aria-label="Toggle Notion background"
+            title="Toggle Notion background"
+          >
+            <span className={overlayMode ? "fc-sec-badge is-active" : "fc-sec-badge"}>BG</span>
+          </button>
           <button className={showDay ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowDay((v) => !v)}>
             <span className={showDay ? "fc-sec-badge is-active" : "fc-sec-badge"}>DAY</span>
           </button>
@@ -382,6 +407,7 @@ export function ClockWidget() {
               url.searchParams.set("size", String(scale));
               url.searchParams.set("format", is24h ? "24" : "12");
               url.searchParams.set("seconds", String(showSeconds ? 1 : 0));
+              url.searchParams.set("overlay", overlayMode ? "1" : "0");
               url.searchParams.set("theme", themeName);
               url.searchParams.set("controls", showControls ? "1" : "0");
               url.searchParams.set("day", showDay ? "1" : "0");
