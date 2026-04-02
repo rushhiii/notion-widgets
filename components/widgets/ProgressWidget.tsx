@@ -625,25 +625,29 @@ export function ProgressWidget() {
     if (typeof window === "undefined") return;
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw) as Array<{ label: string; progress: number; goal?: number }>;
-      if (!Array.isArray(saved) || !saved.length) return;
-      setBars((current) =>
-        current.map((bar, idx) => {
-          const hit = saved.find((s) => s.label === bar.label);
-          if (!hit) return bar;
-          const nextProgress = clampNumber(hit.progress);
-          const nextGoal = Number.isFinite(hit.goal) ? clampNumber(hit.goal || bar.goal, 1) : bar.goal;
-          if (idx === 0) setProgress(nextProgress);
-          return { ...bar, progress: nextProgress, goal: nextGoal };
-        }),
-      );
-      setStorageApplied(true);
+      if (raw) {
+        const saved = JSON.parse(raw) as Array<{ label: string; progress: number; goal?: number }>;
+        if (Array.isArray(saved) && saved.length) {
+          setBars((current) =>
+            current.map((bar, idx) => {
+              const hit = saved.find((s) => s.label === bar.label);
+              if (!hit) return bar;
+              const nextProgress = clampNumber(hit.progress);
+              const nextGoal = Number.isFinite(hit.goal) ? clampNumber(hit.goal || bar.goal, 1) : bar.goal;
+              if (idx === 0) setProgress(nextProgress);
+              return { ...bar, progress: nextProgress, goal: nextGoal };
+            }),
+          );
+          setStorageApplied(true);
+        }
+      }
     } catch (err) {
       console.error("progress load failed", err);
+    } finally {
+      // Enable saving even when storage is empty on first load.
+      setStorageAttempted(true);
+      setStorageReady(true);
     }
-    setStorageAttempted(true);
-    setStorageReady(true);
   }, []);
 
   useEffect(() => {
