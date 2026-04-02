@@ -110,10 +110,10 @@ const THEME_BG_DEFAULTS = {
 
 const defaults = {
     date: "2025-11-11",
-    // mode: "elapsed" as const,
-    // theme: "default" as const,
-    mode: "compact" as const,
-    theme: "dark" as const,
+    mode: "elapsed" as const,
+    theme: "default" as const,
+    // mode: "compact" as const,
+    // theme: "dark" as const,
     align: "left" as const,
     note: "",
     showDate: true,
