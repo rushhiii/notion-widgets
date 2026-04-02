@@ -209,7 +209,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
     ? "#191919" // ignore pageBg/pageMatch when transparency is requested to keep Notion-like dark backdrop
     : pageMatch
       ? cardBackground
-      : pageBgParam ?? (theme === "dark" ? "#191919" : "#2596be");
+      : pageBgParam ?? (theme === "dark" ? "#191919" : "#f4f4f5");
 
   return (
     <div style={{ backgroundColor: pageBackground }} className="w-full h-full">

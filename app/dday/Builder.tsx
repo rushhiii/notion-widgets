@@ -74,6 +74,7 @@ function FancySelect({
 }
 
 const paletteTextDefaults = {
+    title: "#dfab01",
     day: "#448361",
     week: "#6940A5",
     month: "#2383E2",
@@ -87,7 +88,7 @@ const paletteTextDefaults = {
 };
 
 const paletteColorDefaults = {
-    title: "#DFAB01",
+    // title: "#FBF3DB",
     overview: "#9B9A97",
     day: "#448361",
     week: "#6940A5",
@@ -101,9 +102,18 @@ const paletteColorDefaults = {
     mega: "#D9730D",
 };
 
+const THEME_BG_DEFAULTS = {
+    default: "#0f172a",
+    dark: "#191919",
+    light: "#f4f4f5",
+} as const;
+
 const defaults = {
     date: "2025-11-11",
-    mode: "elapsed" as const,
+    // mode: "elapsed" as const,
+    // theme: "default" as const,
+    mode: "compact" as const,
+    theme: "dark" as const,
     align: "left" as const,
     note: "",
     showDate: true,
@@ -125,6 +135,7 @@ const defaults = {
     monthColor: "",
     yearColor: "",
     timeColor: "",
+    timeText: "",
     hoursColor: "",
     minutesColor: "",
     secondsColor: "",
@@ -151,11 +162,12 @@ const ensureHex = (value: string, fallback: string) => {
 
 export function DdayBuilder() {
     const [date, setDate] = useState(defaults.date);
-    const [mode, setMode] = useState<"elapsed" | "countdown" | "overview">(defaults.mode);
+    const [mode, setMode] = useState<"elapsed" | "countdown" | "overview" | "compact">(defaults.mode);
+    const [theme, setTheme] = useState<"default" | "dark" | "light">(defaults.theme);
     const [align, setAlign] = useState<"left" | "center" | "right">(defaults.align);
     const [note, setNote] = useState(defaults.note);
     const [showDate, setShowDate] = useState(defaults.showDate);
-    const [bg, setBg] = useState(defaults.bg);
+    const [bg, setBg] = useState<string>(defaults.bg);
     const [color, setColor] = useState(defaults.color);
     const [showDays, setShowDays] = useState(defaults.showDays);
     const [showWeeks, setShowWeeks] = useState(defaults.showWeeks);
@@ -173,6 +185,7 @@ export function DdayBuilder() {
     const [monthColor, setMonthColor] = useState(defaults.monthColor);
     const [yearColor, setYearColor] = useState(defaults.yearColor);
     const [timeColor, setTimeColor] = useState(defaults.timeColor);
+    const [timeText, setTimeText] = useState(defaults.timeText);
     const [hoursColor, setHoursColor] = useState(defaults.hoursColor);
     const [minutesColor, setMinutesColor] = useState(defaults.minutesColor);
     const [secondsColor, setSecondsColor] = useState(defaults.secondsColor);
@@ -190,16 +203,27 @@ export function DdayBuilder() {
     const [overviewText, setOverviewText] = useState(defaults.overviewText);
     const [copied, setCopied] = useState(false);
 
+    useEffect(() => {
+        if (mode !== "compact") return;
+        setAlign("center");
+        setShowDate(false);
+    }, [mode]);
+
+
+    const themeBgFallback = THEME_BG_DEFAULTS[theme];
+    const showCompactDefaultColorControls = mode === "compact" && theme === "default";
+
     const params = useMemo(() => {
         const p = new URLSearchParams();
         p.set("embed", "1");
         p.set("date", date);
+        if (theme !== "default") p.set("theme", theme);
         if (mode !== "elapsed") p.set("mode", mode);
         if (!showDate) p.set("showdate", "0");
         if (note.trim()) p.set("note", note.trim());
         if (align !== "left") p.set("align", align);
-        if (bg) p.set("bg", bg.replace("#", ""));
-        if (color) p.set("color", color.replace("#", ""));
+        if (showCompactDefaultColorControls && bg) p.set("bg", bg.replace("#", ""));
+        if (showCompactDefaultColorControls && color) p.set("color", color.replace("#", ""));
         const allOn =
             showDays &&
             showWeeks &&
@@ -230,6 +254,7 @@ export function DdayBuilder() {
         if (monthColor.trim()) p.set("monthColor", monthColor.trim());
         if (yearColor.trim()) p.set("yearColor", yearColor.trim());
         if (timeColor.trim()) p.set("timeColor", timeColor.trim());
+        if (timeText.trim()) p.set("timeText", timeText.trim());
         if (hoursColor.trim()) p.set("hoursColor", hoursColor.trim());
         if (minutesColor.trim()) p.set("minutesColor", minutesColor.trim());
         if (secondsColor.trim()) p.set("secondsColor", secondsColor.trim());
@@ -246,17 +271,18 @@ export function DdayBuilder() {
         if (megaText.trim()) p.set("megaText", megaText.trim());
         if (overviewText.trim()) p.set("overviewText", overviewText.trim());
         return p;
-    }, [date, mode, showDate, note, align, bg, color, showDays, showWeeks, showMonths, showYears, showHours, showMinutes, showSeconds, showTotalSeconds, showMegaSeconds, titleColor, overviewColor, dayColor, weekColor, monthColor, yearColor, timeColor, hoursColor, minutesColor, secondsColor, totalColor, megaColor, dayText, weekText, monthText, yearText, hoursText, minutesText, secondsText, totalText, megaText, overviewText]);
+    }, [date, mode, theme, showDate, note, align, bg, color, showCompactDefaultColorControls, showDays, showWeeks, showMonths, showYears, showHours, showMinutes, showSeconds, showTotalSeconds, showMegaSeconds, titleColor, overviewColor, dayColor, weekColor, monthColor, yearColor, timeColor, timeText, hoursColor, minutesColor, secondsColor, totalColor, megaColor, dayText, weekText, monthText, yearText, hoursText, minutesText, secondsText, totalText, megaText, overviewText]);
 
     const livePreviewParams = useMemo(
         () => ({
             date,
             mode,
+            ...(theme !== "default" ? { theme } : {}),
             align,
             note,
             showdate: showDate ? 1 : 0,
-            ...(bg ? { bg } : {}),
-            ...(color ? { color } : {}),
+            ...(showCompactDefaultColorControls && bg ? { bg } : {}),
+            ...(showCompactDefaultColorControls && color ? { color } : {}),
             ...(showDays &&
                 showWeeks &&
                 showMonths &&
@@ -285,6 +311,7 @@ export function DdayBuilder() {
             ...(monthColor.trim() ? { monthColor: monthColor.trim() } : {}),
             ...(yearColor.trim() ? { yearColor: yearColor.trim() } : {}),
             ...(timeColor.trim() ? { timeColor: timeColor.trim() } : {}),
+            ...(timeText.trim() ? { timeText: timeText.trim() } : {}),
             ...(hoursColor.trim() ? { hoursColor: hoursColor.trim() } : {}),
             ...(minutesColor.trim() ? { minutesColor: minutesColor.trim() } : {}),
             ...(secondsColor.trim() ? { secondsColor: secondsColor.trim() } : {}),
@@ -301,12 +328,13 @@ export function DdayBuilder() {
             ...(megaText.trim() ? { megaText: megaText.trim() } : {}),
             ...(overviewText.trim() ? { overviewText: overviewText.trim() } : {}),
         }),
-        [date, mode, align, note, showDate, bg, color, showDays, showWeeks, showMonths, showYears, showHours, showMinutes, showSeconds, showTotalSeconds, showMegaSeconds, titleColor, overviewColor, dayColor, weekColor, monthColor, yearColor, timeColor, hoursColor, minutesColor, secondsColor, totalColor, megaColor, dayText, weekText, monthText, yearText, hoursText, minutesText, secondsText, totalText, megaText, overviewText],
+        [date, mode, theme, align, note, showDate, bg, color, showCompactDefaultColorControls, showDays, showWeeks, showMonths, showYears, showHours, showMinutes, showSeconds, showTotalSeconds, showMegaSeconds, titleColor, overviewColor, dayColor, weekColor, monthColor, yearColor, timeColor, timeText, hoursColor, minutesColor, secondsColor, totalColor, megaColor, dayText, weekText, monthText, yearText, hoursText, minutesText, secondsText, totalText, megaText, overviewText],
     );
 
     const reset = () => {
         setDate(defaults.date);
         setMode(defaults.mode);
+        setTheme(defaults.theme);
         setAlign(defaults.align);
         setNote(defaults.note);
         setShowDate(defaults.showDate);
@@ -328,6 +356,7 @@ export function DdayBuilder() {
         setMonthColor(defaults.monthColor);
         setYearColor(defaults.yearColor);
         setTimeColor(defaults.timeColor);
+        setTimeText(defaults.timeText);
         setHoursColor(defaults.hoursColor);
         setMinutesColor(defaults.minutesColor);
         setSecondsColor(defaults.secondsColor);
@@ -387,16 +416,31 @@ export function DdayBuilder() {
                             />
                         </label>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <label className="space-y-1 text-sm">
                                 <span className="text-zinc-300">Mode</span>
                                 <FancySelect
                                     value={mode}
                                     onChange={(val) => setMode(val as typeof mode)}
+                                    buttonClassName="flex w-full min-w-0 items-center justify-between rounded-lg border border-white/12 bg-white/10 px-3 py-2 text-sm text-white/90 shadow-[0_1px_0_rgba(255,255,255,0.08)] transition focus:border-white/40 focus:ring-2 focus:ring-white/15 focus:outline-none"
                                     options={[
                                         { value: "elapsed", label: "Elapsed" },
                                         { value: "countdown", label: "Countdown" },
                                         { value: "overview", label: "Overview" },
+                                        { value: "compact", label: "Compact" },
+                                    ]}
+                                />
+                            </label>
+                            <label className="space-y-1 text-sm">
+                                <span className="text-zinc-300">Theme</span>
+                                <FancySelect
+                                    value={theme}
+                                    onChange={(val) => setTheme(val as typeof theme)}
+                                    buttonClassName="flex w-full min-w-0 items-center justify-between rounded-lg border border-white/12 bg-white/10 px-3 py-2 text-sm text-white/90 shadow-[0_1px_0_rgba(255,255,255,0.08)] transition focus:border-white/40 focus:ring-2 focus:ring-white/15 focus:outline-none"
+                                    options={[
+                                        { value: "default", label: "Default" },
+                                        { value: "dark", label: "Dark" },
+                                        { value: "light", label: "Light" },
                                     ]}
                                 />
                             </label>
@@ -405,6 +449,7 @@ export function DdayBuilder() {
                                 <FancySelect
                                     value={align}
                                     onChange={(val) => setAlign(val as typeof align)}
+                                    buttonClassName="flex w-full min-w-0 items-center justify-between rounded-lg border border-white/12 bg-white/10 px-3 py-2 text-sm text-white/90 shadow-[0_1px_0_rgba(255,255,255,0.08)] transition focus:border-white/40 focus:ring-2 focus:ring-white/15 focus:outline-none"
                                     options={[
                                         { value: "left", label: "Left" },
                                         { value: "center", label: "Center" },
@@ -523,35 +568,31 @@ export function DdayBuilder() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <label className="space-y-1 text-sm">
-                                <span className="text-zinc-300">Background</span>
-                                <input
-                                    type="color"
-                                    className="color-swatch"
-                                    value={bg}
-                                    onChange={(e) => setBg(e.target.value)}
-                                />
-                            </label>
-                            <label className="space-y-1 text-sm">
-                                <span className="text-zinc-300">Accent / badge color</span>
-                                <div className="flex items-center gap-2">
-                                    {/* <input
-                    className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    placeholder="(optional) leave blank for defaults"
-                  /> */}
+                        {showCompactDefaultColorControls && (
+                            <div className="grid grid-cols-2 gap-3">
+                                <label className="space-y-1 text-sm">
+                                    <span className="text-zinc-300">Background</span>
                                     <input
                                         type="color"
-                                        className="color-swatch "
-                                        value={ensureHex(color, "#EBECED")}
-                                        onChange={(e) => setColor(e.target.value)}
-                                        aria-label="Pick accent color"
+                                        className="color-swatch"
+                                        value={ensureHex(bg || themeBgFallback, themeBgFallback)}
+                                        onChange={(e) => setBg(e.target.value)}
                                     />
-                                </div>
-                            </label>
-                        </div>
+                                </label>
+                                <label className="space-y-1 text-sm">
+                                    <span className="text-zinc-300">Accent / badge color</span>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            className="color-swatch "
+                                            value={ensureHex(color, "#EBECED")}
+                                            onChange={(e) => setColor(e.target.value)}
+                                            aria-label="Pick accent color"
+                                        />
+                                    </div>
+                                </label>
+                            </div>
+                        )}
 
                         <div className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3">
                             {/* <div className="flex items-center justify-between"> */}
@@ -567,8 +608,13 @@ export function DdayBuilder() {
                             <div className="space-y-3 text-sm">
                                 {[{
                                     label: "Title",
-                                    bg: { value: titleColor, onChange: setTitleColor, placeholder: paletteColorDefaults.title, fallback: paletteColorDefaults.title },
-                                    text: null,
+                                    bg: null,
+                                    text: {
+                                        value: titleColor,
+                                        onChange: setTitleColor,
+                                        placeholder: paletteTextDefaults.title,
+                                        fallback: paletteTextDefaults.title,
+                                    },
                                 }, {
                                     label: "Overview",
                                     bg: { value: overviewColor, onChange: setOverviewColor, placeholder: paletteColorDefaults.overview, fallback: paletteColorDefaults.overview },
@@ -592,7 +638,7 @@ export function DdayBuilder() {
                                 }, {
                                     label: "Time group",
                                     bg: { value: timeColor, onChange: setTimeColor, placeholder: paletteColorDefaults.time, fallback: paletteColorDefaults.time },
-                                    text: null,
+                                    text: { value: timeText, onChange: setTimeText, placeholder: paletteTextDefaults.overview, fallback: paletteTextDefaults.overview },
                                 }, {
                                     label: "Hours",
                                     bg: { value: hoursColor, onChange: setHoursColor, placeholder: paletteColorDefaults.hours, fallback: paletteColorDefaults.hours },
@@ -621,24 +667,26 @@ export function DdayBuilder() {
 
                                         <div className="grid grid-cols-[1fr,1fr] items-center gap-2">
 
-                                            {/* <div className="flex items-center gap-2"> */}
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                                                    placeholder={item.bg.placeholder}
-                                                    value={item.bg.value}
-                                                    onChange={(e) => item.bg.onChange(e.target.value)}
-                                                />
-                                                <input
-                                                    type="color"
-                                                    className="color-swatch max-w-[16px] h-10"
-                                                    value={ensureHex(item.bg.value, item.bg.fallback)}
-                                                    onChange={(e) => item.bg.onChange(e.target.value)}
-                                                    aria-label={`${item.label} background color picker`}
-                                                />
-                                            </div>
+                                            {item.bg ? (
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                                                        placeholder={item.bg.placeholder}
+                                                        value={item.bg.value}
+                                                        onChange={(e) => item.bg.onChange(e.target.value)}
+                                                    />
+                                                    <input
+                                                        type="color"
+                                                        className="color-swatch max-w-[16px] h-10"
+                                                        value={ensureHex(item.bg.value, item.bg.fallback)}
+                                                        onChange={(e) => item.bg.onChange(e.target.value)}
+                                                        aria-label={`${item.label} background color picker`}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="text-xs w-full text-center text-zinc-500">~ No background ~</div>
+                                            )}
                                             {item.text ? (
-                                                //   <div className="flex items-center gap-2">
                                                 <div className="flex items-center gap-2">
                                                     <input
                                                         className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
@@ -680,7 +728,7 @@ export function DdayBuilder() {
                 <section className="flex max-h-[88vh] flex-col items-stretch justify-center rounded-2xl border border-white/10 bg-white/5 p-0 shadow-xl overflow-hidden">
                     <div
                         className="flex h-full w-full items-center justify-center "
-                        style={{ background: bg || "#0f172a" }}
+                        style={{ background: showCompactDefaultColorControls ? (bg || themeBgFallback) : themeBgFallback }}
                     >
                         <div className="m-auto">
                             <DdayWidget embedParams={livePreviewParams} />

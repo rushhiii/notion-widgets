@@ -208,6 +208,10 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const showDateLabel = parseBool(getParam("showdate"), true);
   const mode = (getParam("mode") || "").toLowerCase();
   const isCountdown = mode === "countdown";
+  const isCompact = mode === "compact";
+  const themeParam = (getParam("theme") || "default").toLowerCase();
+  const theme: "default" | "dark" | "light" =
+    themeParam === "light" ? "light" : themeParam === "dark" ? "dark" : "default";
   const alignParam = (getParam("align") || "left").toLowerCase();
   const note = getParam("note") || "";
 
@@ -267,6 +271,7 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const yearColorOverride = getParam("yearColor");
   const yearTextOverride = getParam("yearText");
   const timeColorOverride = getParam("timeColor");
+  const timeTextOverride = getParam("timeText");
   const hoursColorOverride = getParam("hoursColor");
   const hoursTextOverride = getParam("hoursText");
   const minutesColorOverride = getParam("minutesColor");
@@ -308,6 +313,11 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const totalSeconds = Math.floor(absMs / 1000);
   const totalMinutes = Math.floor(absMs / (1000 * 60));
   const totalHours = Math.floor(absMs / (1000 * 60 * 60));
+  const compactBaseSeconds = isCountdown ? Math.floor(Math.max(0, diffMs) / 1000) : totalSeconds;
+  const compactDays = Math.floor(compactBaseSeconds / 86400);
+  const compactHours = Math.floor((compactBaseSeconds % 86400) / 3600);
+  const compactMinutes = Math.floor((compactBaseSeconds % 3600) / 60);
+  const compactSeconds = compactBaseSeconds % 60;
 
   const sign = diffMs > 0 ? "left" : diffMs === 0 ? "today" : "passed";
 
@@ -339,15 +349,21 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const defaultWeekText = pickTextColor(weekTextOverride, defaultWeek.text);
   const defaultMonthText = pickTextColor(monthTextOverride, defaultMonth.text);
   const defaultYearText = pickTextColor(yearTextOverride, defaultYear.text);
-  const defaultHoursText = pickTextColor(hoursTextOverride, defaultHours.text);
-  const defaultMinutesText = pickTextColor(minutesTextOverride, defaultMinutes.text);
-  const defaultSecondsText = pickTextColor(secondsTextOverride, defaultSeconds.text);
+  const groupTimeText = pickTextColor(timeTextOverride, baseTime.text);
+  const defaultHoursText = pickTextColor(hoursTextOverride, timeTextOverride ? groupTimeText : defaultHours.text);
+  const defaultMinutesText = pickTextColor(minutesTextOverride, timeTextOverride ? groupTimeText : defaultMinutes.text);
+  const defaultSecondsText = pickTextColor(secondsTextOverride, timeTextOverride ? groupTimeText : defaultSeconds.text);
   const defaultTotalText = pickTextColor(totalTextOverride, defaultTotal.text);
   const defaultMegaText = pickTextColor(megaTextOverride, defaultMega.text);
   const defaultOverviewText = pickTextColor(overviewTextOverride, defaultOverview.text);
-  // Use accent color (badge background) for title, not text color
-  const titleAccentColor = pickColor(titleColorOverride ?? "yellow", globalColor).bg;
-  const pageBackground = pickColor(backgroundOverride, { bg: "#0f172a", text: "#ffffff" }).bg;
+  // Title/date should default to Notion yellow text tone.
+  const titleAccentColor = pickTextColor(titleColorOverride, "#DFAB01");
+  const themeBackground =
+    theme === "dark" ? "#191919" : theme === "light" ? "#f4f4f5" : "#0f172a";
+  const pageBackground = pickColor(backgroundOverride, {
+    bg: themeBackground,
+    text: "#ffffff",
+  }).bg;
 
   const alignItems = alignParam === "center" ? "center" : alignParam === "right" ? "flex-end" : "flex-start";
   const textAlign = alignParam === "center" ? "center" : alignParam === "right" ? "right" : "left";
@@ -437,6 +453,8 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
     ];
     const text = `${parts.join(", ")} ${sign}`;
     pushBadge("overview", text, { ...defaultOverview, text: defaultOverviewText });
+  } else if (mode === "compact") {
+    // Compact mode renders via dedicated grid below.
   } else {
     if (showDays) {
       const value = days;
@@ -490,8 +508,13 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
     return () => clearTimeout(badgeTimeout);
   }, []);
 
-  const containerPadding = mode === "overview" ? "4vw": 8;
-  const containerAlign = mode === "overview" ? alignItems : alignItems;
+  const containerPadding = mode === "overview" || mode === "compact" ? "4vw" : 8;
+  const containerAlign = mode === "compact" ? "center" : alignItems;
+  const contentTextAlign = mode === "compact" ? "center" : textAlign;
+  const compactCardBg = theme === "dark" ? "rgba(255 255 255 / 0)" : "rgba(0 0 0 / 0)";
+  const compactCardBorder = theme === "dark" ? "none" : "none";
+  const compactValueColor = theme === "dark" ? "#f4f4f5" : "#0f172a";
+  const compactLabelColor = theme === "dark" ? "#f4f4f5" : "#334155";
 
   return (
     <div
@@ -503,7 +526,7 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
         padding: containerPadding,
         fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif",
         background: pageBackground,
-        textAlign,
+        textAlign: contentTextAlign,
         minHeight: 180,
         opacity: showBg ? 1 : 0,
         transition: 'opacity 0.7s cubic-bezier(.4,0,.2,1)',
@@ -548,7 +571,61 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
           )}
         </div>
       )}
-      {badges.map((badge, i) => (
+      {isCompact && mounted && now && isValidTarget && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 10,
+            width: "100%",
+            maxWidth: 560,
+            alignItems: "stretch",
+          }}
+        >
+          {[
+            { label: "days", value: compactDays },
+            { label: "hours", value: compactHours },
+            { label: "minutes", value: compactMinutes },
+            { label: "seconds", value: compactSeconds },
+          ].map((item, i) => (
+            <div
+              key={item.label}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 96,
+                width: "100%",
+                textAlign: "center",
+                background: compactCardBg,
+                border: compactCardBorder,
+                opacity: showBadges ? 1 : 0,
+                transform: showBadges ? "translateY(0)" : "translateY(8px)",
+                transition: `opacity 0.7s cubic-bezier(.4,0,.2,1) ${i * 0.09 + 0.42}s, transform 0.7s cubic-bezier(.4,0,.2,1) ${i * 0.09 + 0.42}s`,
+              }}
+            >
+              <div style={{ fontSize: 35, fontWeight: 700, textAlign: "center", letterSpacing: "0.02em", lineHeight: 1, color: compactValueColor, width: "100%" }}>
+                {String(item.value).padStart(2, "0")}
+              </div>
+              <div
+                style={{
+                  textAlign: "center",
+                  fontSize: 11,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: compactLabelColor,
+                  marginTop: 3,
+                  width: "100%",
+                }}
+              >
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {!isCompact && badges.map((badge, i) => (
         <div
           key={badge.key}
           style={{
