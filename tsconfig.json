@@ -32,6 +32,7 @@
      "**/*.ts",
      "app/prvt/**/*",
     "**/*.tsx",
+    "**/*.d.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
     "build/types/**/*.ts"

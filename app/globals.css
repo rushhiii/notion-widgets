@@ -445,7 +445,7 @@
   /* font-size: clamp(24px, 4.4vw, 48px); */
   font-size: clamp(3vw, 4vw, 4vw);
   font-weight: 700;
-  /* font-family: Arial, Helvetica !important; */
+  font-family: Arial, Helvetica !important;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   letter-spacing: 0.04em;
@@ -464,7 +464,7 @@
   color: var(--text);
   font-size: clamp(3vw, 4vw, 4vw);
   font-weight: 700;
-  /* font-family: Arial, Helvetica !important; */
+  font-family: Arial, Helvetica !important;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   letter-spacing: 0.04em;
