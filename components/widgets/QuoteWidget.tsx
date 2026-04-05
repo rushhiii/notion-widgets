@@ -94,7 +94,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const pageTransparent = embedParams?.pageTransparent ?? parseBooleanParam(searchParams.get("pagetransparent"), false);
   const adminParam = (embedParams?.admin ?? searchParams.get("admin") ?? "").trim();
 
-  const ADMIN_SECRET = "dumbass";
+  const ADMIN_SECRET = "ajf9c4899rtVmFLZAFajw";
   const isAdminBypass = adminParam === ADMIN_SECRET;
   const effectiveShowPinned = isAdminBypass ? showPinned : false;
   const effectiveShowPersonal = isAdminBypass ? showPersonal : false;

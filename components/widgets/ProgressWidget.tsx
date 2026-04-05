@@ -9,7 +9,8 @@ import { parseBooleanParam, parseColorParam } from "@/lib/utils";
 
 type Milestone = { id: string; label: string; value: number };
 type BarRow = { id: string; label: string; progress: number; goal: number; milestones: Milestone[] };
-type LayoutMode = "linear" | "circular";
+type LayoutMode = "linear" | "circular" | "counter";
+type TransparentBgMode = "off" | "dark" | "light";
 
 type PreviewProps = {
   title: string;
@@ -30,9 +31,17 @@ type PreviewProps = {
   layoutMode: LayoutMode;
   fontFamily: string;
   themeName: string;
+  widthPct: number;
+  fontSizePct: number;
+  showTitle: boolean;
+  showLabelText: boolean;
+  showBorder: boolean;
+  showProgressLabel: boolean;
+  transparentBgMode: TransparentBgMode;
   isEmbedView?: boolean;
   defaultStep: number;
   onAdjustBar?: (barId: string, delta: number) => void;
+  onAdjustMilestone?: (barId: string, milestoneId: string, delta: number) => void;
   bars: BarRow[];
 };
 
@@ -50,6 +59,8 @@ const DEFAULTS = {
   layoutMode: "linear" as LayoutMode,
   fontFamily: "var(--font-plus-jakarta), 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
   themeName: "midnight",
+  widthPct: 100,
+  fontSizePct: 100,
 };
 
 const THEME_PRESETS: Record<
@@ -117,6 +128,14 @@ function parseNumberParam(value: string | null, fallback: number) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   return clampNumber(parsed, 0);
+}
+
+function parseTransparentBgMode(value: string | null): TransparentBgMode {
+  if (!value) return "off";
+  const normalized = value.toLowerCase();
+  if (normalized === "dark" || normalized === "light") return normalized;
+  // Legacy support: transparentbg=1 or true maps to dark mode.
+  return parseBooleanParam(value, false) ? "dark" : "off";
 }
 
 function parseMilestone(raw: string): Milestone | null {
@@ -250,9 +269,17 @@ function ProgressPreview({
   layoutMode,
   fontFamily,
   themeName,
+  widthPct,
+  fontSizePct,
+  showTitle,
+  showLabelText,
+  showBorder,
+  showProgressLabel,
+  transparentBgMode,
   isEmbedView = false,
   defaultStep,
   onAdjustBar,
+  onAdjustMilestone,
   bars,
 }: PreviewProps) {
   // Animation: fade/slide-in for preview container and each bar row
@@ -263,36 +290,55 @@ function ProgressPreview({
 
   const baseBar = { id: "base", label, progress, goal, milestones: defaultMilestones() };
   const rows = bars.length ? bars : [baseBar];
+  const contentScale = fontSizePct / 100;
   const labelText = (label || "").trim();
   const transparent = fullPage && isEmbedView;
+  const transparentBgColor = transparentBgMode === "dark" ? "#191919" : "#ffffff";
+  const effectiveBg = transparentBgMode === "off" ? (transparent ? "transparent" : background) : transparentBgColor;
   const isMidnight = themeName === "midnight";
   const containerClass = transparent
-    ? "flex w-full flex-col gap-3 p-2 sm:p-6"
+    ? "flex w-full flex-col justify-center gap-3 p-2 sm:p-6"
     : isMidnight
-      ? "flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-transparent bg-[#0c0f1f] px-7 py-6 shadow-sm"
-      : "flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/90 px-7 py-6 shadow-sm";
+      ? "flex w-full max-w-4xl flex-col justify-center gap-3 rounded-2xl px-7 py-6"
+      : "flex w-full max-w-4xl flex-col justify-center gap-3 rounded-2xl px-7 py-6";
   const containerStyle = {
     color: text,
     fontFamily,
-    backgroundColor: transparent ? "transparent" : background,
-    backgroundImage: transparent || isMidnight
+    borderColor: showBorder ? text : "transparent",
+    backgroundColor: effectiveBg,
+    backgroundImage: transparentBgMode !== "off" || transparent || isMidnight
       ? undefined
-      : "radial-gradient(circle at 25% 25%, rgba(59,130,246,0.08), transparent 45%)",
+      : "",
+      // : "radial-gradient(circle at 25% 25%, rgba(59,130,246,0.08), transparent 45%)",
     transition: "background-color 180ms ease, color 180ms ease, border-color 180ms ease, opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1)",
     opacity: showPreview ? 1 : 0,
     transform: showPreview ? 'translateY(0)' : 'translateY(24px)',
+    width: `${widthPct}%`,
+    minHeight: fullPage ? "100vh" : undefined,
+    marginInline: "auto",
   } as const;
 
   return (
     <div className={containerClass} style={containerStyle}>
-      {(title || labelText) && (
+      <div
+        style={{
+          transform: `scale(${contentScale})`,
+          transformOrigin: "top center",
+          width: contentScale < 1 ? "100%" : `${100 / contentScale}%`,
+          minHeight: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}
+      >
+      {(showTitle || showLabelText) && (title || labelText) && (
         <div className="space-y-1">
-          {title && (
+          {showTitle && title && (
             <h2 className="text-3xl text-left font-semibold tracking-tight" style={{ color: accent }}>
               {title}
             </h2>
           )}
-          {labelText && (
+          {showLabelText && labelText && (
             <p className="text-sm text-left font-medium text-zinc-500" style={{ color: text }}>
               {labelText}
             </p>
@@ -326,8 +372,12 @@ function ProgressPreview({
             const arc = (pct / 100) * circumference;
 
             return (
-              <div key={row.id} className="space-y-3 rounded-2xl border border-white/10 bg-white/70 p-4 shadow-sm" style={{ background: transparent ? background : "rgba(255,255,255,0.7)", ...rowAnim }}>
-                {row.label.trim() !== "" && (
+              <div
+                key={row.id}
+                className="space-y-3 rounded-2xl border p-4 shadow-sm"
+                style={{ backgroundColor: transparentBgMode === "off" ? background : transparentBgColor, borderColor: showBorder ? text : "transparent", ...rowAnim }}
+              >
+                {showProgressLabel && row.label.trim() !== "" && (
                   <div className="flex items-center justify-between text-sm font-semibold" style={{ color: text }}>
                     <span>{row.label.trim()}</span>
                     <span>
@@ -338,7 +388,7 @@ function ProgressPreview({
                   </div>
                 )}
 
-                <div className="relative flex flex-col items-center gap-3">
+                <div className="group relative flex flex-col items-center gap-3">
                   <div className="relative" style={{ width: size, height: size }}>
                     <svg width={size} height={size}>
                       <circle
@@ -365,45 +415,65 @@ function ProgressPreview({
                     </svg>
 
                     {showMilestones && (
-                      <div className="absolute inset-0">
-                        {sortedMilestones.map((ms) => {
+                      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        {sortedMilestones.map((ms, index) => {
                           const angle = (ms.pct / 100) * 2 * Math.PI - Math.PI / 2;
-                          const x = center + Math.cos(angle) * (radius - stroke / 2);
-                          const y = center + Math.sin(angle) * (radius - stroke / 2);
+                          const x = center + Math.cos(angle) * radius;
+                          const y = center + Math.sin(angle) * radius;
+                          const labelRadius = radius + 22;
+                          const lx = center + Math.cos(angle) * labelRadius;
+                          const ly = center + Math.sin(angle) * labelRadius;
                           return (
-                            <div
-                              key={`${row.id}-dot-${ms.id}`}
-                              className="absolute -translate-x-1 -translate-y-0 rounded-full border border-white/70 shadow-sm"
-                              style={{ left: x, top: y, width: 14, height: 14, background: accent }}
-                              title={ms.label}
-                            />
+                            <div key={`${row.id}-mk-${ms.id}`} className="contents">
+                              <div
+                                className="absolute rounded-full border border-white/70 shadow-sm"
+                                style={{ left: x, top: y, width: 10, height: 10, background: accent, transform: "translate(-50%, -50%)" }}
+                                title={ms.label}
+                              />
+                              {!showMilestoneList && (
+                                <div
+                                  className="absolute"
+                                  style={{ left: lx, top: ly, transform: "translate(-50%, -50%)" }}
+                                >
+                                  <div
+                                    className="rounded-md border border-white/20 bg-black/70 px-2 py-1 text-[11px] font-medium text-white shadow-md backdrop-blur-sm opacity-0 scale-95 translate-y-1 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0"
+                                    style={{ transitionDelay: `${index * 45}ms` }}
+                                  >
+                                    {ms.label}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
                     )}
 
-                    {onAdjustBar && (
-                      <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-3 opacity-0 transition-opacity duration-200 hover:opacity-100">
-                        <button
-                          className="pointer-events-auto rounded-full bg-white/80 px-2 py-1 text-sm font-semibold text-zinc-700 shadow"
-                          onClick={() => onAdjustBar(row.id, -defaultStep)}
-                          aria-label="Decrement progress"
-                        >
-                          -
-                        </button>
-                        <button
-                          className="pointer-events-auto rounded-full bg-white/80 px-2 py-1 text-sm font-semibold text-zinc-700 shadow"
-                          onClick={() => onAdjustBar(row.id, defaultStep)}
-                          aria-label="Increment progress"
-                        >
-                          +
-                        </button>
-                      </div>
-                    )}
-
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center" style={{ color: text }}>
                       {showPct && <div className="text-2xl font-semibold">{pct.toFixed(1)}%</div>}
-                      {showTotals && <div className="text-sm text-zinc-600" style={{ color: text }}>{formatNumber(row.progress)}</div>}
+                      {showTotals && (
+                        <div className="group/value pointer-events-auto mt-1 flex items-center justify-center gap-2 text-sm text-zinc-600" style={{ color: text }}>
+                          {onAdjustBar && (
+                            <button
+                              className="rounded px-1 text-base font-semibold leading-none opacity-0 transition-opacity duration-150 group-hover/value:opacity-100"
+                              onClick={() => onAdjustBar(row.id, -defaultStep)}
+                              aria-label="Decrement progress"
+                            >
+                              -
+                            </button>
+                          )}
+                          <span>{formatNumber(row.progress)}</span>
+                          {onAdjustBar && (
+                            <button
+                              className="rounded px-1 text-base font-semibold leading-none opacity-0 transition-opacity duration-150 group-hover/value:opacity-100"
+                              onClick={() => onAdjustBar(row.id, defaultStep)}
+                              aria-label="Increment progress"
+                            >
+                              +
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -411,18 +481,33 @@ function ProgressPreview({
                     <div className="w-full space-y-2">
                       {sortedMilestones.map((ms) => {
                         const milestonePct = clampNumber((ms.value / safeGoal) * 100, 0, 100);
+                        const progressToTargetPct = ms.value > 0 ? clampNumber((row.progress / ms.value) * 100, 0, 100) : 0;
                         return (
-                          <div key={`${row.id}-list-${ms.id}`} className="space-y-1">
+                          <div key={`${row.id}-list-${ms.id}`} className="group/ms space-y-1">
                             <div className="flex items-center justify-between text-xs font-medium" style={{ color: text }}>
                               <span>{ms.label}</span>
-                              <span>
-                                {formatNumber(ms.value)} ({milestonePct.toFixed(1)}%)
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  className="rounded px-1 text-[16px] opacity-0 transition-opacity duration-200 group-hover/ms:opacity-100"
+                                  onClick={() => onAdjustMilestone?.(row.id, ms.id, -defaultStep)}
+                                  aria-label="Decrease milestone value"
+                                >
+                                  -
+                                </button>
+                                <span>{formatNumber(row.progress)} / {formatNumber(ms.value)} ({progressToTargetPct.toFixed(1)}%)</span>
+                                <button
+                                  className="rounded px-1 text-[16px] opacity-0 transition-opacity duration-200 group-hover/ms:opacity-100"
+                                  onClick={() => onAdjustMilestone?.(row.id, ms.id, defaultStep)}
+                                  aria-label="Increase milestone value"
+                                >
+                                  +
+                                </button>
+                              </div>
                             </div>
                             <div className="relative h-2 w-full rounded-full" style={{ background: track }}>
                               <div
                                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
-                                style={{ width: `${milestonePct}%`, background: accent }}
+                                style={{ width: `${progressToTargetPct}%`, background: accent }}
                               />
                             </div>
                           </div>
@@ -435,9 +520,74 @@ function ProgressPreview({
             );
           }
 
+          if (layoutMode === "counter") {
+            const progressDeltaToZero = row.progress;
+            const progressPct = safeGoal > 0 ? clampNumber((row.progress / safeGoal) * 100, 0, 100) : 0;
+
+            return (
+              <div
+                key={row.id}
+                className="space-y-3 rounded-2xl border p-5 "
+                style={{ backgroundColor: transparentBgMode === "off" ? background : transparentBgColor, borderColor: showBorder ? text : "transparent", ...rowAnim }}
+              >
+                {showProgressLabel && row.label.trim() !== "" && (
+                  <div className="text-center text-lg font-semibold" style={{ color: text }}>
+                    {row.label.trim()}
+                  </div>
+                )}
+
+                <div className="group/value flex items-center justify-center gap-4">
+                  {onAdjustBar && (
+                    <button
+                      className="h-12 w-12 rounded-xl bg-black/10 text-2xl font-medium opacity-80 transition hover:opacity-100"
+                      onClick={() => onAdjustBar(row.id, -defaultStep)}
+                      aria-label="Decrement counter"
+                    >
+                      -
+                    </button>
+                  )}
+
+                  <div className="text-center">
+                    <div className="text-5xl font-semibold leading-none" style={{ color: text }}>
+                      {formatNumber(row.progress)}
+                    </div>
+                    {showPct && <div className="mt-2 text-sm opacity-80" style={{ color: text }}>{progressPct.toFixed(1)}%</div>}
+                  </div>
+
+                  {onAdjustBar && (
+                    <button
+                      className="h-12 w-12 rounded-xl bg-black/10 text-2xl font-medium opacity-80 transition hover:opacity-100"
+                      onClick={() => onAdjustBar(row.id, defaultStep)}
+                      aria-label="Increment counter"
+                    >
+                      +
+                    </button>
+                  )}
+                </div>
+
+                {onAdjustBar && (
+                  <button
+                    className="mx-auto block text-sm opacity-80 transition hover:opacity-100"
+                    style={{ color: text }}
+                    onClick={() => onAdjustBar(row.id, -progressDeltaToZero)}
+                    aria-label="Reset counter"
+                  >
+                    reset
+                  </button>
+                )}
+
+                {showTotals && (
+                  <div className="text-center text-sm" style={{ color: text }}>
+                    target: {formatNumber(row.goal)}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return (
             <div key={row.id} className="space-y-2 group">
-              {row.label.trim() !== "" && (
+              {showProgressLabel && row.label.trim() !== "" && (
                 <div className="flex items-center justify-between text-sm font-semibold" style={{ color: text }}>
                   <span>{row.label.trim()}</span>
                   <span>
@@ -478,17 +628,24 @@ function ProgressPreview({
                 )}
 
                 {showMilestones && (
-                  <div className="pointer-events-none absolute -top-7 left-0 right-0 opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:-translate-y-1">
+                  <div className="pointer-events-none absolute left-0 right-0 top-0 opacity-0 transition-all duration-200 group-hover:opacity-100">
                     {sortedMilestones.map((ms) => (
                       <div
                         key={`${row.id}-${ms.id}`}
                         className="absolute flex -translate-x-1/2 flex-col items-center"
-                        style={{ left: `${ms.pct}%` }}
+                        style={{ left: `${ms.pct-.7}%`, top: -34 }}
                       >
-                        <div className="rounded-md bg-zinc-200 px-2 py-1 text-sm font-medium text-zinc-800 shadow-sm transition-transform duration-200 group-hover:scale-100">
+                        <div
+                          className="progress-marker-label relative rounded-md px-2 py-1 text-sm font-medium shadow-sm transition-all duration-200 whitespace-nowrap"
+                          style={{
+                            backgroundColor: track,
+                            color: text,
+                            ['--marker-label-bg' as string]: track,
+                          }}
+                          title={`${ms.label} (${formatNumber(ms.value)})`}
+                        >
                           {ms.label}
                         </div>
-                        <div className="h-0 w-0 border-x-6 border-x-transparent border-t-6 border-t-zinc-200" />
                       </div>
                     ))}
                   </div>
@@ -504,18 +661,33 @@ function ProgressPreview({
                 <div className="space-y-2">
                   {sortedMilestones.map((ms) => {
                     const milestonePct = clampNumber((ms.value / safeGoal) * 100, 0, 100);
+                    const progressToTargetPct = ms.value > 0 ? clampNumber((row.progress / ms.value) * 100, 0, 100) : 0;
                     return (
-                      <div key={`${row.id}-list-${ms.id}`} className="space-y-1">
+                      <div key={`${row.id}-list-${ms.id}`} className="group/ms space-y-1">
                         <div className="flex items-center justify-between text-xs font-medium text-zinc-600" style={{ color: text }}>
                           <span>{ms.label}</span>
-                          <span>
-                            {formatNumber(ms.value)} ({milestonePct.toFixed(1)}%)
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              className="rounded px-1 text-[11px] opacity-0 transition-opacity duration-200 group-hover/ms:opacity-100"
+                              onClick={() => onAdjustMilestone?.(row.id, ms.id, -defaultStep)}
+                              aria-label="Decrease milestone value"
+                            >
+                              -
+                            </button>
+                            <span>{formatNumber(row.progress)} / {formatNumber(ms.value)} ({progressToTargetPct.toFixed(1)}%)</span>
+                            <button
+                              className="rounded px-1 text-[11px] opacity-0 transition-opacity duration-200 group-hover/ms:opacity-100"
+                              onClick={() => onAdjustMilestone?.(row.id, ms.id, defaultStep)}
+                              aria-label="Increase milestone value"
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
                         <div className="relative h-2 w-full rounded-full" style={{ background: track }}>
                           <div
                             className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
-                            style={{ width: `${milestonePct}%`, background: accent }}
+                            style={{ width: `${progressToTargetPct}%`, background: accent }}
                           />
                         </div>
                       </div>
@@ -526,6 +698,7 @@ function ProgressPreview({
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
@@ -562,6 +735,8 @@ export function ProgressWidget() {
     const trackParam = parseColorParam(searchParams.get("track")) ?? themePreset?.track ?? DEFAULTS.track;
     const textParam = parseColorParam(searchParams.get("text")) ?? themePreset?.text ?? DEFAULTS.text;
     const backgroundParam = parseColorParam(searchParams.get("bg")) ?? themePreset?.background ?? DEFAULTS.background;
+    const widthParam = clampNumber(parseNumberParam(searchParams.get("width"), DEFAULTS.widthPct), 40, 140);
+    const fontSizeParam = clampNumber(parseNumberParam(searchParams.get("fsize"), DEFAULTS.fontSizePct), 70, 160);
 
     return {
       title: searchParams.get("title") ?? DEFAULTS.title,
@@ -578,12 +753,19 @@ export function ProgressWidget() {
       fontFamily: fontParam,
       fontCustom: Boolean(fontParamRaw),
       themeName: themePreset ? themeParam : "custom",
+      widthPct: widthParam,
+      fontSizePct: fontSizeParam,
       showBuilder: !parseBooleanParam(searchParams.get("embed"), false) && !parseBooleanParam(searchParams.get("bare"), false),
       showMilestones: parseBooleanParam(searchParams.get("markers"), false),
       showMilestoneList: parseBooleanParam(searchParams.get("mlist"), false),
       showPct: parseBooleanParam(searchParams.get("pct"), true),
       showTotals: parseBooleanParam(searchParams.get("totals"), true),
       fullPage: parseBooleanParam(searchParams.get("full"), true),
+      transparentBgMode: parseTransparentBgMode(searchParams.get("transparentbg")),
+      showTitle: parseBooleanParam(searchParams.get("showtitle"), true),
+      showLabelText: parseBooleanParam(searchParams.get("showlabel"), true),
+      showBorder: parseBooleanParam(searchParams.get("showborder"), true),
+      showProgressLabel: parseBooleanParam(searchParams.get("showprogresslabel"), true),
       defaultStep: parseNumberParam(searchParams.get("step"), 100),
       bars: barsWithMilestones,
     };
@@ -603,12 +785,19 @@ export function ProgressWidget() {
   const [fontFamily, setFontFamily] = useState(initial.fontFamily ?? DEFAULTS.fontFamily);
   const [fontCustom, setFontCustom] = useState(initial.fontCustom ?? false);
   const [themeName, setThemeName] = useState(initial.themeName ?? "custom");
+  const [widthPct, setWidthPct] = useState(initial.widthPct ?? DEFAULTS.widthPct);
+  const [fontSizePct, setFontSizePct] = useState(initial.fontSizePct ?? DEFAULTS.fontSizePct);
   const [copied, setCopied] = useState(false);
   const [showMilestones, setShowMilestones] = useState(initial.showMilestones);
   const [showMilestoneList, setShowMilestoneList] = useState(initial.showMilestoneList);
   const [showPct, setShowPct] = useState(initial.showPct);
   const [showTotals, setShowTotals] = useState(initial.showTotals);
   const [fullPage, setFullPage] = useState(initial.fullPage);
+  const [transparentBgMode, setTransparentBgMode] = useState<TransparentBgMode>(initial.transparentBgMode ?? "off");
+  const [showTitle, setShowTitle] = useState(initial.showTitle ?? true);
+  const [showLabelText, setShowLabelText] = useState(initial.showLabelText ?? true);
+  const [showBorder, setShowBorder] = useState(initial.showBorder ?? true);
+  const [showProgressLabel, setShowProgressLabel] = useState(initial.showProgressLabel ?? true);
   const [adjustMode, setAdjustMode] = useState<"add" | "set">("add");
   const [defaultStep, setDefaultStep] = useState(initial.defaultStep || 100);
   const [bars, setBars] = useState<BarRow[]>(
@@ -682,11 +871,18 @@ export function ProgressWidget() {
     setFontFamily(initial.fontFamily ?? DEFAULTS.fontFamily);
     setFontCustom(initial.fontCustom ?? false);
     setThemeName(initial.themeName ?? "custom");
+    setWidthPct(initial.widthPct ?? DEFAULTS.widthPct);
+    setFontSizePct(initial.fontSizePct ?? DEFAULTS.fontSizePct);
     setShowMilestones(initial.showMilestones);
     setShowMilestoneList(initial.showMilestoneList);
     setShowPct(initial.showPct);
     setShowTotals(initial.showTotals);
     setFullPage(initial.fullPage);
+    setTransparentBgMode(initial.transparentBgMode ?? "off");
+    setShowTitle(initial.showTitle ?? true);
+    setShowLabelText(initial.showLabelText ?? true);
+    setShowBorder(initial.showBorder ?? true);
+    setShowProgressLabel(initial.showProgressLabel ?? true);
     setAdjustMode("add");
     setDefaultStep(initial.defaultStep || 100);
     const nextBars = initial.bars.length
@@ -714,6 +910,21 @@ export function ProgressWidget() {
     });
   };
 
+  const updateMilestoneValue = (barId: string, milestoneId: string, delta: number) => {
+    setBars((current) =>
+      current.map((bar) =>
+        bar.id === barId
+          ? {
+              ...bar,
+              milestones: bar.milestones.map((ms) =>
+                ms.id === milestoneId ? { ...ms, value: clampNumber(ms.value + delta, 0) } : ms,
+              ),
+            }
+          : bar,
+      ),
+    );
+  };
+
   const handleCopyLink = () => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
@@ -725,6 +936,8 @@ export function ProgressWidget() {
     url.searchParams.set("mode", layoutMode);
     url.searchParams.set("font", fontFamily);
     url.searchParams.set("theme", themeName || "custom");
+    if (widthPct !== DEFAULTS.widthPct) url.searchParams.set("width", String(widthPct));
+    if (fontSizePct !== DEFAULTS.fontSizePct) url.searchParams.set("fsize", String(fontSizePct));
     if (prefix) url.searchParams.set("prefix", prefix);
     if (suffix) url.searchParams.set("suffix", suffix);
     if (accent) url.searchParams.set("accent", accent.replace("#", ""));
@@ -736,6 +949,11 @@ export function ProgressWidget() {
     if (!showPct) url.searchParams.set("pct", "0");
     if (!showTotals) url.searchParams.set("totals", "0");
     url.searchParams.set("full", fullPage ? "1" : "0");
+    if (transparentBgMode !== "off") url.searchParams.set("transparentbg", transparentBgMode);
+    if (!showTitle) url.searchParams.set("showtitle", "0");
+    if (!showLabelText) url.searchParams.set("showlabel", "0");
+    if (!showBorder) url.searchParams.set("showborder", "0");
+    if (!showProgressLabel) url.searchParams.set("showprogresslabel", "0");
     bars.forEach((bar, idx) => {
       url.searchParams.append("bar", `${bar.label}:${bar.progress}:${bar.goal}`);
       bar.milestones.forEach((ms) => {
@@ -744,7 +962,7 @@ export function ProgressWidget() {
     });
     // Always generate the embed view URL so it opens directly to the widget (not the builder).
     url.searchParams.set("embed", "1");
-    if (!showMilestones) url.searchParams.set("markers", "0");
+    url.searchParams.set("markers", showMilestones ? "1" : "0");
 
     navigator.clipboard
       .writeText(url.toString())
@@ -774,24 +992,35 @@ export function ProgressWidget() {
     layoutMode,
     fontFamily,
     themeName,
+    widthPct,
+    fontSizePct,
+    showTitle,
+    showLabelText,
+    showBorder,
+    showProgressLabel,
+    transparentBgMode,
     isEmbedView: false,
     defaultStep,
     onAdjustBar: (barId: string, delta: number) => {
       updateBarProgress(barId, (prev) => clampNumber(prev + delta));
+    },
+    onAdjustMilestone: (barId: string, milestoneId: string, delta: number) => {
+      updateMilestoneValue(barId, milestoneId, delta);
     },
     bars,
   };
 
   if (!showBuilder) {
     if (fullPage) {
-      const isMidnight = themeName === "midnight";
+      const transparentBgColor = transparentBgMode === "dark" ? "#191919" : "#ffffff";
       const fullPageStyle = {
         minHeight: "100vh",
         width: "100%",
-        backgroundColor: background,
-        backgroundImage: isMidnight
+        backgroundColor: transparentBgMode === "off" ? background : transparentBgColor,
+        backgroundImage: themeName === "midnight"
           ? undefined
-          : "radial-gradient(circle at 25% 25%, rgba(59,130,246,0.08), transparent 45%)",
+          : "",
+          // : "radial-gradient(circle at 25% 25%, rgba(59,130,246,0.08), transparent 45%)",
         color: text,
         fontFamily,
       } as const;
@@ -802,9 +1031,17 @@ export function ProgressWidget() {
       );
     }
     return (
-      <WidgetContainer theme="light" className="bg-transparent" heightClassName="h-screen">
-        <ProgressPreview {...previewProps} isEmbedView />
-      </WidgetContainer>
+      <div
+        style={{
+          minHeight: "100vh",
+          width: "100%",
+          backgroundColor: transparentBgMode === "off" ? background : transparentBgMode === "dark" ? "#191919" : "#ffffff",
+        }}
+      >
+        <WidgetContainer theme="light" className="bg-transparent" heightClassName="h-screen">
+          <ProgressPreview {...previewProps} isEmbedView />
+        </WidgetContainer>
+      </div>
     );
   }
 
@@ -836,6 +1073,12 @@ export function ProgressWidget() {
                 setFontFamily(DEFAULTS.fontFamily);
                 setFontCustom(false);
                 setThemeName(DEFAULTS.themeName);
+                setWidthPct(DEFAULTS.widthPct);
+                setFontSizePct(DEFAULTS.fontSizePct);
+                setShowTitle(true);
+                setShowLabelText(true);
+                setShowBorder(true);
+                setShowProgressLabel(true);
                 const resetBar = {
                   id: nextId(),
                   label: "Progress",
@@ -846,6 +1089,7 @@ export function ProgressWidget() {
                 setBars([resetBar]);
                 setSelectedBarId(resetBar.id);
                 setShowMilestones(true);
+                setTransparentBgMode("off");
                 setAdjustMode("add");
               }}
               aria-label="Reset"
@@ -869,10 +1113,34 @@ export function ProgressWidget() {
                 <span className="text-zinc-300">Display mode</span>
                 <FancySelect
                   value={layoutMode}
-                  onChange={(val) => setLayoutMode(val as LayoutMode)}
+                  onChange={(val) => {
+                    const nextMode = val as LayoutMode;
+                    setLayoutMode(nextMode);
+                    if (nextMode === "counter") {
+                      const preset = THEME_PRESETS.daylight;
+                      setThemeName("daylight");
+                      setAccent(preset.accent);
+                      setTrack(preset.track);
+                      setText(preset.text);
+                      setBackground(preset.background);
+                      // Counter mode defaults (match builder preset shown in screenshot).
+                      setShowPct(false);
+                      setShowTotals(false);
+                      setShowTitle(false);
+                      setShowLabelText(false);
+                      setShowBorder(false);
+                      setShowProgressLabel(false);
+                      setFullPage(true);
+                      // setTransparentBgMode("dark");
+                      if (preset.font && !fontCustom) {
+                        setFontFamily(preset.font);
+                      }
+                    }
+                  }}
                   options={[
                     { value: "linear", label: "Horizontal bars" },
                     { value: "circular", label: "Circular dials" },
+                    { value: "counter", label: "Counter mode" },
                   ]}
                 />
               </label>
@@ -1031,15 +1299,19 @@ export function ProgressWidget() {
                 />
                 Show milestone markers
               </label>
-              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-white/20 bg-white/10"
-                  checked={showMilestoneList}
-                  onChange={(e) => setShowMilestoneList(e.target.checked)}
-                />
-                Show milestone breakdown
-              </label>
+              {showMilestones ? (
+                <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-white/20 bg-white/10"
+                    checked={showMilestoneList}
+                    onChange={(e) => setShowMilestoneList(e.target.checked)}
+                  />
+                  Show milestone breakdown
+                </label>
+              ) : (
+                <div />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 items-center">
@@ -1059,7 +1331,49 @@ export function ProgressWidget() {
                   checked={showTotals}
                   onChange={(e) => setShowTotals(e.target.checked)}
                 />
-                Show progress value
+                {layoutMode === "counter" ? "Show target value" : "Show progress value"}
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 items-center">
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-white/20 bg-white/10"
+                  checked={showTitle}
+                  onChange={(e) => setShowTitle(e.target.checked)}
+                />
+                Show title
+              </label>
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-white/20 bg-white/10"
+                  checked={showLabelText}
+                  onChange={(e) => setShowLabelText(e.target.checked)}
+                />
+                Show label
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 items-center">
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-white/20 bg-white/10"
+                  checked={showBorder}
+                  onChange={(e) => setShowBorder(e.target.checked)}
+                />
+                Show border
+              </label>
+              <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-white/20 bg-white/10"
+                  checked={showProgressLabel}
+                  onChange={(e) => setShowProgressLabel(e.target.checked)}
+                />
+                Show progress label
               </label>
             </div>
 
@@ -1071,9 +1385,73 @@ export function ProgressWidget() {
                   checked={fullPage}
                   onChange={(e) => setFullPage(e.target.checked)}
                 />
-                Full-page transparent mode
+                Full-page mode
               </label>
-              <p className="text-xs text-zinc-400">Makes the embed span the page with no container chrome.</p>
+              <div className="space-y-2">
+                <label className="inline-flex items-center gap-2 text-sm text-zinc-300 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-white/20 bg-white/10"
+                    checked={transparentBgMode !== "off"}
+                    onChange={(e) => setTransparentBgMode(e.target.checked ? "dark" : "off")}
+                  />
+                  Transparent BG
+                </label>
+                <label
+                  className={`relative inline-flex items-center gap-2 text-sm select-none ${
+                    transparentBgMode === "off" ? "text-zinc-500 cursor-not-allowed" : "text-zinc-300 cursor-pointer"
+                  }`}
+                >
+                  <span>Dark</span>
+                  <input
+                    type="checkbox"
+                    className="peer absolute h-0 w-0 opacity-0"
+                    checked={transparentBgMode === "light"}
+                    disabled={transparentBgMode === "off"}
+                    onChange={(e) => setTransparentBgMode(e.target.checked ? "light" : "dark")}
+                  />
+                  <span
+                    className={`relative h-5 w-11 rounded-full transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-6 ${
+                      transparentBgMode === "off"
+                        ? "bg-zinc-700/40"
+                        : "bg-zinc-500/90 peer-checked:bg-zinc-300"
+                    }`}
+                  />
+                  <span>Light</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-1 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-300">Widget width</span>
+                <span className="text-zinc-400">{widthPct}%</span>
+              </div>
+              <input
+                type="range"
+                min={40}
+                max={140}
+                step={1}
+                value={widthPct}
+                onChange={(e) => setWidthPct(clampNumber(Number(e.target.value), 40, 140))}
+                className="w-full accent-white"
+              />
+            </div>
+
+            <div className="space-y-1 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-300">Font size</span>
+                <span className="text-zinc-400">{fontSizePct}%</span>
+              </div>
+              <input
+                type="range"
+                min={70}
+                max={160}
+                step={1}
+                value={fontSizePct}
+                onChange={(e) => setFontSizePct(clampNumber(Number(e.target.value), 70, 160))}
+                className="w-full accent-white"
+              />
             </div>
           </div>
 
@@ -1348,14 +1726,14 @@ export function ProgressWidget() {
         {/* right widget container */}
         <section
           className={`flex max-h-[88vh] items-center justify-center rounded-2xl overflow-y-auto scrollbar-hide ${
-            fullPage ? "p-0 border border-transparent shadow-none" : "border border-white/10 bg-white/5 p-6 shadow-xl"
+            fullPage ? "p-0 border border-transparent shadow-none" : "border border-white/10 bg-transparent p-6 shadow-xl"
           }`}
-          style={fullPage ? { background: background, width: "100%" } : undefined}
+          style={{ background: transparentBgMode === "off" ? background : transparentBgMode === "dark" ? "#191919" : "#ffffff", width: "100%" }}
         >
           {fullPage ? (
-            <div className="flex w-full items-center justify-center" style={{ background }}>
+            <div className="flex w-full items-center justify-center" style={{ background: transparentBgMode === "off" ? background : transparentBgMode === "dark" ? "#191919" : "#ffffff" }}>
               <div className="w-full">
-                <ProgressPreview {...previewProps} isEmbedView />
+                <ProgressPreview {...previewProps} />
               </div>
             </div>
           ) : (

@@ -1166,3 +1166,16 @@ body {
   font-style: normal;
   font-weight: 400;
 }
+
+.progress-marker-label::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--marker-label-bg, #e5e7eb);
+}
