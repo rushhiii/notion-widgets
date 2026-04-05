@@ -7,6 +7,8 @@ import { WidgetContainer } from "@/components/ui/WidgetContainer";
 import { getQuotes, Quote } from "@/lib/quotes";
 import { parseBooleanParam, parsePositiveIntParam, parseColorParam, resolveTheme } from "@/lib/utils";
 
+type TransparentBgMode = "off" | "dark" | "light";
+
 type QuoteEmbedParams = {
   category?: string;
   categories?: string;
@@ -32,6 +34,7 @@ type QuoteEmbedParams = {
   pageBg?: string;
   pageMatch?: boolean;
   pageTransparent?: boolean;
+  pageTransparentMode?: TransparentBgMode;
   admin?: string;
 };
 
@@ -91,7 +94,14 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const accentParam = embedParams?.accent ?? parseColorParam(searchParams.get("accent"));
   const pageBgParam = embedParams?.pageBg ?? parseColorParam(searchParams.get("pagebg"));
   const pageMatch = embedParams?.pageMatch ?? parseBooleanParam(searchParams.get("pagematch"), true);
+  const pageTransparentModeParam = (embedParams?.pageTransparentMode ?? searchParams.get("pagetransparentmode") ?? "").trim().toLowerCase();
   const pageTransparent = embedParams?.pageTransparent ?? parseBooleanParam(searchParams.get("pagetransparent"), false);
+  const transparentBgMode: TransparentBgMode =
+    pageTransparentModeParam === "dark" || pageTransparentModeParam === "light"
+      ? (pageTransparentModeParam as TransparentBgMode)
+      : pageTransparent
+        ? "dark"
+        : "off";
   const adminParam = (embedParams?.admin ?? searchParams.get("admin") ?? "").trim();
 
   const ADMIN_SECRET = "ajf9c4899rtVmFLZAFajw";
@@ -205,8 +215,8 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const cardBorder = borderParam ?? (theme === "dark" ? "#7c3aed" : "#d4d4d8");
   const quoteColor = textParam ?? (theme === "dark" ? "#e5e7eb" : "#0f172a");
   const authorColor = accentParam ?? (theme === "dark" ? "#a1a1aa" : "#475569");
-  const pageBackground = pageTransparent
-    ? "#191919" // ignore pageBg/pageMatch when transparency is requested to keep Notion-like dark backdrop
+  const pageBackground = transparentBgMode !== "off"
+    ? (transparentBgMode === "dark" ? "#191919" : "#ffffff")
     : pageMatch
       ? cardBackground
       : pageBgParam ?? (theme === "dark" ? "#191919" : "#f4f4f5");

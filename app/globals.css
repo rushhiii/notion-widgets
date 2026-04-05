@@ -147,7 +147,8 @@
 .fc-root {
   --background: black;
   --line: black;
-  --text: #b7b7b7;
+  /* --text: #b7b7b7; */
+  --text: #fff;
   --holder: #101010;
   --theme-secondary: white;
   --slider-background: #353535;
@@ -182,6 +183,93 @@
   justify-content: center;
   /* padding: clamp(12px, 4vw, 32px); */
   gap: clamp(18px, 4vw, 32px);
+}
+
+.fc-minimal-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.fc-minimal-time {
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: clamp(56px, 20vw, 220px);
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.fc-root[data-mode="minimal"] {
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
+.fc-root[data-mode="minimal"] .fc-surface {
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  gap: 0;
+}
+
+.fc-root[data-mode="minimal"] .fc-minimal-clock {
+  width: 100%;
+  height: 100%;
+}
+
+.fc-root[data-mode="minimal"] .fc-minimal-time {
+  color: var(--text);
+}
+
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-nav,
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-panel,
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-panel-dock {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.22);
+}
+
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-nav-btn,
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-sec-badge,
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-pill-toggle,
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-pill-text,
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-chip {
+  color: #000000;
+}
+
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-chip {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-chip.is-active,
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-chip:hover {
+  border: 1px solid rgba(0, 0, 0, 0.45);
+}
+
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-slider {
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-slider::-webkit-slider-thumb,
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-slider::-moz-range-thumb {
+  background: #000000;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-slider::-moz-range-track {
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-theme-swatch {
+  border: 1px solid rgba(0, 0, 0, 0.25);
 }
 
 .fc-line {

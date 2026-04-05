@@ -207,6 +207,7 @@ export function DdayBuilder() {
         if (mode !== "compact") return;
         setAlign("center");
         setShowDate(false);
+        setTheme("dark");
     }, [mode]);
 
 

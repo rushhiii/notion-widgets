@@ -7,6 +7,7 @@ import { QuoteWidget } from "@/components/widgets/QuoteWidget";
 import { getQuotes, Quote } from "@/lib/quotes";
 
 type ThemeKey = "dark" | "light";
+type TransparentBgMode = "off" | "dark" | "light";
 
 type FancyOption = { value: string; label: string };
 
@@ -115,7 +116,7 @@ export function QuotesBuilder() {
   const [accent, setAccent] = useState(defaultsForTheme("dark").accent);
   const [pageBg, setPageBg] = useState("#0a0a0b");
   const [pageMatch, setPageMatch] = useState(true);
-  const [pageTransparent, setPageTransparent] = useState(false);
+  const [transparentBgMode, setTransparentBgMode] = useState<TransparentBgMode>("off");
   const [copied, setCopied] = useState(false);
   const searchParams = useSearchParams();
   const adminParam = (searchParams.get("admin") ?? "").trim();
@@ -179,7 +180,7 @@ export function QuotesBuilder() {
     setAccent(next.accent);
     setPageBg("#0a0a0b");
     setPageMatch(true);
-    setPageTransparent(false);
+    setTransparentBgMode("off");
   };
 
   const params = useMemo(() => {
@@ -205,9 +206,12 @@ export function QuotesBuilder() {
     if (accent) p.set("accent", accent.replace("#", ""));
     if (pageBg) p.set("pagebg", pageBg.replace("#", ""));
     if (pageMatch) p.set("pagematch", "1");
-    if (pageTransparent) p.set("pagetransparent", "1");
+    if (transparentBgMode !== "off") {
+      p.set("pagetransparent", "1");
+      p.set("pagetransparentmode", transparentBgMode);
+    }
     return p;
-  }, [adminParam, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, pageTransparent]);
+  }, [adminParam, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -231,9 +235,10 @@ export function QuotesBuilder() {
       accent,
       pageBg: pageMatch ? undefined : pageBg,
       pageMatch,
-      pageTransparent,
+      pageTransparent: transparentBgMode !== "off",
+      pageTransparentMode: transparentBgMode,
     }),
-    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, pageTransparent]
+    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]
   );
 
   const copyLink = () => {
@@ -456,26 +461,50 @@ export function QuotesBuilder() {
                     checked={pageMatch}
                     onChange={(e) => {
                       setPageMatch(e.target.checked);
-                      if (e.target.checked) setPageTransparent(false);
+                      if (e.target.checked) setTransparentBgMode("off");
                     }}
                   />
                   Match page background to card
                 </label>
-                <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-white/20 bg-white/10"
-                    checked={pageTransparent}
-                    onChange={(e) => {
-                      setPageTransparent(e.target.checked);
-                      if (e.target.checked) setPageMatch(false);
-                    }}
-                  />
-                  Transparent page background
-                </label>
+                <div className="space-y-2">
+                  <label className="inline-flex items-center gap-2 text-sm text-zinc-300 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-white/20 bg-white/10"
+                      checked={transparentBgMode !== "off"}
+                      onChange={(e) => {
+                        setTransparentBgMode(e.target.checked ? "dark" : "off");
+                        if (e.target.checked) setPageMatch(false);
+                      }}
+                    />
+                    Transparent BG
+                  </label>
+                  <label
+                    className={`relative inline-flex items-center gap-2 text-sm select-none ${
+                      transparentBgMode === "off" ? "text-zinc-500 cursor-not-allowed" : "text-zinc-300 cursor-pointer"
+                    }`}
+                  >
+                    <span>Dark</span>
+                    <input
+                      type="checkbox"
+                      className="peer absolute h-0 w-0 opacity-0"
+                      checked={transparentBgMode === "light"}
+                      disabled={transparentBgMode === "off"}
+                      onChange={(e) => setTransparentBgMode(e.target.checked ? "light" : "dark")}
+                    />
+                    <span
+                      className={`relative h-5 w-11 rounded-full transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-6 ${
+                        transparentBgMode === "off"
+                          ? "bg-zinc-700/40"
+                          : "bg-zinc-500/90 peer-checked:bg-zinc-300"
+                      }`}
+                    />
+                    <span>Light</span>
+                  </label>
+                </div>
               </div>
 
-              {!pageTransparent && !pageMatch && (
+              {transparentBgMode === "off" && !pageMatch && (
                 <label className="space-y-1 text-sm">
                   <span className="text-zinc-300">Page background</span>
                   <input
@@ -549,7 +578,14 @@ export function QuotesBuilder() {
           <div
             className="flex h-full w-full items-center justify-center"
             style={{
-              background: pageTransparent ? "transparent" : pageMatch ? bg : pageBg,
+              background:
+                transparentBgMode !== "off"
+                  ? transparentBgMode === "dark"
+                    ? "#191919"
+                    : "#ffffff"
+                  : pageMatch
+                    ? bg
+                    : pageBg,
             }}
           >
             <div className="w-full p-4">

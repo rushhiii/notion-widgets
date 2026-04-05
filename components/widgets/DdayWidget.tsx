@@ -210,8 +210,9 @@ export function DdayWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const isCountdown = mode === "countdown";
   const isCompact = mode === "compact";
   const themeParam = (getParam("theme") || "default").toLowerCase();
-  const theme: "default" | "dark" | "light" =
+  const parsedTheme: "default" | "dark" | "light" =
     themeParam === "light" ? "light" : themeParam === "dark" ? "dark" : "default";
+  const theme: "default" | "dark" | "light" = isCompact ? "dark" : parsedTheme;
   const alignParam = (getParam("align") || "left").toLowerCase();
   const note = getParam("note") || "";
 

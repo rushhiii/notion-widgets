@@ -1,4 +1,5 @@
 import {
+  Karla,
   Libre_Baskerville,
   Manrope,
   Plus_Jakarta_Sans,
@@ -53,4 +54,12 @@ export const fontLibreBaskerville = Libre_Baskerville({
   style: ["normal", "italic"],
   display: "swap",
   variable: "--font-libre-baskerville",
+});
+
+export const fontKarla = Karla({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  style: ["normal"],
+  display: "swap",
+  variable: "--font-karla",
 });

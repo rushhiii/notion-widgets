@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import {
+  fontKarla,
   fontManrope,
   fontPlayfair,
   fontPlusJakarta,
@@ -29,8 +30,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`h-full bg-transparent ${fontSpaceGrotesk.variable} ${fontSora.variable} ${fontPlusJakarta.variable} ${fontManrope.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable}`}
+      className={`h-full bg-transparent ${fontSpaceGrotesk.variable} ${fontSora.variable} ${fontPlusJakarta.variable} ${fontManrope.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable} ${fontKarla.variable}`}
     >
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        />
+      </head>
       <body className="h-full bg-transparent antialiased" suppressHydrationWarning>
         <AuthProvider>{children}</AuthProvider>
       </body>

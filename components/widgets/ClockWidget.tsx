@@ -6,7 +6,11 @@ import { useSearchParams } from "next/navigation";
 
 import { Link2, Maximize2, Menu, Minimize2, Moon, Sun, Timer, TimerReset, X } from "lucide-react";
 
-import { THEME_ORDER, THEMES, useNotionTheme, type ThemeName } from "./theme";
+import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
+
+type TransparentBgMode = "off" | "dark" | "light";
+type ClockMode = "flip" | "minimal";
+type EmbedParams = Record<string, string | number | boolean | undefined>;
 
 function isValidTimeZone(timeZone: string): boolean {
   try {
@@ -31,27 +35,52 @@ function parseIntParam(val: string | null, fallback: number, min = 0, max = 999)
   return fallback;
 }
 
-export function ClockWidget() {
+function parseTransparentBgMode(val: string | null, fallback: TransparentBgMode = "off"): TransparentBgMode {
+  if (!val) return fallback;
+  const normalized = val.trim().toLowerCase();
+  if (normalized === "dark" || normalized === "light" || normalized === "off") {
+    return normalized;
+  }
+  return fallback;
+}
+
+export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const searchParams = useSearchParams();
   const [now, setNow] = useState<Date | null>(null);
-  const isNotionDark = useNotionTheme();
 
-  const sizeFromQuery = parseIntParam(searchParams.get("size"), 75, 50, 120);
-  const formatFromQuery = searchParams.get("format") === "24";
-  const secondsFromQuery = parseBool(searchParams.get("seconds"), true);
-  const controlsFromQuery = parseBool(searchParams.get("controls"), false);
-  const themeFromQuery = (searchParams.get("theme")?.trim().toLowerCase() as ThemeName) || "default";
-  const dayFromQuery = parseBool(searchParams.get("day"), false);
-  const overlayFromQuery = parseBool(searchParams.get("overlay"), false);
+  const getParam = (key: string) => {
+    if (embedParams && key in embedParams) {
+      const value = embedParams[key];
+      return value === undefined ? null : String(value);
+    }
+    return searchParams.get(key);
+  };
 
-  const timezoneParam = searchParams.get("tz") ?? "America/Toronto";
+  const sizeFromQuery = parseIntParam(getParam("size"), 75, 50, 120);
+  const formatFromQuery = getParam("format") === "24";
+  const secondsFromQuery = parseBool(getParam("seconds"), true);
+  const controlsFromQuery = parseBool(getParam("controls"), false);
+  const themeFromQuery = (getParam("theme")?.trim().toLowerCase() as ThemeName) || "default";
+  const dayFromQuery = parseBool(getParam("day"), false);
+  const modeFromQueryRaw = (getParam("mode") || "flip").trim().toLowerCase();
+  const modeFromQuery: ClockMode =
+    modeFromQueryRaw === "minimal" || modeFromQueryRaw === "minimal-clock" ? "minimal" : "flip";
+  const overlayFromQuery = parseBool(getParam("overlay"), false); // legacy
+  const transparentBgFromQuery = parseBool(getParam("transparentbg"), overlayFromQuery);
+  const transparentBgModeFromQuery = parseTransparentBgMode(
+    getParam("transparentbgmode"),
+    transparentBgFromQuery ? "dark" : "off",
+  );
+
+  const timezoneParam = getParam("tz") ?? "America/Toronto";
   const timezone = isValidTimeZone(timezoneParam) ? timezoneParam : "America/Toronto";
 
   const [size, setSize] = useState<number>(sizeFromQuery);
   const [is24h, setIs24h] = useState<boolean>(formatFromQuery);
   const [showSeconds, setShowSeconds] = useState<boolean>(secondsFromQuery);
   const [showDay, setShowDay] = useState<boolean>(dayFromQuery);
-  const [overlayMode, setOverlayMode] = useState<boolean>(overlayFromQuery);
+  const [mode, setMode] = useState<ClockMode>(modeFromQuery);
+  const [transparentBgMode, setTransparentBgMode] = useState<TransparentBgMode>(transparentBgModeFromQuery);
   const [themeName, setThemeName] = useState<ThemeName>(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [showControls, setShowControls] = useState<boolean>(controlsFromQuery);
@@ -63,6 +92,28 @@ export function ClockWidget() {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const [autoScale, setAutoScale] = useState(1);
   const [isVertical, setIsVertical] = useState(false);
+
+  useEffect(() => {
+    if (!embedParams) return;
+    setSize(sizeFromQuery);
+    setIs24h(formatFromQuery);
+    setShowSeconds(secondsFromQuery);
+    setShowDay(dayFromQuery);
+    setMode(modeFromQuery);
+    setTransparentBgMode(transparentBgModeFromQuery);
+    setThemeName(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
+    setShowControls(controlsFromQuery);
+  }, [
+    embedParams,
+    sizeFromQuery,
+    formatFromQuery,
+    secondsFromQuery,
+    dayFromQuery,
+    modeFromQuery,
+    transparentBgModeFromQuery,
+    themeFromQuery,
+    controlsFromQuery,
+  ]);
 
   useEffect(() => {
     setNow(new Date());
@@ -77,6 +128,7 @@ export function ClockWidget() {
   }, []);
 
   useEffect(() => {
+    if (embedParams) return;
     const stored = window.localStorage.getItem("fc_size");
     if (stored) {
       const n = Number(stored);
@@ -95,38 +147,59 @@ export function ClockWidget() {
     const storedDay = window.localStorage.getItem("fc_day");
     if (storedDay === "true") setShowDay(true);
     if (storedDay === "false") setShowDay(false);
-    const storedOverlay = window.localStorage.getItem("fc_overlay");
-    if (storedOverlay === "true") setOverlayMode(true);
-    if (storedOverlay === "false") setOverlayMode(false);
-  }, []);
+    const storedMode = window.localStorage.getItem("fc_mode");
+    if (storedMode === "flip" || storedMode === "minimal") setMode(storedMode);
+    const storedTransparentMode = parseTransparentBgMode(window.localStorage.getItem("fc_transparentbgmode"), "off");
+    if (storedTransparentMode !== "off") {
+      setTransparentBgMode(storedTransparentMode);
+    } else {
+      const storedOverlay = window.localStorage.getItem("fc_overlay");
+      if (storedOverlay === "true") setTransparentBgMode("dark");
+      if (storedOverlay === "false") setTransparentBgMode("off");
+    }
+  }, [embedParams]);
 
   useEffect(() => {
+    if (embedParams) return;
     window.localStorage.setItem("fc_size", String(size));
-  }, [size]);
+  }, [size, embedParams]);
 
   useEffect(() => {
+    if (embedParams) return;
     window.localStorage.setItem("fc_seconds", String(showSeconds));
-  }, [showSeconds]);
+  }, [showSeconds, embedParams]);
 
   useEffect(() => {
+    if (embedParams) return;
     window.localStorage.setItem("fc_24h", String(is24h));
-  }, [is24h]);
+  }, [is24h, embedParams]);
 
   useEffect(() => {
+    if (embedParams) return;
     window.localStorage.setItem("fc_theme", themeName);
-  }, [themeName]);
+  }, [themeName, embedParams]);
 
   useEffect(() => {
+    if (embedParams) return;
     window.localStorage.setItem("fc_controls", String(showControls));
-  }, [showControls]);
+  }, [showControls, embedParams]);
 
   useEffect(() => {
+    if (embedParams) return;
     window.localStorage.setItem("fc_day", String(showDay));
-  }, [showDay]);
+  }, [showDay, embedParams]);
 
   useEffect(() => {
-    window.localStorage.setItem("fc_overlay", String(overlayMode));
-  }, [overlayMode]);
+    if (embedParams) return;
+    window.localStorage.setItem("fc_mode", mode);
+  }, [mode, embedParams]);
+
+  useEffect(() => {
+    if (embedParams) return;
+    window.localStorage.setItem("fc_transparentbgmode", transparentBgMode);
+    // Keep legacy flag for backward compatibility.
+    window.localStorage.setItem("fc_overlay", String(transparentBgMode !== "off"));
+  }, [transparentBgMode, embedParams]);
 
   useEffect(() => {
     return () => {
@@ -228,17 +301,19 @@ export function ClockWidget() {
   }, [now, timezone]);
 
   const baseThemeVars = THEMES[themeName] ?? THEMES.default;
-  const overlayBg = isNotionDark ? "#191919" : "#2596be";
-  const themeVars = overlayMode ? { ...baseThemeVars, background: overlayBg } : baseThemeVars;
+  const transparentBgColor = transparentBgMode === "dark" ? "#191919" : "#ffffff";
+  const themeVars = transparentBgMode !== "off" ? { ...baseThemeVars, background: transparentBgColor } : baseThemeVars;
+  const isMinimalMode = mode === "minimal";
+  const minimalTextColor = isMinimalMode && transparentBgMode === "light" ? "#000000" : themeVars.text;
   const toggleTheme = () => setThemeName((prev) => (prev === "light" ? "default" : "light"));
   const themeList = useMemo(() => THEME_ORDER.filter((name) => name !== "light"), []);
 
   const rootStyle: CSSProperties & Record<`--${string}`, string> = {
     background: themeVars.background,
-    color: themeVars.text,
+    color: minimalTextColor,
     "--background": themeVars.background,
     "--holder": themeVars.holder,
-    "--text": themeVars.text,
+    "--text": minimalTextColor,
   };
 
   const handleFullscreen = () => {
@@ -253,50 +328,60 @@ export function ClockWidget() {
   const scale = baseScale * autoScale;
 
   return (
-    <div className="fc-root" style={rootStyle} data-theme={themeName} data-overlay={overlayMode ? "1" : "0"}>
+    <div
+      className="fc-root"
+      style={rootStyle}
+      data-theme={themeName}
+      data-overlay={transparentBgMode !== "off" ? "1" : "0"}
+      data-transparent-mode={transparentBgMode}
+      data-mode={mode}
+    >
       <div className={`fc-surface ${isVertical ? "is-vertical" : ""}`} ref={surfaceRef}>
-        <div className="fc-line" aria-hidden />
+        {!isMinimalMode && <div className="fc-line" aria-hidden />}
 
-        <div
-          className={showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"}
-          style={{ transform: `scale(${scale / 100})`, transformOrigin: "center", position: "relative" }}
-        >
-
-          <div className="fc-holder">
-            <FlipDigit value={currentTime?.hour ?? ""} pad={false} />
-            {!is24h && <h2>{currentTime?.period}</h2>}
-          </div>
-
-          <div className="fc-holder">
-            <FlipDigit value={currentTime?.minute ?? ""} />
-            {showDay && dayName && !showSeconds && (
-              <div
-                className="fc-aux-label"
-                // style={{ right: showSeconds ? "-14rem" : "3rem" }}
-              >
-                <h2>{dayName}</h2>
+        {isMinimalMode ? (
+          <div className="fc-minimal-clock" style={{ transform: `scale(${scale / 100})`, transformOrigin: "center" }}>
+            <div id="clock" style={{ color: minimalTextColor }}>
+              <div id="time-wrapper">
+                <div id="time" className="fc-minimal-time">
+                  {showSeconds
+                    ? `${currentTime?.hour ?? "--"}:${currentTime?.minute ?? "--"}:${currentTime?.second ?? "--"}`
+                    : `${currentTime?.hour ?? "--"}:${currentTime?.minute ?? "--"}`}
+                </div>
               </div>
-            )}
+            </div>
           </div>
+        ) : (
+          <div
+            className={showSeconds ? "fc-container has-seconds" : "fc-container no-seconds"}
+            style={{ transform: `scale(${scale / 100})`, transformOrigin: "center", position: "relative" }}
+          >
+            <div className="fc-holder">
+              <FlipDigit value={currentTime?.hour ?? ""} pad={false} />
+              {!is24h && <h2>{currentTime?.period}</h2>}
+            </div>
 
-          {showSeconds && (
-            <div className="fc-holder" id="seconds_holder">
-              <FlipDigit value={currentTime?.second ?? ""} />
-                  {showDay && dayName && showSeconds && (
-                <div
-                  className="fc-aux-label"
-                // style={{ right: showSeconds ? "-14rem" : "3rem" }}
-                >
-                <h2>{dayName}</h2>
+            <div className="fc-holder">
+              <FlipDigit value={currentTime?.minute ?? ""} />
+              {showDay && dayName && !showSeconds && (
+                <div className="fc-aux-label">
+                  <h2>{dayName}</h2>
                 </div>
               )}
             </div>
-          )}
 
-        
-
-
-        </div>
+            {showSeconds && (
+              <div className="fc-holder" id="seconds_holder">
+                <FlipDigit value={currentTime?.second ?? ""} />
+                {showDay && dayName && showSeconds && (
+                  <div className="fc-aux-label">
+                    <h2>{dayName}</h2>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <div
           className={`fc-nav ${showNav ? "is-visible" : ""}`}
@@ -389,28 +474,58 @@ export function ClockWidget() {
             <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
           </button>
           <button
-            className={overlayMode ? "fc-chip is-active" : "fc-chip"}
-            onClick={() => setOverlayMode((v) => !v)}
-            aria-label="Toggle Notion background"
-            title="Toggle Notion background"
+            className={transparentBgMode !== "off" ? "fc-chip is-active" : "fc-chip"}
+            onClick={() => setTransparentBgMode((v) => (v === "off" ? "dark" : "off"))}
+            aria-label="Toggle transparent background"
+            title="Toggle transparent background"
           >
-            <span className={overlayMode ? "fc-sec-badge is-active" : "fc-sec-badge"}>BG</span>
+            <span className={transparentBgMode !== "off" ? "fc-sec-badge is-active" : "fc-sec-badge"}>BG</span>
+          </button>
+          <button
+            className="fc-pill-toggle"
+            onClick={() => {
+              if (transparentBgMode === "off") return;
+              setTransparentBgMode((v) => (v === "light" ? "dark" : "light"));
+            }}
+            disabled={transparentBgMode === "off"}
+            aria-label="Toggle transparent background mode"
+            title="Dark/Light transparent background"
+          >
+            <span className="fc-pill-text">D</span>
+            <input type="checkbox" checked={transparentBgMode === "light"} readOnly disabled={transparentBgMode === "off"} />
+            <span className="fc-pill-text">L</span>
           </button>
           <button className={showDay ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowDay((v) => !v)}>
             <span className={showDay ? "fc-sec-badge is-active" : "fc-sec-badge"}>DAY</span>
+          </button>
+          <button className={isMinimalMode ? "fc-chip is-active" : "fc-chip"} onClick={() => setMode((v) => (v === "minimal" ? "flip" : "minimal"))}>
+            <span className={isMinimalMode ? "fc-sec-badge is-active" : "fc-sec-badge"}>MIN</span>
           </button>
           <button
             className="fc-nav-btn embed-copy"
             aria-label="Copy embed"
             onClick={() => {
-              const url = new URL(window.location.href);
-              url.searchParams.set("size", String(scale));
+              const url = new URL(window.location.origin + "/clock");
+              url.searchParams.set("embed", "1");
+              url.searchParams.set("size", String(baseScale));
               url.searchParams.set("format", is24h ? "24" : "12");
               url.searchParams.set("seconds", String(showSeconds ? 1 : 0));
-              url.searchParams.set("overlay", overlayMode ? "1" : "0");
+              url.searchParams.set("overlay", transparentBgMode !== "off" ? "1" : "0"); // legacy
+              url.searchParams.set("transparentbg", transparentBgMode !== "off" ? "1" : "0");
+              if (transparentBgMode !== "off") {
+                url.searchParams.set("transparentbgmode", transparentBgMode);
+              } else {
+                url.searchParams.delete("transparentbgmode");
+              }
               url.searchParams.set("theme", themeName);
-              url.searchParams.set("controls", showControls ? "1" : "0");
+              if (mode === "minimal") {
+                url.searchParams.set("mode", "minimal");
+              } else {
+                url.searchParams.delete("mode");
+              }
+              url.searchParams.set("controls", "0");
               url.searchParams.set("day", showDay ? "1" : "0");
+              url.searchParams.set("tz", timezone);
               navigator.clipboard
                 .writeText(url.toString())
                 .then(() => {
@@ -493,3 +608,5 @@ function FlipDigit({ value, pad = true }: { value: string; pad?: boolean }) {
     </div>
   );
 }
+
+export default ClockWidget;
