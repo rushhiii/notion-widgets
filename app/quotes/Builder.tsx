@@ -96,6 +96,10 @@ function defaultsForTheme(theme: ThemeKey) {
   };
 }
 
+const RESTRICTED_AUTHORS = ["unknow", "unknown", "n/a", "rushi", "jane austen", "atticus", "emperor fushimi"];
+const RESTRICTED_LANGUAGES = ["hindi", "punjabi", "punjabi/hindi"];
+const RESTRICTED_SOURCE_TYPES = ["poetry", "quote", "saying", "series", "song", "lines", "my thought"];
+
 export function QuotesBuilder() {
   const [authors, setAuthors] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -124,30 +128,21 @@ export function QuotesBuilder() {
   const isAdminBypass = adminParam === ADMIN_SECRET;
   const sourceQuotes = useMemo<Quote[]>(() => getQuotes(source), [source]);
 
-  const restrictedAuthors = ["unknow", "unknown", "n/a", "rushi", "jane austen", "atticus", "emperor fushimi"];
-  const restrictedLanguages = ["hindi", "punjabi", "punjabi/hindi"];
-  const restrictedSourceTypes = ["poetry", "quote", "saying", "series", "song", "lines", "my thought"];
-
   const availableAuthors = useMemo<FancyOption[]>(() => {
     const vals = Array.from(new Set(sourceQuotes.map((q) => (q.author || "").trim()).filter(Boolean))).sort();
-    const filtered = isAdminBypass ? vals : vals.filter((v) => !restrictedAuthors.includes(v.toLowerCase()));
+    const filtered = isAdminBypass ? vals : vals.filter((v) => !RESTRICTED_AUTHORS.includes(v.toLowerCase()));
     return filtered.map((v) => ({ value: v, label: v }));
   }, [sourceQuotes, isAdminBypass]);
 
-  const availableTags = useMemo<FancyOption[]>(() => {
-    const vals = Array.from(new Set(sourceQuotes.flatMap((q) => q.tags || []).filter(Boolean))).sort();
-    return vals.map((v) => ({ value: v, label: v }));
-  }, [sourceQuotes]);
-
   const availableLanguages = useMemo<FancyOption[]>(() => {
     const vals = Array.from(new Set(sourceQuotes.map((q) => (q.language || "").trim()).filter(Boolean))).sort();
-    const filtered = isAdminBypass ? vals : vals.filter((v) => !restrictedLanguages.includes(v.toLowerCase()));
+    const filtered = isAdminBypass ? vals : vals.filter((v) => !RESTRICTED_LANGUAGES.includes(v.toLowerCase()));
     return [{ value: "", label: "Any language" }, ...filtered.map((v) => ({ value: v, label: v }))];
   }, [sourceQuotes, isAdminBypass]);
 
   const availableSourceTypes = useMemo<FancyOption[]>(() => {
     const vals = Array.from(new Set(sourceQuotes.map((q) => (q.sourceType || "").trim()).filter(Boolean))).sort();
-    const filtered = isAdminBypass ? vals : vals.filter((v) => !restrictedSourceTypes.includes(v.toLowerCase()));
+    const filtered = isAdminBypass ? vals : vals.filter((v) => !RESTRICTED_SOURCE_TYPES.includes(v.toLowerCase()));
     return [{ value: "", label: "Any source" }, ...filtered.map((v) => ({ value: v, label: v }))];
   }, [sourceQuotes, isAdminBypass]);
 
@@ -238,7 +233,7 @@ export function QuotesBuilder() {
       pageTransparent: transparentBgMode !== "off",
       pageTransparentMode: transparentBgMode,
     }),
-    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]
+    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, adminParam, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]
   );
 
   const copyLink = () => {

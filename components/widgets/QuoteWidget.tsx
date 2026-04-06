@@ -146,7 +146,21 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
       return true;
     });
     return candidates;
-  }, [baseQuotes, categoryParam, categoriesParam, authorsParam, tagsParam, languagesParam, languageParam, sourceTypesParam, sourceTypeParam, queryTerms, showPinned, showPersonal]);
+  }, [
+    baseQuotes,
+    isAdminBypass,
+    effectiveShowPinned,
+    effectiveShowPersonal,
+    categoryParam,
+    categoriesParam,
+    safeAuthorsParam,
+    tagsParam,
+    safeLanguagesParam,
+    safeLanguageParam,
+    safeSourceTypesParam,
+    safeSourceTypeParam,
+    queryTerms,
+  ]);
 
   const filtersApplied = Boolean(
     categoriesParam.length ||
@@ -162,7 +176,10 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
       effectiveShowPersonal,
   );
 
-  const availableQuotes = filteredQuotes.length > 0 ? filteredQuotes : filtersApplied ? [] : baseQuotes;
+  const availableQuotes = useMemo(
+    () => (filteredQuotes.length > 0 ? filteredQuotes : filtersApplied ? [] : baseQuotes),
+    [filteredQuotes, filtersApplied, baseQuotes],
+  );
 
   const noQuotes = availableQuotes.length === 0;
   const canStep = modeParam === "flashcard" && availableQuotes.length > 1 && !noQuotes;

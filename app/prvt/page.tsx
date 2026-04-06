@@ -93,37 +93,35 @@ export default function PrvtPage() {
                   onClick={() => setShowAccountModal(true)}
                   className="rounded-full bg-[#22222D00] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-auto text-xs font-medium tracking-wide text-white"
                   aria-label="Account Settings"
-                  onMouseEnter={e => e.currentTarget.nextElementSibling?.classList.add('opacity-100','pointer-events-auto')}
-                  onMouseLeave={e => e.currentTarget.nextElementSibling?.classList.remove('opacity-100','pointer-events-auto')}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="size-8 fill-[#E0DBFD]">
                     <path d="M463 448.2C440.9 409.8 399.4 384 352 384L288 384C240.6 384 199.1 409.8 177 448.2C212.2 487.4 263.2 512 320 512C376.8 512 427.8 487.3 463 448.2zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320zM320 336C359.8 336 392 303.8 392 264C392 224.2 359.8 192 320 192C280.2 192 248 224.2 248 264C248 303.8 280.2 336 320 336z"/>
                   </svg>
                 </button>
-                <div className="pointer-events-none absolute right-9 top-1 opacity-0 transition-all duration-200 border border-violet-700 bg-violet-900/60 text-violet-100 text-white text-xs px-4 py-1 rounded-lg shadow-lg border border-zinc-700 select-none min-w-max max-w-xs whitespace-nowrap">
+                <div className="pointer-events-none absolute right-9 top-1 opacity-0 transition-all duration-200 border border-violet-700 bg-violet-900/60 text-violet-100 text-xs px-4 py-1 rounded-lg shadow-lg select-none min-w-max max-w-xs whitespace-nowrap group-hover:opacity-100 group-hover:pointer-events-auto">
                   Account Settings
                 </div>
               </div>
-
             </div>
           </div>
-                {/* Account Modal */}
-                {showAccountModal && typedSession?.user && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-md shadow-2xl relative">
-                      <button
-                        className="absolute top-2 right-5 text-zinc-400 hover:text-white text-4xl"
-                        onClick={() => setShowAccountModal(false)}
-                        aria-label="Close"
-                      >
-                        &times;
-                      </button>
-                      <h2 className="text-2xl font-bold mb-6 text-violet-200 text-center tracking-tight">Account Settings</h2>
-                      <AccountSettingsForm session={typedSession} setShowAccountModal={setShowAccountModal} />
-                    </div>
-                  </div>
-                )}
-                {/* End Account Modal */}
+
+          {/* Account Modal */}
+          {showAccountModal && typedSession?.user && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+              <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-md shadow-2xl relative">
+                <button
+                  className="absolute top-2 right-5 text-zinc-400 hover:text-white text-4xl"
+                  onClick={() => setShowAccountModal(false)}
+                  aria-label="Close"
+                >
+                  &times;
+                </button>
+                <h2 className="text-2xl font-bold mb-6 text-violet-200 text-center tracking-tight">Account Settings</h2>
+                <AccountSettingsForm session={typedSession} setShowAccountModal={setShowAccountModal} />
+              </div>
+            </div>
+          )}
+          {/* End Account Modal */}
 
           <h1 className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
             {`${greeting || "Greetings"} ${displayName}, welcome to your private access`}

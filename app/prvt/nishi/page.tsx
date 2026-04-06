@@ -75,36 +75,35 @@ export default function NishiPage() {
                   onClick={() => setShowAccountModal(true)}
                   className="rounded-full bg-[#0000] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-auto text-xs font-medium tracking-wide text-white"
                   aria-label="Account Settings"
-                  onMouseEnter={e => e.currentTarget.nextElementSibling?.classList.add('opacity-100','pointer-events-auto')}
-                  onMouseLeave={e => e.currentTarget.nextElementSibling?.classList.remove('opacity-100','pointer-events-auto')}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="size-8" style={{ fill: nishiBlue.accentLight }}>
                     <path d="M463 448.2C440.9 409.8 399.4 384 352 384L288 384C240.6 384 199.1 409.8 177 448.2C212.2 487.4 263.2 512 320 512C376.8 512 427.8 487.3 463 448.2zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320zM320 336C359.8 336 392 303.8 392 264C392 224.2 359.8 192 320 192C280.2 192 248 224.2 248 264C248 303.8 280.2 336 320 336z"/>
                   </svg>
                 </button>
-                <div className="pointer-events-none absolute right-9 top-1 opacity-0 transition-all duration-200 border border-blue-700 bg-blue-900/70 text-blue-100 text-xs px-4 py-1 rounded-lg shadow-lg select-none min-w-max max-w-xs whitespace-nowrap">
+                <div className="pointer-events-none absolute right-9 top-1 opacity-0 transition-all duration-200 border border-blue-700 bg-blue-900/70 text-blue-100 text-xs px-4 py-1 rounded-lg shadow-lg select-none min-w-max max-w-xs whitespace-nowrap group-hover:opacity-100 group-hover:pointer-events-auto">
                   Account Settings
                 </div>
-                {showAccountModal && typedSession?.user?.id && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-                    <div className="relative w-full max-w-md rounded-2xl border border-blue-700 bg-[#0f1f3a] shadow-2xl overflow-hidden">
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.18),transparent_55%)]" />
-                      <div className="relative p-6">
-                        <button
-                          className="absolute top-2 right-4 text-blue-200 hover:text-white text-3xl"
-                          onClick={() => setShowAccountModal(false)}
-                          aria-label="Close"
-                        >
-                          &times;
-                        </button>
-                        <h2 className="text-xl font-bold mb-4 text-blue-100 text-center tracking-tight">Account Settings</h2>
-                        <AccountSettingsForm session={typedSession as SessionWithUser} setShowAccountModal={setShowAccountModal} />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
+
+            {showAccountModal && typedSession?.user && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+                <div className="relative w-full max-w-md rounded-2xl border border-blue-700 bg-[#0f1f3a] shadow-2xl overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.18),transparent_55%)]" />
+                  <div className="relative p-6">
+                    <button
+                      className="absolute top-2 right-4 text-blue-200 hover:text-white text-3xl"
+                      onClick={() => setShowAccountModal(false)}
+                      aria-label="Close"
+                    >
+                      &times;
+                    </button>
+                    <h2 className="text-xl font-bold mb-4 text-blue-100 text-center tracking-tight">Account Settings</h2>
+                    <AccountSettingsForm session={typedSession as SessionWithUser} setShowAccountModal={setShowAccountModal} />
+                  </div>
+                </div>
+              </div>
+            )}
           <h1
             className="hero-title mt-4 text-3xl font-semibold tracking-tight md:text-5xl"
             style={{ color: nishiBlue.accentLight, textShadow: `0 2px 8px ${nishiBlue.bgLight}` }}

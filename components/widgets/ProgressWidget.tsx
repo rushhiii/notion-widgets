@@ -480,7 +480,6 @@ function ProgressPreview({
                   {showMilestoneList && (
                     <div className="w-full space-y-2">
                       {sortedMilestones.map((ms) => {
-                        const milestonePct = clampNumber((ms.value / safeGoal) * 100, 0, 100);
                         const progressToTargetPct = ms.value > 0 ? clampNumber((row.progress / ms.value) * 100, 0, 100) : 0;
                         return (
                           <div key={`${row.id}-list-${ms.id}`} className="group/ms space-y-1">
@@ -660,7 +659,6 @@ function ProgressPreview({
               {showMilestoneList && (
                 <div className="space-y-2">
                   {sortedMilestones.map((ms) => {
-                    const milestonePct = clampNumber((ms.value / safeGoal) * 100, 0, 100);
                     const progressToTargetPct = ms.value > 0 ? clampNumber((row.progress / ms.value) * 100, 0, 100) : 0;
                     return (
                       <div key={`${row.id}-list-${ms.id}`} className="group/ms space-y-1">

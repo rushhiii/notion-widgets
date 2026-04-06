@@ -82,6 +82,7 @@ Your widgets will be live at `https://YOUR_VERCEL_APP.vercel.app/clock`, `/timer
 - `/quotes`
 - `/weather`
 - `/progress`
+- `/music-player`
 
 ## Common Query Params
 
@@ -92,6 +93,37 @@ Your widgets will be live at `https://YOUR_VERCEL_APP.vercel.app/clock`, `/timer
 - D-Day: `date`, `mode`, `align`, `showdate`, `bg`, `color`, `titleColor`, `dayColor`, `timeColor`
 - Weather: `location`, `lat`, `lon`, `units`, `mode`, `details`, `theme`, `bg`, `text`, `accent`
 - Progress: `title`, `label`, `goal`, `progress`, `prefix`, `suffix`, `accent`, `track`, `text`, `bg`, `embed`
+- Music Player: `server`, `type`, `id`, `colorscheme`, `theme`, `loop`, `order`, `preload`, `volume`, `list-folded`, `list-max-height`, `storage-name`
+
+## Music Player (English)
+
+Powered by APlayer + MetingJS, supports both Netease and Tencent playlists/songs/albums/artists/search.
+
+Examples:
+
+- Tencent playlist:
+   `https://notion.busiyi.world/music-player/?server=tencent&type=playlist&id=7888484143`
+- Netease playlist with list height:
+   `https://notion.busiyi.world/music-player/?server=netease&type=playlist&id=12528089157&list-max-height=96`
+- Netease song with forced dark mode:
+   `https://notion.busiyi.world/music-player/?server=netease&type=song&id=28285910&colorscheme=dark`
+
+Options:
+
+| option | default | description |
+| --- | --- | --- |
+| server | required | Music provider: `netease`, `tencent` |
+| type | required | Type: `song`, `playlist`, `album`, `search`, `artist` |
+| id | required | `song id`, `playlist id`, `album id`, `search keyword`, `artist id` |
+| colorscheme | auto | `dark`, `light`, or auto (follow system) |
+| theme | `#2980b9` | Primary accent color |
+| loop | `all` | Loop mode: `all`, `one`, `none` |
+| order | `list` | Play order: `list`, `random` |
+| preload | `auto` | Preload mode: `none`, `metadata`, `auto` |
+| volume | `0.7` | Default volume (overridden after manual adjustment) |
+| list-folded | `false` | Fold playlist by default |
+| list-max-height | `340px` | Playlist max height (numeric values treated as px) |
+| storage-name | `metingjs` | localStorage key for player settings |
 
 ## Recent Updates
 
