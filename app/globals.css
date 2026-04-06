@@ -202,20 +202,21 @@
 }
 
 .fc-minimal-time {
+  /* font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif !important; */
   font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif !important;
   font-weight: 700;
   /* font-size: 1em; */
   line-height: 0;
   letter-spacing: 0.01em;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
+  /* font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1; */
 }
 
 .fc-root[data-mode="minimal"] #clock {
   /* font-size: calc(var(--minimal-base-font, 150px) * var(--minimal-size-mult, 1)); */
   font-size: calc(var(--minimal-base-font, 150px) * var(--minimal-size-mult, 1));
   text-align: center;
-  font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif !important;
+  /* font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif !important; */
   display: flex;
   align-items: center;
   justify-content: center;
