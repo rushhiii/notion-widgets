@@ -44,6 +44,39 @@ function parseTransparentBgMode(val: string | null, fallback: TransparentBgMode 
   return fallback;
 }
 
+function formatMinimalDateByPattern(date: Date, timeZone: string, pattern: string) {
+  const dayLong = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone }).format(date);
+  const dayShort = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone }).format(date);
+  const monthLong = new Intl.DateTimeFormat("en-US", { month: "long", timeZone }).format(date);
+  const monthShort = new Intl.DateTimeFormat("en-US", { month: "short", timeZone }).format(date);
+  const dayNumRaw = new Intl.DateTimeFormat("en-US", { day: "numeric", timeZone }).format(date);
+  const monthNumRaw = new Intl.DateTimeFormat("en-US", { month: "numeric", timeZone }).format(date);
+  const yearFull = new Intl.DateTimeFormat("en-US", { year: "numeric", timeZone }).format(date);
+
+  const dayNum = dayNumRaw.padStart(2, "0");
+  const monthNum = monthNumRaw.padStart(2, "0");
+  const yearShort = yearFull.slice(-2);
+
+  const tokens: Array<[string, string]> = [
+    ["YYYY", yearFull],
+    ["YY", yearShort],
+    ["MMMM", monthLong],
+    ["MMM", monthShort],
+    ["MM", monthNum],
+    ["M", monthNumRaw],
+    ["DD", dayNum],
+    ["D", dayNumRaw],
+    ["dddd", dayLong],
+    ["ddd", dayShort],
+  ];
+
+  let output = pattern;
+  for (const [token, value] of tokens) {
+    output = output.replaceAll(token, value);
+  }
+  return output;
+}
+
 export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const searchParams = useSearchParams();
   const [now, setNow] = useState<Date | null>(null);
@@ -62,6 +95,9 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const controlsFromQuery = parseBool(getParam("controls"), false);
   const themeFromQuery = (getParam("theme")?.trim().toLowerCase() as ThemeName) || "default";
   const dayFromQuery = parseBool(getParam("day"), false);
+  const minimalAmPmFromQuery = parseBool(getParam("minampm"), true);
+  const minimalFullDateFromQuery = parseBool(getParam("mindate"), false);
+  const minimalDateFormatFromQuery = getParam("mindateformat") || "dddd, MMMM D, YYYY";
   const modeFromQueryRaw = (getParam("mode") || "flip").trim().toLowerCase();
   const modeFromQuery: ClockMode =
     modeFromQueryRaw === "minimal" || modeFromQueryRaw === "minimal-clock" ? "minimal" : "flip";
@@ -79,6 +115,9 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const [is24h, setIs24h] = useState<boolean>(formatFromQuery);
   const [showSeconds, setShowSeconds] = useState<boolean>(secondsFromQuery);
   const [showDay, setShowDay] = useState<boolean>(dayFromQuery);
+  const [showMinimalAmPm, setShowMinimalAmPm] = useState<boolean>(minimalAmPmFromQuery);
+  const [showMinimalFullDate, setShowMinimalFullDate] = useState<boolean>(minimalFullDateFromQuery);
+  const [minimalDateFormat, setMinimalDateFormat] = useState<string>(minimalDateFormatFromQuery);
   const [mode, setMode] = useState<ClockMode>(modeFromQuery);
   const [transparentBgMode, setTransparentBgMode] = useState<TransparentBgMode>(transparentBgModeFromQuery);
   const [themeName, setThemeName] = useState<ThemeName>(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
@@ -99,6 +138,9 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     setIs24h(formatFromQuery);
     setShowSeconds(secondsFromQuery);
     setShowDay(dayFromQuery);
+    setShowMinimalAmPm(minimalAmPmFromQuery);
+    setShowMinimalFullDate(minimalFullDateFromQuery);
+    setMinimalDateFormat(minimalDateFormatFromQuery);
     setMode(modeFromQuery);
     setTransparentBgMode(transparentBgModeFromQuery);
     setThemeName(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
@@ -109,6 +151,9 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     formatFromQuery,
     secondsFromQuery,
     dayFromQuery,
+    minimalAmPmFromQuery,
+    minimalFullDateFromQuery,
+    minimalDateFormatFromQuery,
     modeFromQuery,
     transparentBgModeFromQuery,
     themeFromQuery,
@@ -147,6 +192,14 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     const storedDay = window.localStorage.getItem("fc_day");
     if (storedDay === "true") setShowDay(true);
     if (storedDay === "false") setShowDay(false);
+    const storedMinimalAmPm = window.localStorage.getItem("fc_min_ampm");
+    if (storedMinimalAmPm === "true") setShowMinimalAmPm(true);
+    if (storedMinimalAmPm === "false") setShowMinimalAmPm(false);
+    const storedMinimalFullDate = window.localStorage.getItem("fc_min_fulldate");
+    if (storedMinimalFullDate === "true") setShowMinimalFullDate(true);
+    if (storedMinimalFullDate === "false") setShowMinimalFullDate(false);
+    const storedMinimalDateFormat = window.localStorage.getItem("fc_min_dateformat");
+    if (storedMinimalDateFormat) setMinimalDateFormat(storedMinimalDateFormat);
     const storedMode = window.localStorage.getItem("fc_mode");
     if (storedMode === "flip" || storedMode === "minimal") setMode(storedMode);
     const storedTransparentMode = parseTransparentBgMode(window.localStorage.getItem("fc_transparentbgmode"), "off");
@@ -188,6 +241,21 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     if (embedParams) return;
     window.localStorage.setItem("fc_day", String(showDay));
   }, [showDay, embedParams]);
+
+  useEffect(() => {
+    if (embedParams) return;
+    window.localStorage.setItem("fc_min_ampm", String(showMinimalAmPm));
+  }, [showMinimalAmPm, embedParams]);
+
+  useEffect(() => {
+    if (embedParams) return;
+    window.localStorage.setItem("fc_min_fulldate", String(showMinimalFullDate));
+  }, [showMinimalFullDate, embedParams]);
+
+  useEffect(() => {
+    if (embedParams) return;
+    window.localStorage.setItem("fc_min_dateformat", minimalDateFormat);
+  }, [minimalDateFormat, embedParams]);
 
   useEffect(() => {
     if (embedParams) return;
@@ -300,6 +368,12 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     return now.toLocaleDateString("en-US", { weekday: "long", timeZone: timezone });
   }, [now, timezone]);
 
+  const minimalFullDateText = useMemo(() => {
+    if (!now) return "";
+    const pattern = minimalDateFormat.trim() || "dddd, MMMM D, YYYY";
+    return formatMinimalDateByPattern(now, timezone, pattern);
+  }, [now, timezone, minimalDateFormat]);
+
   const baseThemeVars = THEMES[themeName] ?? THEMES.default;
   const transparentBgColor = transparentBgMode === "dark" ? "#191919" : "#ffffff";
   const themeVars = transparentBgMode !== "off" ? { ...baseThemeVars, background: transparentBgColor } : baseThemeVars;
@@ -308,12 +382,17 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const toggleTheme = () => setThemeName((prev) => (prev === "light" ? "default" : "light"));
   const themeList = useMemo(() => THEME_ORDER.filter((name) => name !== "light"), []);
 
+  const baseScale = Math.min(Math.max(size, 25), 120);
+  const scale = baseScale * autoScale;
+  const minimalSizeMultiplier = String(Number((scale / 75).toFixed(3)));
+
   const rootStyle: CSSProperties & Record<`--${string}`, string> = {
     background: themeVars.background,
     color: minimalTextColor,
     "--background": themeVars.background,
     "--holder": themeVars.holder,
     "--text": minimalTextColor,
+    "--minimal-size-mult": minimalSizeMultiplier,
   };
 
   const handleFullscreen = () => {
@@ -323,9 +402,6 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
       document.documentElement.requestFullscreen();
     }
   };
-
-  const baseScale = Math.min(Math.max(size, 25), 120);
-  const scale = baseScale * autoScale;
 
   return (
     <div
@@ -340,14 +416,19 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
         {!isMinimalMode && <div className="fc-line" aria-hidden />}
 
         {isMinimalMode ? (
-          <div className="fc-minimal-clock" style={{ transform: `scale(${scale / 100})`, transformOrigin: "center" }}>
+          <div className="fc-minimal-clock">
             <div id="clock" style={{ color: minimalTextColor }}>
               <div id="time-wrapper">
                 <div id="time" className="fc-minimal-time">
                   {showSeconds
                     ? `${currentTime?.hour ?? "--"}:${currentTime?.minute ?? "--"}:${currentTime?.second ?? "--"}`
                     : `${currentTime?.hour ?? "--"}:${currentTime?.minute ?? "--"}`}
+                {!is24h && showMinimalAmPm && currentTime?.period && <div id="am-pm" className="fc-minimal-period">{currentTime.period}</div>}
+
                 </div>
+                {/* {!is24h && showMinimalAmPm && currentTime?.period && <div id="am-pm" className="fc-minimal-period">{currentTime.period}</div>} */}
+                {showDay && dayName && <div className="fc-minimal-day">{dayName}</div>}
+                {showMinimalFullDate && <div className="fc-minimal-full-date">{minimalFullDateText}</div>}
               </div>
             </div>
           </div>
@@ -450,6 +531,20 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
               })}
             </div>
           </div>
+          {isMinimalMode && (
+            <div className="fc-minimal-format-wrap">
+              <label htmlFor="minimal-date-format" className="fc-minimal-format-label">
+                Date format
+              </label>
+              <input
+                id="minimal-date-format"
+                className="fc-minimal-format-input"
+                value={minimalDateFormat}
+                onChange={(e) => setMinimalDateFormat(e.target.value)}
+                placeholder="dddd, MMMM D, YYYY"
+              />
+            </div>
+          )}
         </div>
 
         <div className={`fc-panel-dock ${showControls ? "is-visible" : ""}`} onMouseEnter={clearHidePanel} onMouseLeave={scheduleHidePanel}>
@@ -470,8 +565,13 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
             <input type="checkbox" checked={is24h} readOnly />
             <span className="fc-pill-text">24</span>
           </button>
+          {/* display seconds */}
           <button className={showSeconds ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowSeconds((v) => !v)}>
             <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
+          </button>
+          {/* display dayname */}
+          <button className={showDay ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowDay((v) => !v)}>
+            <span className={showDay ? "fc-sec-badge is-active" : "fc-sec-badge"}>DAY</span>
           </button>
           <button
             className={transparentBgMode !== "off" ? "fc-chip is-active" : "fc-chip"}
@@ -481,6 +581,8 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
           >
             <span className={transparentBgMode !== "off" ? "fc-sec-badge is-active" : "fc-sec-badge"}>BG</span>
           </button>
+          <span className="fc-dock-break" aria-hidden="true" />
+          {/* transparent BG & it's toggle  */}
           <button
             className="fc-pill-toggle"
             onClick={() => {
@@ -495,9 +597,28 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
             <input type="checkbox" checked={transparentBgMode === "light"} readOnly disabled={transparentBgMode === "off"} />
             <span className="fc-pill-text">L</span>
           </button>
-          <button className={showDay ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowDay((v) => !v)}>
-            <span className={showDay ? "fc-sec-badge is-active" : "fc-sec-badge"}>DAY</span>
-          </button>
+          {/* display minimal clock */}
+          {isMinimalMode && (
+            <button
+              className={showMinimalAmPm ? "fc-chip is-active" : "fc-chip"}
+              onClick={() => setShowMinimalAmPm((v) => !v)}
+              disabled={is24h}
+              aria-label="Toggle AM/PM in minimal mode"
+              title="Toggle AM/PM in minimal mode"
+            >
+              <span className={showMinimalAmPm ? "fc-sec-badge is-active" : "fc-sec-badge"}>AP</span>
+            </button>
+          )}
+          {isMinimalMode && (
+            <button
+              className={showMinimalFullDate ? "fc-chip is-active" : "fc-chip"}
+              onClick={() => setShowMinimalFullDate((v) => !v)}
+              aria-label="Toggle full date in minimal mode"
+              title="Toggle full date in minimal mode"
+            >
+              <span className={showMinimalFullDate ? "fc-sec-badge is-active" : "fc-sec-badge"}>DATE</span>
+            </button>
+          )}
           <button className={isMinimalMode ? "fc-chip is-active" : "fc-chip"} onClick={() => setMode((v) => (v === "minimal" ? "flip" : "minimal"))}>
             <span className={isMinimalMode ? "fc-sec-badge is-active" : "fc-sec-badge"}>MIN</span>
           </button>
@@ -525,6 +646,19 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
               }
               url.searchParams.set("controls", "0");
               url.searchParams.set("day", showDay ? "1" : "0");
+              if (mode === "minimal") {
+                url.searchParams.set("minampm", showMinimalAmPm ? "1" : "0");
+                url.searchParams.set("mindate", showMinimalFullDate ? "1" : "0");
+                if (minimalDateFormat.trim()) {
+                  url.searchParams.set("mindateformat", minimalDateFormat.trim());
+                } else {
+                  url.searchParams.delete("mindateformat");
+                }
+              } else {
+                url.searchParams.delete("minampm");
+                url.searchParams.delete("mindate");
+                url.searchParams.delete("mindateformat");
+              }
               url.searchParams.set("tz", timezone);
               navigator.clipboard
                 .writeText(url.toString())

@@ -189,24 +189,64 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
+  /* width: 100%;
+  height: 100%; */
 }
 
 .fc-minimal-time {
   font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
   font-weight: 700;
-  font-size: clamp(56px, 20vw, 220px);
-  line-height: 1;
+  /* font-size: 1em; */
+  line-height: 0;
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
 
+.fc-root[data-mode="minimal"] #clock {
+  font-size: calc(var(--minimal-base-font, 150px) * var(--minimal-size-mult, 1));
+  text-align: center;
+  font-family: var(--font-karla), "Karla", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+@media screen and (max-width: 768px) {
+  .fc-root[data-mode="minimal"] {
+    --minimal-base-font: 100px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .fc-root[data-mode="minimal"] {
+    --minimal-base-font: 80px;
+  }
+}
+
 .fc-root[data-mode="minimal"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
   min-height: 100vh;
   overflow-x: hidden;
   overflow-y: hidden;
+}
+
+.fc-root[data-mode="minimal"] #time {
+  font-weight: bold;
+  display: inline-block;
+  line-height: 0.96;
+}
+
+.fc-root[data-mode="minimal"] #time-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.015em;
 }
 
 .fc-root[data-mode="minimal"] .fc-surface {
@@ -220,12 +260,109 @@
 }
 
 .fc-root[data-mode="minimal"] .fc-minimal-clock {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
 }
 
 .fc-root[data-mode="minimal"] .fc-minimal-time {
   color: var(--text);
+}
+
+.fc-root[data-mode="minimal"] .fc-minimal-period {
+  /* margin-top: 0.2rem; */
+  /* margin-bottom: 0.4rem; */
+  /* margin-left: -0.7rem; */
+  display: inline;
+  text-align: center;
+  color: var(--text);
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
+  font-size: .3em;
+  font-weight: 700;
+  letter-spacing: -0.06em;
+}
+
+@media screen and (max-width: 768px) {
+  .fc-root[data-mode="minimal"] #am-pm {
+    font-size: 10px !important;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .fc-root[data-mode="minimal"] #am-pm {
+    font-size: 10px !important;
+  }
+}
+
+.fc-root[data-mode="minimal"] .fc-minimal-day {
+  margin-top: 0;
+  text-align: center;
+  color: var(--text);
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
+  font-size: 0.16em;
+  font-weight: 700;
+  /* letter-spacing: 0.06em; */
+  text-transform: uppercase;
+  opacity: 0.92;
+}
+
+.fc-root[data-mode="minimal"] .fc-minimal-full-date {
+  margin-top: 0;
+  text-align: center;
+  color: var(--text);
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
+  font-size: 0.14em;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+
+.fc-minimal-format-wrap {
+  margin-top: 0.2rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.fc-minimal-format-label {
+  line-height: 1;
+  font-size: 12px;
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
+  color: var(--text);
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.fc-minimal-format-input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  padding: 0 10px;
+  font-size: 12px;
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
+  outline: none;
+}
+
+.fc-minimal-format-input::placeholder {
+  color: color-mix(in srgb, var(--text) 68%, transparent);
+}
+
+@media screen and (max-width: 640px) {
+  .fc-minimal-format-wrap {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .fc-minimal-format-label {
+    text-align: left;
+  }
 }
 
 .fc-root[data-mode="minimal"][data-transparent-mode="light"] .fc-nav,
@@ -876,9 +1013,11 @@
   transform: translate(-50%, 8px);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  align-content: center;
   gap: 8px;
   flex-wrap: wrap;
-  row-gap: 10px;
+  row-gap: 1px;
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(10, 10, 10, 0.9);
@@ -889,6 +1028,12 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.fc-dock-break {
+  flex-basis: 100%;
+  width: 100%;
+  height: 0;
 }
 
 .fc-panel-dock.is-visible {
@@ -930,6 +1075,7 @@
   gap: 8px;
   min-width: 140px;
 }
+
 
 .fc-sec-badge {
   display: inline-flex;
