@@ -204,6 +204,7 @@
 }
 
 .fc-root[data-mode="minimal"] #clock {
+  /* font-size: calc(var(--minimal-base-font, 150px) * var(--minimal-size-mult, 1)); */
   font-size: calc(var(--minimal-base-font, 150px) * var(--minimal-size-mult, 1));
   text-align: center;
   font-family: var(--font-karla), "Karla", sans-serif;
@@ -213,15 +214,15 @@
   flex-direction: column;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (min-width: 768px) {
   .fc-root[data-mode="minimal"] {
-    --minimal-base-font: 100px;
+    --minimal-base-font: 100px !important;
   }
 }
 
-@media screen and (max-width: 576px) {
+@media screen and (min-width: 576px) {
   .fc-root[data-mode="minimal"] {
-    --minimal-base-font: 80px;
+    --minimal-base-font: 80px !important;
   }
 }
 
@@ -281,13 +282,13 @@
   letter-spacing: -0.06em;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (min-width: 768px) {
   .fc-root[data-mode="minimal"] #am-pm {
     font-size: 10px !important;
   }
 }
 
-@media screen and (max-width: 576px) {
+@media screen and (min-width: 576px) {
   .fc-root[data-mode="minimal"] #am-pm {
     font-size: 10px !important;
   }
