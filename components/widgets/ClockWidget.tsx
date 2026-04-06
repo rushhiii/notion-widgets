@@ -288,16 +288,15 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     const observer = new ResizeObserver(entries => {
       const width = entries[0]?.contentRect.width ?? 0;
       if (!width) return;
-      // const base = showSeconds ? 860 : 720;
-      const base = 860;
-      const factor = Math.min(1, width / base);
-      setAutoScale(Number(factor.toFixed(3)) || 1);
+      // Flip clock should be full-size at 300px width; keep minimal sizing baseline unchanged.
+      const base = mode === "flip" ? 300 : 860;
+      setAutoScale(Number(Math.min(1, width / base).toFixed(3)) || 1);
       // setIsVertical(width < 760);
       setIsVertical(width < 300);
     });
     observer.observe(surfaceRef.current);
     return () => observer.disconnect();
-  }, [showSeconds]);
+  }, [showSeconds, mode]);
 
   const scheduleHidePanel = () => {
     if (hidePanelTimer.current) window.clearTimeout(hidePanelTimer.current);

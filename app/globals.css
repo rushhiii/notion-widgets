@@ -214,13 +214,13 @@
   flex-direction: column;
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (max-width: 768px) {
   .fc-root[data-mode="minimal"] {
     --minimal-base-font: 100px !important;
   }
 }
 
-@media screen and (min-width: 576px) {
+@media screen and (max-width: 576px) {
   .fc-root[data-mode="minimal"] {
     --minimal-base-font: 80px !important;
   }
@@ -277,20 +277,21 @@
   text-align: center;
   color: var(--text);
   font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
+  /* font-size: .29em; */
   font-size: .3em;
   font-weight: 700;
   letter-spacing: -0.06em;
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (max-width: 768px) {
   .fc-root[data-mode="minimal"] #am-pm {
-    font-size: 10px !important;
+    /* font-size: 10px; */
   }
 }
 
-@media screen and (min-width: 576px) {
+@media screen and (max-width: 576px) {
   .fc-root[data-mode="minimal"] #am-pm {
-    font-size: 10px !important;
+    /* font-size: 10px ; */
   }
 }
 
