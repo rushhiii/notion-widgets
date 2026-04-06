@@ -329,11 +329,11 @@
 }
 
 .fc-minimal-format-wrap {
-  margin-top: 0.2rem;
+  margin-top: 0.6rem;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   width: 100%;
   max-width: 320px;
 }
