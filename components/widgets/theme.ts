@@ -17,8 +17,8 @@ export type ThemeName =
   | "theme8";
 // #2596be notion light bg
 export const THEMES: Record<ThemeName, { background: string; holder: string; text: string }> = {
-  default: { background: "#000", holder: "#101010", text: "#fff" },
-  light: { background: "#f6f6f7", holder: "#ffffff", text: "#111214" },
+  default: { background: "#000", holder: "#101010", text: "#B7B7B7" },
+  light: { background: "#f3f3f3", holder: "#e6e6e6", text: "#000000" },
   purple: { background: "#0f0a1f", holder: "#17112b", text: "#d8c7ff" },
   teal: { background: "#0c1a1a", holder: "#132222", text: "#c0fff5" },
   sunset: { background: "#1a0f0c", holder: "#241512", text: "#ffc7a3" },
