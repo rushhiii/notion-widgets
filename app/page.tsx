@@ -60,6 +60,19 @@ export default function HomePage() {
       ],
     },
     {
+      title: "Progress Widget",
+      desc: "Customizable progress bar with milestones, prefixes/suffixes, and a built-in embed link copier.",
+      links: [
+        { label: "/progress", url: "/progress" },
+        { label: "/progress?goal=23300&progress=5000&prefix=%2A&ms=+1:8200&ms=+bundle:15000&ms=+3:20000&embed=1", url: null },
+      ],
+      actions: [
+        { label: "Open Builder", url: "/progress" },
+        { label: "View", url: "/progress/?embed=1" },
+      ],
+    },
+
+    {
       title: "Quotes Widget",
       desc: "Rotating quotes from local data or synced Notion source, with category and timing controls.",
       links: [
@@ -93,18 +106,6 @@ export default function HomePage() {
       actions: [
         { label: "Open Builder", url: "/weather" },
         { label: "View", url: "/weather/?embed=1" },
-      ],
-    },
-    {
-      title: "Progress Widget",
-      desc: "Customizable progress bar with milestones, prefixes/suffixes, and a built-in embed link copier.",
-      links: [
-        { label: "/progress", url: "/progress" },
-        { label: "/progress?goal=23300&progress=5000&prefix=%2A&ms=+1:8200&ms=+bundle:15000&ms=+3:20000&embed=1", url: null },
-      ],
-      actions: [
-        { label: "Open Builder", url: "/progress" },
-        { label: "View", url: "/progress/?embed=1" },
       ],
     },
     {

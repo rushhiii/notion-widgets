@@ -9,6 +9,7 @@ type MusicServer = "netease" | "tencent";
 type MusicType = "song" | "playlist" | "album" | "search" | "artist";
 type ColorScheme = "light" | "dark" | "auto";
 type UiLanguage = "auto" | "en";
+type TranslateSource = "auto" | "google" | "mymemory";
 type TransparentBgMode = "off" | "dark" | "light";
 type SurfaceTheme = "default" | "notion-modern";
 
@@ -21,6 +22,7 @@ type PlayerConfig = {
   translateTarget: string;
   translateUrl: string;
   translateKey?: string | null;
+  translateSource: TranslateSource;
   colorscheme: ColorScheme;
   theme: string;
   loop: "all" | "one" | "none";
@@ -120,6 +122,11 @@ export default function MusicPlayerWidget({ embedParams }: { embedParams?: Embed
   const translateTarget = (getParam(["translate-target", "translateTarget"]) || "en").toLowerCase();
   const translateUrl = getParam(["translate-url", "translateUrl"]) || "/api/translate";
   const translateKey = getParam(["translate-key", "translateKey"]);
+  const translateSource = pick(
+    getParam(["translate-source", "translateSource"]),
+    ["auto", "google", "mymemory"] as const,
+    uiLanguage === "en" ? "google" : "auto",
+  );
 
   const config: PlayerConfig | null = id
     ? {
@@ -131,6 +138,7 @@ export default function MusicPlayerWidget({ embedParams }: { embedParams?: Embed
         translateTarget,
         translateUrl,
         translateKey,
+        translateSource,
         colorscheme: pick(
           getParam(["colorscheme", "colorScheme"]),
           ["light", "dark", "auto"] as const,
@@ -211,6 +219,7 @@ export default function MusicPlayerWidget({ embedParams }: { embedParams?: Embed
   const translateTargetValue = config?.translateTarget ?? "en";
   const translateUrlValue = config?.translateUrl ?? "";
   const translateKeyValue = config?.translateKey ?? null;
+  const translateSourceValue = config?.translateSource ?? "auto";
   const storageNameValue = config?.storageName ?? "metingjs";
 
   useEffect(() => {
@@ -254,6 +263,7 @@ export default function MusicPlayerWidget({ embedParams }: { embedParams?: Embed
           target: translateTargetValue,
           source: "auto",
           format: "text",
+          engine: translateSourceValue,
         };
         if (translateKeyValue) payload.api_key = translateKeyValue;
 

@@ -13,6 +13,7 @@ type UiLanguage = "auto" | "en";
 type TransparentBgMode = "off" | "dark" | "light";
 type SurfaceTheme = "default" | "notion-modern";
 type ThemePreset = "classic" | "notion-modern" | "graphite" | "mint";
+type EnglishPreset = { label: string; server: MusicServer; type: MusicType; id: string };
 
 const THEME_PRESETS: Record<string, string> = {
   classic: "#2980b9",
@@ -20,6 +21,17 @@ const THEME_PRESETS: Record<string, string> = {
   graphite: "#52525b",
   mint: "#10b981",
 };
+
+const ENGLISH_PRESETS: EnglishPreset[] = [
+  { label: "The Weeknd", server: "netease", type: "search", id: "The Weeknd" },
+  { label: "Taylor Swift", server: "netease", type: "search", id: "Taylor Swift" },
+  { label: "Drake", server: "netease", type: "search", id: "Drake" },
+  { label: "Ariana Grande", server: "netease", type: "search", id: "Ariana Grande" },
+  { label: "Billie Eilish", server: "netease", type: "search", id: "Billie Eilish" },
+  { label: "Coldplay", server: "netease", type: "search", id: "Coldplay" },
+  { label: "Dua Lipa", server: "netease", type: "search", id: "Dua Lipa" },
+  { label: "Ed Sheeran", server: "netease", type: "search", id: "Ed Sheeran" },
+];
 
 function FancySelect({
   value,
@@ -217,6 +229,13 @@ export default function MusicPlayerBuilder() {
     }
   };
 
+  const applyEnglishPreset = (preset: EnglishPreset) => {
+    setServer(preset.server);
+    setType(preset.type);
+    setId(preset.id);
+    setUiLanguage("en");
+  };
+
   const copyLink = () => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.origin + "/music-player");
@@ -286,6 +305,25 @@ export default function MusicPlayerBuilder() {
                 placeholder="Playlist ID, Song ID, or search keyword"
               />
             </label>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-zinc-300">
+              <div className="mb-2 flex items-center justify-between text-zinc-200">
+                <span className="font-medium">English quick picks</span>
+                <span className="text-[11px] text-zinc-400">Uses search mode</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {ENGLISH_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-200 transition hover:bg-white/10"
+                    onClick={() => applyEnglishPreset(preset)}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-zinc-500">Tip: you can edit the keyword after selecting.</p>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1 text-sm">
