@@ -47,8 +47,8 @@ Gallery (widget screenshots):
 | ![D-Day](public/readme/dday.png) | ![Weather](public/readme/weather.png) | ![Progress](public/readme/progress.png) | ![Music Player](public/readme/music_player.png) |
 
 
-<video src="public/readme/clock-flip.mp4" autoplay loop muted playsinline></video>
-<video src="public/readme/music-player.mp4" autoplay loop muted playsinline></video>
+<!-- <video src="public/readme/clock-flip.mp4" autoplay loop muted playsinline></video>
+<video src="public/readme/music-player.mp4" autoplay loop muted playsinline></video> -->
 
 ## Quick Start
 
