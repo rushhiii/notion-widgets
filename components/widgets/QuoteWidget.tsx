@@ -10,6 +10,7 @@ import { parseBooleanParam, parsePositiveIntParam, parseColorParam, resolveTheme
 type TransparentBgMode = "off" | "dark" | "light";
 
 type QuoteEmbedParams = {
+  instance?: string;
   category?: string;
   categories?: string;
   authors?: string;

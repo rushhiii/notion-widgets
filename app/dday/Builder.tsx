@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Copy, RefreshCw, Info } from "lucide-react";
 import { DdayWidget } from "@/components/widgets/DdayWidget";
 
@@ -161,6 +162,11 @@ const ensureHex = (value: string, fallback: string) => {
 };
 
 export function DdayBuilder() {
+    const searchParams = useSearchParams();
+    const sanitizeInstance = (value: string) => value.replace(/[^a-z0-9_-]/gi, "");
+    const instanceParam = (searchParams.get("instance") ?? "").trim();
+    const [instanceId, setInstanceId] = useState(instanceParam);
+    const normalizedInstance = sanitizeInstance(instanceId);
     const [date, setDate] = useState(defaults.date);
     const [mode, setMode] = useState<"elapsed" | "countdown" | "overview" | "compact">(defaults.mode);
     const [theme, setTheme] = useState<"default" | "dark" | "light">(defaults.theme);
@@ -217,6 +223,7 @@ export function DdayBuilder() {
     const params = useMemo(() => {
         const p = new URLSearchParams();
         p.set("embed", "1");
+        if (normalizedInstance) p.set("instance", normalizedInstance);
         p.set("date", date);
         if (theme !== "default") p.set("theme", theme);
         if (mode !== "elapsed") p.set("mode", mode);
@@ -272,7 +279,7 @@ export function DdayBuilder() {
         if (megaText.trim()) p.set("megaText", megaText.trim());
         if (overviewText.trim()) p.set("overviewText", overviewText.trim());
         return p;
-    }, [date, mode, theme, showDate, note, align, bg, color, showCompactDefaultColorControls, showDays, showWeeks, showMonths, showYears, showHours, showMinutes, showSeconds, showTotalSeconds, showMegaSeconds, titleColor, overviewColor, dayColor, weekColor, monthColor, yearColor, timeColor, timeText, hoursColor, minutesColor, secondsColor, totalColor, megaColor, dayText, weekText, monthText, yearText, hoursText, minutesText, secondsText, totalText, megaText, overviewText]);
+    }, [date, mode, theme, showDate, note, align, bg, color, showCompactDefaultColorControls, showDays, showWeeks, showMonths, showYears, showHours, showMinutes, showSeconds, showTotalSeconds, showMegaSeconds, titleColor, overviewColor, dayColor, weekColor, monthColor, yearColor, timeColor, timeText, hoursColor, minutesColor, secondsColor, totalColor, megaColor, dayText, weekText, monthText, yearText, hoursText, minutesText, secondsText, totalText, megaText, overviewText, normalizedInstance]);
 
     const livePreviewParams = useMemo(
         () => ({
@@ -282,6 +289,7 @@ export function DdayBuilder() {
             align,
             note,
             showdate: showDate ? 1 : 0,
+            ...(normalizedInstance ? { instance: normalizedInstance } : {}),
             ...(showCompactDefaultColorControls && bg ? { bg } : {}),
             ...(showCompactDefaultColorControls && color ? { color } : {}),
             ...(showDays &&
@@ -329,7 +337,7 @@ export function DdayBuilder() {
             ...(megaText.trim() ? { megaText: megaText.trim() } : {}),
             ...(overviewText.trim() ? { overviewText: overviewText.trim() } : {}),
         }),
-        [date, mode, theme, align, note, showDate, bg, color, showCompactDefaultColorControls, showDays, showWeeks, showMonths, showYears, showHours, showMinutes, showSeconds, showTotalSeconds, showMegaSeconds, titleColor, overviewColor, dayColor, weekColor, monthColor, yearColor, timeColor, timeText, hoursColor, minutesColor, secondsColor, totalColor, megaColor, dayText, weekText, monthText, yearText, hoursText, minutesText, secondsText, totalText, megaText, overviewText],
+        [date, mode, theme, align, note, showDate, bg, color, showCompactDefaultColorControls, showDays, showWeeks, showMonths, showYears, showHours, showMinutes, showSeconds, showTotalSeconds, showMegaSeconds, titleColor, overviewColor, dayColor, weekColor, monthColor, yearColor, timeColor, timeText, hoursColor, minutesColor, secondsColor, totalColor, megaColor, dayText, weekText, monthText, yearText, hoursText, minutesText, secondsText, totalText, megaText, overviewText, normalizedInstance],
     );
 
     const reset = () => {
@@ -373,6 +381,7 @@ export function DdayBuilder() {
         setTotalText(defaults.totalText);
         setMegaText(defaults.megaText);
         setOverviewText(defaults.overviewText);
+        setInstanceId(instanceParam);
     };
 
     const copyLink = () => {
@@ -414,6 +423,17 @@ export function DdayBuilder() {
                                 className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
+                            />
+                        </label>
+
+                        <label className="space-y-1 text-sm">
+                            <span className="text-zinc-300">Instance</span>
+                            <input
+                                className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                                value={instanceId}
+                                onChange={(e) => setInstanceId(e.target.value)}
+                                onBlur={(e) => setInstanceId(sanitizeInstance(e.target.value))}
+                                placeholder="main"
                             />
                         </label>
 

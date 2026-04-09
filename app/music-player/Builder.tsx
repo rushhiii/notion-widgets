@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Copy, RefreshCw, Info } from "lucide-react";
 import MusicPlayerWidget from "@/components/widgets/MusicPlayerWidget";
 
@@ -121,6 +122,11 @@ const defaults = {
 };
 
 export default function MusicPlayerBuilder() {
+  const searchParams = useSearchParams();
+  const sanitizeInstance = (value: string) => value.replace(/[^a-z0-9_-]/gi, "");
+  const instanceParam = (searchParams.get("instance") ?? "").trim();
+  const [instanceId, setInstanceId] = useState(instanceParam);
+  const normalizedInstance = sanitizeInstance(instanceId);
   const [server, setServer] = useState<MusicServer>(defaults.server);
   const [type, setType] = useState<MusicType>(defaults.type);
   const [id, setId] = useState(defaults.id);
@@ -145,6 +151,7 @@ export default function MusicPlayerBuilder() {
   const params = useMemo(() => {
     const p = new URLSearchParams();
     p.set("embed", "1");
+    if (normalizedInstance) p.set("instance", normalizedInstance);
     p.set("server", server);
     p.set("type", type);
     p.set("id", id.trim());
@@ -167,10 +174,11 @@ export default function MusicPlayerBuilder() {
       p.set("transparentbgmode", transparentBgMode);
     }
     return p;
-  }, [server, type, id, uiLanguage, colorscheme, theme, surfaceTheme, loop, order, preload, volume, width, listFolded, listMaxHeight, storageName, showBorder, transparentBgMode, fullPage]);
+  }, [server, type, id, uiLanguage, colorscheme, theme, surfaceTheme, loop, order, preload, volume, width, listFolded, listMaxHeight, storageName, showBorder, transparentBgMode, fullPage, normalizedInstance]);
 
   const livePreviewParams = useMemo(
     () => ({
+      instance: normalizedInstance || undefined,
       server,
       type,
       id: id.trim(),
@@ -190,7 +198,7 @@ export default function MusicPlayerBuilder() {
       transparentbg: transparentBgMode !== "off" ? 1 : 0,
       transparentbgmode: transparentBgMode,
     }),
-    [server, type, id, colorscheme, theme, surfaceTheme, loop, order, preload, volume, width, listFolded, listMaxHeight, storageName, showBorder, transparentBgMode, fullPage],
+    [server, type, id, colorscheme, theme, surfaceTheme, loop, order, preload, volume, width, listFolded, listMaxHeight, storageName, showBorder, transparentBgMode, fullPage, normalizedInstance],
   );
 
   const previewWidget = useMemo(
@@ -218,6 +226,7 @@ export default function MusicPlayerBuilder() {
     setShowBorder(defaults.showBorder);
     setTransparentBgMode(defaults.transparentBgMode);
     setFullPage(defaults.fullPage);
+    setInstanceId(instanceParam);
   };
 
   const applyThemePreset = (preset: string) => {
@@ -470,6 +479,17 @@ export default function MusicPlayerBuilder() {
                 value={storageName}
                 onChange={(e) => setStorageName(e.target.value)}
                 placeholder="metingjs"
+              />
+            </label>
+
+            <label className="space-y-1 text-sm">
+              <span className="text-zinc-300">Instance</span>
+              <input
+                className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                value={instanceId}
+                onChange={(e) => setInstanceId(e.target.value)}
+                onBlur={(e) => setInstanceId(sanitizeInstance(e.target.value))}
+                placeholder="main"
               />
             </label>
 

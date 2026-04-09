@@ -708,6 +708,12 @@ export function ProgressWidget() {
   const fieldClass = "w-full rounded-lg border border-white/12 bg-white/10 px-3 py-2 text-sm text-white/90 placeholder:text-zinc-500 shadow-[0_1px_0_rgba(255,255,255,0.08)] transition focus:border-white/40 focus:ring-2 focus:ring-white/15 focus:outline-none";
   const compactFieldClass = "w-full rounded-md border border-transparent bg-white/10 px-3 py-1.5 text-sm text-white/90 placeholder:text-zinc-500 shadow-[0_1px_0_rgba(255,255,255,0.06)] transition focus:ring-2 focus:ring-white/15 focus:outline-none";
 
+  const sanitizeInstance = (value: string) => value.replace(/[^a-z0-9_-]/gi, "");
+  const instanceParam = (searchParams.get("instance") ?? "").trim();
+  const [instanceId, setInstanceId] = useState(instanceParam);
+  const normalizedInstance = sanitizeInstance(instanceId);
+  const storageKey = normalizedInstance ? `${STORAGE_KEY}:${normalizedInstance}` : STORAGE_KEY;
+
   const initial = useMemo(() => {
     const themeParam = searchParams.get("theme") || DEFAULTS.themeName;
     const themePreset = THEME_PRESETS[themeParam] ?? null;
@@ -811,7 +817,7 @@ export function ProgressWidget() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(storageKey);
       if (raw) {
         const saved = JSON.parse(raw) as Array<{ label: string; progress: number; goal?: number }>;
         if (Array.isArray(saved) && saved.length) {
@@ -835,7 +841,7 @@ export function ProgressWidget() {
       setStorageAttempted(true);
       setStorageReady(true);
     }
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
     if (!bars.length) return;
@@ -849,8 +855,8 @@ export function ProgressWidget() {
     if (typeof window === "undefined") return;
     if (!storageReady) return;
     const payload = bars.map((b) => ({ label: b.label, progress: b.progress, goal: b.goal }));
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }, [bars, storageReady]);
+    window.localStorage.setItem(storageKey, JSON.stringify(payload));
+  }, [bars, storageReady, storageKey]);
 
   useEffect(() => {
     if (!storageAttempted) return;
@@ -927,6 +933,7 @@ export function ProgressWidget() {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     url.search = "";
+    if (normalizedInstance) url.searchParams.set("instance", normalizedInstance);
     url.searchParams.set("title", title);
     url.searchParams.set("label", label);
     url.searchParams.set("goal", String(goal));
@@ -1089,6 +1096,7 @@ export function ProgressWidget() {
                 setShowMilestones(true);
                 setTransparentBgMode("off");
                 setAdjustMode("add");
+                setInstanceId(instanceParam);
               }}
               aria-label="Reset"
             >
@@ -1097,6 +1105,16 @@ export function ProgressWidget() {
           </div>
 
           <div className="grid grid-cols-1 gap-3">
+            <label className="space-y-1 text-sm">
+              <span className="text-zinc-300">Instance</span>
+              <input
+                className={fieldClass}
+                value={instanceId}
+                onChange={(e) => setInstanceId(e.target.value)}
+                onBlur={(e) => setInstanceId(sanitizeInstance(e.target.value))}
+                placeholder="main"
+              />
+            </label>
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Title</span>
               <input className={fieldClass} value={title} onChange={(e) => setTitle(e.target.value)} />

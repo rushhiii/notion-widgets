@@ -123,6 +123,10 @@ export function QuotesBuilder() {
   const [transparentBgMode, setTransparentBgMode] = useState<TransparentBgMode>("off");
   const [copied, setCopied] = useState(false);
   const searchParams = useSearchParams();
+  const sanitizeInstance = (value: string) => value.replace(/[^a-z0-9_-]/gi, "");
+  const instanceParam = (searchParams.get("instance") ?? "").trim();
+  const [instanceId, setInstanceId] = useState(instanceParam);
+  const normalizedInstance = sanitizeInstance(instanceId);
   const adminParam = (searchParams.get("admin") ?? "").trim();
   const ADMIN_SECRET = "dumbass";
   const isAdminBypass = adminParam === ADMIN_SECRET;
@@ -176,11 +180,13 @@ export function QuotesBuilder() {
     setPageBg("#0a0a0b");
     setPageMatch(true);
     setTransparentBgMode("off");
+    setInstanceId(instanceParam);
   };
 
   const params = useMemo(() => {
     const p = new URLSearchParams();
     p.set("embed", "1");
+    if (normalizedInstance) p.set("instance", normalizedInstance);
     p.set("theme", theme);
     if (adminParam) p.set("admin", adminParam);
     if (authors.length) p.set("authors", authors.join(","));
@@ -206,7 +212,7 @@ export function QuotesBuilder() {
       p.set("pagetransparentmode", transparentBgMode);
     }
     return p;
-  }, [adminParam, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]);
+  }, [adminParam, normalizedInstance, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -221,6 +227,7 @@ export function QuotesBuilder() {
       mode,
       startIndex,
       q: query,
+      instance: normalizedInstance || undefined,
       admin: adminParam,
       showPinned,
       showPersonal,
@@ -233,7 +240,7 @@ export function QuotesBuilder() {
       pageTransparent: transparentBgMode !== "off",
       pageTransparentMode: transparentBgMode,
     }),
-    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, adminParam, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]
+    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, normalizedInstance, adminParam, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]
   );
 
   const copyLink = () => {
@@ -268,6 +275,16 @@ export function QuotesBuilder() {
           </div>
 
           <div className="grid grid-cols-1 gap-3">
+            <label className="space-y-1 text-sm">
+              <span className="text-zinc-300">Instance</span>
+              <input
+                className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                value={instanceId}
+                onChange={(e) => setInstanceId(e.target.value)}
+                onBlur={(e) => setInstanceId(sanitizeInstance(e.target.value))}
+                placeholder="main"
+              />
+            </label>
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Authors</span>
               <div className="flex flex-wrap gap-2">

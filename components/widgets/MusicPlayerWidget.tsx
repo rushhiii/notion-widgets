@@ -114,6 +114,9 @@ export default function MusicPlayerWidget({ embedParams }: { embedParams?: Embed
     return null;
   };
 
+  const instanceParam = (getParam(["instance"]) || "").trim();
+  const normalizedInstance = instanceParam.replace(/[^a-z0-9_-]/gi, "");
+
   const server = pick(getParam(["server"]), ["netease", "tencent"] as const, "netease");
   const type = pick(getParam(["type"]), ["song", "playlist", "album", "search", "artist"] as const, "playlist");
   const id = (getParam(["id"]) || "").trim();
@@ -220,7 +223,9 @@ export default function MusicPlayerWidget({ embedParams }: { embedParams?: Embed
   const translateUrlValue = config?.translateUrl ?? "";
   const translateKeyValue = config?.translateKey ?? null;
   const translateSourceValue = config?.translateSource ?? "auto";
-  const storageNameValue = config?.storageName ?? "metingjs";
+  const storageNameBase = config?.storageName ?? "metingjs";
+  const resolvedStorageName = normalizedInstance ? `${storageNameBase}_${normalizedInstance}` : storageNameBase;
+  const storageNameValue = resolvedStorageName;
 
   useEffect(() => {
     if (transparentMode === "off") return;
@@ -351,7 +356,7 @@ export default function MusicPlayerWidget({ embedParams }: { embedParams?: Embed
     config.volume,
     config.listFolded ? "1" : "0",
     config.listMaxHeight,
-    config.storageName,
+    resolvedStorageName,
     scheme,
     config.showBorder ? "1" : "0",
     config.transparentBgMode,
@@ -404,7 +409,7 @@ export default function MusicPlayerWidget({ embedParams }: { embedParams?: Embed
             volume: config.volume,
             "list-folded": config.listFolded ? "true" : "false",
             "list-max-height": config.listMaxHeight,
-            "storage-name": config.storageName,
+            "storage-name": resolvedStorageName,
             lang: config.uiLanguage === "en" ? "en" : undefined,
           })}
         </div>
