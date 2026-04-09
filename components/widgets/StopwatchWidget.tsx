@@ -4,7 +4,20 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { Home, Link2, Maximize2, Menu, Minimize2, Moon, Pause, Play, RotateCcw, Sun, Timer as TimerIcon } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBars,
+  faCompress,
+  faExpand,
+  faHouse,
+  faHourglassHalf,
+  faLink,
+  faMoon,
+  faPause,
+  faPlay,
+  faRotateLeft,
+  faSun,
+} from "@fortawesome/free-solid-svg-icons";
 
 import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
 
@@ -217,7 +230,7 @@ export function StopwatchWidget() {
             aria-label={isRunning ? "Pause" : "Start"}
             onClick={() => setIsRunning((v) => !v)}
           >
-            {isRunning ? <Pause size={18} strokeWidth={1.6} /> : <Play size={18} strokeWidth={1.6} />}
+            {isRunning ? <FontAwesomeIcon icon={faPause} fixedWidth /> : <FontAwesomeIcon icon={faPlay} fixedWidth />}
           </button>
           <button
             className="fc-inline-btn"
@@ -227,10 +240,10 @@ export function StopwatchWidget() {
               setElapsed(0);
             }}
           >
-            <RotateCcw size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faRotateLeft} fixedWidth />
           </button>
           <button className="fc-inline-btn" aria-label="Open settings" onClick={() => setShowControls(true)}>
-            <Menu size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faBars} fixedWidth />
           </button>
         </div>
 
@@ -243,17 +256,17 @@ export function StopwatchWidget() {
           onMouseLeave={scheduleHideNav}
         >
           <a className="fc-nav-btn" href="/clock" aria-label="Home" title="Clock">
-            <Home size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faHouse} fixedWidth />
           </a>
           <a className="fc-nav-btn" href="/timer" aria-label="Timer" title="Timer">
-            <TimerIcon size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faHourglassHalf} fixedWidth />
           </a>
           <button
             className="fc-nav-btn"
             aria-label={isRunning ? "Pause" : "Start"}
             onClick={() => setIsRunning((v) => !v)}
           >
-            {isRunning ? <Pause size={18} strokeWidth={1.6} /> : <Play size={18} strokeWidth={1.6} />}
+            {isRunning ? <FontAwesomeIcon icon={faPause} fixedWidth /> : <FontAwesomeIcon icon={faPlay} fixedWidth />}
           </button>
           <button
             className="fc-nav-btn"
@@ -263,16 +276,16 @@ export function StopwatchWidget() {
               setElapsed(0);
             }}
           >
-            <RotateCcw size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faRotateLeft} fixedWidth />
           </button>
           <button className="fc-nav-btn" aria-label="Toggle settings" onClick={() => setShowControls((v) => !v)}>
-            <Menu size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faBars} fixedWidth />
           </button>
           <button className="fc-nav-btn" aria-label="Toggle light/dark" onClick={toggleTheme}>
-            {themeName === "light" ? <Moon size={18} strokeWidth={1.6} /> : <Sun size={18} strokeWidth={1.6} />}
+            {themeName === "light" ? <FontAwesomeIcon icon={faMoon} fixedWidth /> : <FontAwesomeIcon icon={faSun} fixedWidth />}
           </button>
           <button className="fc-nav-btn" aria-label="Fullscreen" onClick={handleFullscreen}>
-            {isFullscreen ? <Minimize2 size={18} strokeWidth={1.8} /> : <Maximize2 size={18} strokeWidth={1.8} />}
+            {isFullscreen ? <FontAwesomeIcon icon={faCompress} fixedWidth /> : <FontAwesomeIcon icon={faExpand} fixedWidth />}
           </button>
         </div>
 
@@ -301,7 +314,7 @@ export function StopwatchWidget() {
             />
           </div>
           <button className="fc-inline-btn" aria-label={isRunning ? "Pause" : "Start"} onClick={() => setIsRunning((v) => !v)}>
-            {isRunning ? <Pause size={18} strokeWidth={1.6} /> : <Play size={18} strokeWidth={1.6} />}
+            {isRunning ? <FontAwesomeIcon icon={faPause} fixedWidth /> : <FontAwesomeIcon icon={faPlay} fixedWidth />}
           </button>
           <button
             className="fc-inline-btn"
@@ -311,13 +324,13 @@ export function StopwatchWidget() {
               setElapsed(0);
             }}
           >
-            <RotateCcw size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faRotateLeft} fixedWidth />
           </button>
           <button className={showSeconds ? "fc-chip is-active" : "fc-chip"} onClick={() => setShowSeconds((v) => !v)}>
             <span className={showSeconds ? "fc-sec-badge is-active" : "fc-sec-badge"}>SEC</span>
           </button>
           <button className="fc-nav-btn" aria-label="Copy embed" onClick={copyEmbed}>
-            <Link2 size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faLink} fixedWidth />
           </button>
         </div>
 

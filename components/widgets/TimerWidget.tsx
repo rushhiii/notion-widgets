@@ -4,7 +4,17 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { Home, Link2, Maximize2, Menu, Minimize2, Moon, Sun, TimerReset } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBars,
+  faCompress,
+  faExpand,
+  faHouse,
+  faLink,
+  faMoon,
+  faStopwatch,
+  faSun,
+} from "@fortawesome/free-solid-svg-icons";
 
 import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
 
@@ -217,19 +227,19 @@ export function TimerWidget() {
           onMouseLeave={scheduleHideNav}
         >
           <a className="fc-nav-btn" href="/clock" aria-label="Home" title="Clock">
-            <Home size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faHouse} fixedWidth />
           </a>
           <a className="fc-nav-btn" href="/stopwatch" aria-label="Stopwatch" title="Stopwatch">
-            <TimerReset size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faStopwatch} fixedWidth />
           </a>
           <button className="fc-nav-btn" aria-label="Toggle settings" onClick={() => setShowControls((v) => !v)}>
-            <Menu size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faBars} fixedWidth />
           </button>
           <button className="fc-nav-btn" aria-label="Toggle light/dark" onClick={toggleTheme}>
-            {themeName === "light" ? <Moon size={18} strokeWidth={1.6} /> : <Sun size={18} strokeWidth={1.6} />}
+            {themeName === "light" ? <FontAwesomeIcon icon={faMoon} fixedWidth /> : <FontAwesomeIcon icon={faSun} fixedWidth />}
           </button>
           <button className="fc-nav-btn" aria-label="Fullscreen" onClick={handleFullscreen}>
-            {isFullscreen ? <Minimize2 size={18} strokeWidth={1.8} /> : <Maximize2 size={18} strokeWidth={1.8} />}
+            {isFullscreen ? <FontAwesomeIcon icon={faCompress} fixedWidth /> : <FontAwesomeIcon icon={faExpand} fixedWidth />}
           </button>
         </div>
 
@@ -285,7 +295,7 @@ export function TimerWidget() {
             Reset
           </button>
           <button className="fc-nav-btn" aria-label="Copy embed" onClick={copyEmbed}>
-            <Link2 size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faLink} fixedWidth />
           </button>
         </div>
 

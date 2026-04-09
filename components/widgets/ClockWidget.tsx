@@ -4,7 +4,18 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { Link2, Maximize2, Menu, Minimize2, Moon, Sun, Timer, TimerReset, X } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBars,
+  faClock,
+  faCompress,
+  faExpand,
+  faLink,
+  faMoon,
+  faStopwatch,
+  faSun,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 
 import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
 
@@ -89,6 +100,15 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     return searchParams.get(key);
   };
 
+  const instanceParam = (getParam("instance") || "").trim();
+  const [instanceId, setInstanceId] = useState(instanceParam);
+  const normalizedInstance = instanceId.replace(/[^a-z0-9_-]/gi, "");
+  const storagePrefix = normalizedInstance ? `fc_${normalizedInstance}_` : "fc_";
+  const storageKey = (suffix: string) => `${storagePrefix}${suffix}`;
+
+  const bgFromQuery = (getParam("bg") || "").trim();
+  const textFromQuery = (getParam("text") || "").trim();
+
   const sizeFromQuery = parseIntParam(getParam("size"), 75, 50, 120);
   const formatFromQuery = getParam("format") === "24";
   const secondsFromQuery = parseBool(getParam("seconds"), true);
@@ -121,6 +141,8 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const [mode, setMode] = useState<ClockMode>(modeFromQuery);
   const [transparentBgMode, setTransparentBgMode] = useState<TransparentBgMode>(transparentBgModeFromQuery);
   const [themeName, setThemeName] = useState<ThemeName>(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
+  const [customBackground, setCustomBackground] = useState<string>(bgFromQuery);
+  const [customTextColor, setCustomTextColor] = useState<string>(textFromQuery);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [showControls, setShowControls] = useState<boolean>(controlsFromQuery);
   const [copied, setCopied] = useState<boolean>(false);
@@ -134,6 +156,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
 
   useEffect(() => {
     if (!embedParams) return;
+    setInstanceId(instanceParam);
     setSize(sizeFromQuery);
     setIs24h(formatFromQuery);
     setShowSeconds(secondsFromQuery);
@@ -145,8 +168,11 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     setTransparentBgMode(transparentBgModeFromQuery);
     setThemeName(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
     setShowControls(controlsFromQuery);
+    setCustomBackground(bgFromQuery);
+    setCustomTextColor(textFromQuery);
   }, [
     embedParams,
+    instanceParam,
     sizeFromQuery,
     formatFromQuery,
     secondsFromQuery,
@@ -158,6 +184,8 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     transparentBgModeFromQuery,
     themeFromQuery,
     controlsFromQuery,
+    bgFromQuery,
+    textFromQuery,
   ]);
 
   useEffect(() => {
@@ -174,100 +202,122 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
 
   useEffect(() => {
     if (embedParams) return;
-    const stored = window.localStorage.getItem("fc_size");
+    const stored = window.localStorage.getItem(storageKey("size"));
     if (stored) {
       const n = Number(stored);
       if (Number.isFinite(n)) setSize(n);
     }
-    const storedSeconds = window.localStorage.getItem("fc_seconds");
+    const storedSeconds = window.localStorage.getItem(storageKey("seconds"));
     if (storedSeconds === "true") setShowSeconds(true);
     if (storedSeconds === "false") setShowSeconds(false);
-    const storedFormat = window.localStorage.getItem("fc_24h");
+    const storedFormat = window.localStorage.getItem(storageKey("24h"));
     if (storedFormat === "true") setIs24h(true);
     if (storedFormat === "false") setIs24h(false);
-    const storedTheme = window.localStorage.getItem("fc_theme") as ThemeName | null;
+    const storedTheme = window.localStorage.getItem(storageKey("theme")) as ThemeName | null;
     if (storedTheme && THEME_ORDER.includes(storedTheme)) setThemeName(storedTheme);
-    const storedControls = window.localStorage.getItem("fc_controls");
+    const storedControls = window.localStorage.getItem(storageKey("controls"));
     if (storedControls === "true") setShowControls(false);
-    const storedDay = window.localStorage.getItem("fc_day");
+    const storedDay = window.localStorage.getItem(storageKey("day"));
     if (storedDay === "true") setShowDay(true);
     if (storedDay === "false") setShowDay(false);
-    const storedMinimalAmPm = window.localStorage.getItem("fc_min_ampm");
+    const storedMinimalAmPm = window.localStorage.getItem(storageKey("min_ampm"));
     if (storedMinimalAmPm === "true") setShowMinimalAmPm(true);
     if (storedMinimalAmPm === "false") setShowMinimalAmPm(false);
-    const storedMinimalFullDate = window.localStorage.getItem("fc_min_fulldate");
+    const storedMinimalFullDate = window.localStorage.getItem(storageKey("min_fulldate"));
     if (storedMinimalFullDate === "true") setShowMinimalFullDate(true);
     if (storedMinimalFullDate === "false") setShowMinimalFullDate(false);
-    const storedMinimalDateFormat = window.localStorage.getItem("fc_min_dateformat");
+    const storedMinimalDateFormat = window.localStorage.getItem(storageKey("min_dateformat"));
     if (storedMinimalDateFormat) setMinimalDateFormat(storedMinimalDateFormat);
-    const storedMode = window.localStorage.getItem("fc_mode");
+    const storedMode = window.localStorage.getItem(storageKey("mode"));
     if (storedMode === "flip" || storedMode === "minimal") setMode(storedMode);
-    const storedTransparentMode = parseTransparentBgMode(window.localStorage.getItem("fc_transparentbgmode"), "off");
+    const storedTransparentMode = parseTransparentBgMode(window.localStorage.getItem(storageKey("transparentbgmode")), "off");
     if (storedTransparentMode !== "off") {
       setTransparentBgMode(storedTransparentMode);
     } else {
-      const storedOverlay = window.localStorage.getItem("fc_overlay");
+      const storedOverlay = window.localStorage.getItem(storageKey("overlay"));
       if (storedOverlay === "true") setTransparentBgMode("dark");
       if (storedOverlay === "false") setTransparentBgMode("off");
     }
-  }, [embedParams]);
+    const storedBg = window.localStorage.getItem(storageKey("bg"));
+    if (storedBg) setCustomBackground(storedBg);
+    const storedText = window.localStorage.getItem(storageKey("text"));
+    if (storedText) setCustomTextColor(storedText);
+  }, [embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_size", String(size));
-  }, [size, embedParams]);
+    window.localStorage.setItem(storageKey("size"), String(size));
+  }, [size, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_seconds", String(showSeconds));
-  }, [showSeconds, embedParams]);
+    window.localStorage.setItem(storageKey("seconds"), String(showSeconds));
+  }, [showSeconds, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_24h", String(is24h));
-  }, [is24h, embedParams]);
+    window.localStorage.setItem(storageKey("24h"), String(is24h));
+  }, [is24h, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_theme", themeName);
-  }, [themeName, embedParams]);
+    window.localStorage.setItem(storageKey("theme"), themeName);
+  }, [themeName, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_controls", String(showControls));
-  }, [showControls, embedParams]);
+    if (customBackground) {
+      window.localStorage.setItem(storageKey("bg"), customBackground);
+    } else {
+      window.localStorage.removeItem(storageKey("bg"));
+    }
+  }, [customBackground, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_day", String(showDay));
-  }, [showDay, embedParams]);
+    if (customTextColor) {
+      window.localStorage.setItem(storageKey("text"), customTextColor);
+    } else {
+      window.localStorage.removeItem(storageKey("text"));
+    }
+  }, [customTextColor, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_min_ampm", String(showMinimalAmPm));
-  }, [showMinimalAmPm, embedParams]);
+    window.localStorage.setItem(storageKey("controls"), String(showControls));
+  }, [showControls, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_min_fulldate", String(showMinimalFullDate));
-  }, [showMinimalFullDate, embedParams]);
+    window.localStorage.setItem(storageKey("day"), String(showDay));
+  }, [showDay, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_min_dateformat", minimalDateFormat);
-  }, [minimalDateFormat, embedParams]);
+    window.localStorage.setItem(storageKey("min_ampm"), String(showMinimalAmPm));
+  }, [showMinimalAmPm, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_mode", mode);
-  }, [mode, embedParams]);
+    window.localStorage.setItem(storageKey("min_fulldate"), String(showMinimalFullDate));
+  }, [showMinimalFullDate, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
-    window.localStorage.setItem("fc_transparentbgmode", transparentBgMode);
+    window.localStorage.setItem(storageKey("min_dateformat"), minimalDateFormat);
+  }, [minimalDateFormat, embedParams, storagePrefix]);
+
+  useEffect(() => {
+    if (embedParams) return;
+    window.localStorage.setItem(storageKey("mode"), mode);
+  }, [mode, embedParams, storagePrefix]);
+
+  useEffect(() => {
+    if (embedParams) return;
+    window.localStorage.setItem(storageKey("transparentbgmode"), transparentBgMode);
     // Keep legacy flag for backward compatibility.
-    window.localStorage.setItem("fc_overlay", String(transparentBgMode !== "off"));
-  }, [transparentBgMode, embedParams]);
+    window.localStorage.setItem(storageKey("overlay"), String(transparentBgMode !== "off"));
+  }, [transparentBgMode, embedParams, storagePrefix]);
 
   useEffect(() => {
     return () => {
@@ -287,12 +337,16 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     if (!surfaceRef.current || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(entries => {
       const width = entries[0]?.contentRect.width ?? 0;
+      const height = entries[0]?.contentRect.height ?? 0;
       if (!width) return;
       // Flip clock should be full-size at 300px width; keep minimal sizing baseline unchanged.
       const base = mode === "flip" ? 300 : 860;
       setAutoScale(Number(Math.min(1, width / base).toFixed(3)) || 1);
-      // setIsVertical(width < 760);
-      setIsVertical(width < 300);
+
+      // Match responsive behavior: switch to vertical only when view is narrow and tall.
+      const effectiveHeight = height || window.innerHeight;
+      const shouldUseVertical = width <= 1200 && effectiveHeight > width;
+      setIsVertical(shouldUseVertical);
     });
     observer.observe(surfaceRef.current);
     return () => observer.disconnect();
@@ -362,6 +416,13 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     return parts;
   }, [now, is24h, timezone]);
 
+  const minimalTimeString = useMemo(() => {
+    const hour = currentTime?.hour ?? "--";
+    const minute = currentTime?.minute ?? "--";
+    const second = currentTime?.second ?? "--";
+    return showSeconds ? `${hour}:${minute}:${second}` : `${hour}:${minute}`;
+  }, [currentTime, showSeconds]);
+
   const dayName = useMemo(() => {
     if (!now) return "";
     return now.toLocaleDateString("en-US", { weekday: "long", timeZone: timezone });
@@ -377,7 +438,9 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const transparentBgColor = transparentBgMode === "dark" ? "#191919" : "#ffffff";
   const themeVars = transparentBgMode !== "off" ? { ...baseThemeVars, background: transparentBgColor } : baseThemeVars;
   const isMinimalMode = mode === "minimal";
-  const minimalTextColor = isMinimalMode && transparentBgMode === "light" ? "#000000" : themeVars.text;
+  const baseTextColor = themeVars.text;
+  const resolvedBackground = customBackground || themeVars.background;
+  const resolvedTextColor = customTextColor || baseTextColor;
   const toggleTheme = () => setThemeName((prev) => (prev === "light" ? "default" : "light"));
   const themeList = useMemo(() => THEME_ORDER.filter((name) => name !== "light"), []);
 
@@ -386,12 +449,25 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const minimalSizeMultiplier = String(Number((scale / 75).toFixed(3)));
 
   const rootStyle: CSSProperties & Record<`--${string}`, string> = {
-    background: themeVars.background,
-    color: minimalTextColor,
-    "--background": themeVars.background,
+    background: resolvedBackground,
+    color: resolvedTextColor,
+    "--background": resolvedBackground,
     "--holder": themeVars.holder,
-    "--text": minimalTextColor,
+    "--text": resolvedTextColor,
     "--minimal-size-mult": minimalSizeMultiplier,
+  };
+
+  const handleInstanceBlur = (value: string) => {
+    const sanitized = value.replace(/[^a-z0-9_-]/gi, "");
+    setInstanceId(sanitized);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (sanitized) {
+      url.searchParams.set("instance", sanitized);
+    } else {
+      url.searchParams.delete("instance");
+    }
+    window.history.replaceState({}, "", url.toString());
   };
 
   const handleFullscreen = () => {
@@ -415,15 +491,24 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
         {!isMinimalMode && <div className="fc-line" aria-hidden />}
 
         {isMinimalMode ? (
-          <div className="fc-minimal-clock">
-            <div id="clock" style={{ color: minimalTextColor }}>
+            <div className="fc-minimal-clock">
+            <div id="clock" style={{ color: resolvedTextColor }}>
               <div id="time-wrapper">
-                <div id="time" className="fc-minimal-time">
-                  {showSeconds
-                    ? `${currentTime?.hour ?? "--"}:${currentTime?.minute ?? "--"}:${currentTime?.second ?? "--"}`
-                    : `${currentTime?.hour ?? "--"}:${currentTime?.minute ?? "--"}`}
-                {!is24h && showMinimalAmPm && currentTime?.period && <div id="am-pm" className="fc-minimal-period">{currentTime.period}</div>}
-
+                <div id="time" className="fc-minimal-time" aria-label={minimalTimeString}>
+                  {minimalTimeString.split("").map((char, index) => (
+                    <span
+                      key={`${index}-${char}`}
+                      className={char === ":" ? "fc-minimal-sep" : "fc-minimal-digit"}
+                      aria-hidden="true"
+                    >
+                      {char}
+                    </span>
+                  ))}
+                  {!is24h && showMinimalAmPm && currentTime?.period && (
+                    <span id="am-pm" className="fc-minimal-period">
+                      {currentTime.period}
+                    </span>
+                  )}
                 </div>
                 {/* {!is24h && showMinimalAmPm && currentTime?.period && <div id="am-pm" className="fc-minimal-period">{currentTime.period}</div>} */}
                 {showDay && dayName && <div className="fc-minimal-day">{dayName}</div>}
@@ -472,19 +557,19 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
           onMouseLeave={scheduleHideNav}
         >
           <a className="fc-nav-btn" href="/timer" aria-label="Timer" title="Timer">
-            <Timer size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faClock} fixedWidth />
           </a>
           <a className="fc-nav-btn" href="/stopwatch" aria-label="Stopwatch" title="Stopwatch">
-            <TimerReset size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faStopwatch} fixedWidth />
           </a>
           <button className="fc-nav-btn" aria-label="Toggle settings" onClick={() => setShowControls((v) => !v)}>
-            <Menu size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faBars} fixedWidth />
           </button>
           <button className="fc-nav-btn" aria-label="Toggle light/dark" onClick={toggleTheme}>
-            {themeName === "light" ? <Moon size={18} strokeWidth={1.6} /> : <Sun size={18} strokeWidth={1.6} />}
+            {themeName === "light" ? <FontAwesomeIcon icon={faMoon} fixedWidth /> : <FontAwesomeIcon icon={faSun} fixedWidth />}
           </button>
           <button className="fc-nav-btn" aria-label="Fullscreen" onClick={handleFullscreen}>
-            {isFullscreen ? <Minimize2 size={18} strokeWidth={1.8} /> : <Maximize2 size={18} strokeWidth={1.8} />}
+            {isFullscreen ? <FontAwesomeIcon icon={faCompress} fixedWidth /> : <FontAwesomeIcon icon={faExpand} fixedWidth />}
           </button>
         </div>
 
@@ -500,14 +585,14 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
         {showControls && <div className="fc-panel-backdrop" onClick={() => setShowControls(false)} />}
 
         <div
-          className={`fc-panel fc-panel-floating ${showControls ? "is-visible" : ""}`}
+          className={`fc-panel fc-panel-floating fc-panel-compact ${showControls ? "is-visible" : ""}`}
           role="dialog"
           aria-modal
           onMouseEnter={clearHidePanel}
           onMouseLeave={scheduleHidePanel}
         >
           <button className="fc-nav-btn fc-panel-close" aria-label="Close settings" onClick={() => setShowControls(false)}>
-            <X size={18} strokeWidth={1.8} />
+            <FontAwesomeIcon icon={faXmark} fixedWidth />
           </button>
           <div className="fc-panel-themes-only">
             <div className="fc-theme-overlay-toggle">
@@ -528,6 +613,52 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
                   />
                 );
               })}
+            </div>
+          </div>
+          <div className="fc-panel-section">
+            <label className="fc-panel-label" htmlFor="fc-instance">
+              Instance
+            </label>
+            <input
+              id="fc-instance"
+              className="fc-panel-input"
+              value={instanceId}
+              onChange={(e) => setInstanceId(e.target.value)}
+              onBlur={(e) => handleInstanceBlur(e.target.value)}
+              placeholder="Main"
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </div>
+          <div className="fc-panel-section">
+            <span className="fc-panel-label">Colors</span>
+            <div className="fc-color-row">
+              <label className="fc-color-label" htmlFor="fc-bg-color">
+                BG
+              </label>
+              <input
+                id="fc-bg-color"
+                type="color"
+                className="fc-color-input"
+                value={customBackground || themeVars.background}
+                onChange={(e) => setCustomBackground(e.target.value)}
+                aria-label="Background color"
+              />
+              <button className="fc-chip fc-color-reset" onClick={() => setCustomBackground("")}>CLR</button>
+            </div>
+            <div className="fc-color-row">
+              <label className="fc-color-label" htmlFor="fc-text-color">
+                Text
+              </label>
+              <input
+                id="fc-text-color"
+                type="color"
+                className="fc-color-input"
+                value={customTextColor || baseTextColor}
+                onChange={(e) => setCustomTextColor(e.target.value)}
+                aria-label="Text color"
+              />
+              <button className="fc-chip fc-color-reset" onClick={() => setCustomTextColor("")}>CLR</button>
             </div>
           </div>
           {isMinimalMode && (
@@ -643,6 +774,21 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
               } else {
                 url.searchParams.delete("mode");
               }
+              if (normalizedInstance) {
+                url.searchParams.set("instance", normalizedInstance);
+              } else {
+                url.searchParams.delete("instance");
+              }
+              if (customBackground) {
+                url.searchParams.set("bg", customBackground);
+              } else {
+                url.searchParams.delete("bg");
+              }
+              if (customTextColor) {
+                url.searchParams.set("text", customTextColor);
+              } else {
+                url.searchParams.delete("text");
+              }
               url.searchParams.set("controls", "0");
               url.searchParams.set("day", showDay ? "1" : "0");
               if (mode === "minimal") {
@@ -669,7 +815,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
                 .catch(() => undefined);
             }}
           >
-            <Link2 size={18} strokeWidth={1.6} />
+            <FontAwesomeIcon icon={faLink} fixedWidth />
           </button>
         </div>
 
