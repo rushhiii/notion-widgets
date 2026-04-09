@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Music Player Widget",
   description: "Embeddable music player powered by APlayer and MetingJS for Netease and Tencent.",
   icons: {
-    icon: "/icons/quotes.png",
+    icon: "/icons/music_player_icon.png",
   },
 };
 

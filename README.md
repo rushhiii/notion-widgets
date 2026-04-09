@@ -14,6 +14,7 @@ Includes clock, timer, stopwatch, D-Day, quotes, weather, progress, and music pl
 ## Table of Contents
 
 - [What's Included](#whats-included)
+- [Showcase](#showcase)
 - [Quick Start](#quick-start)
 - [Fork & Deploy Your Own](#fork--deploy-your-own)
 - [Widget Routes](#widget-routes)
@@ -33,6 +34,21 @@ Includes clock, timer, stopwatch, D-Day, quotes, weather, progress, and music pl
 - Theme, layout, color, and behavior customization through query params
 - Responsive UI with transparent-friendly embeds
 - Per-instance settings for widgets that store state
+
+## Showcase
+
+![Notion widgets dashboard](public/readme/hero_dashboard.png)
+
+Gallery (widget screenshots):
+| Clock | Timer | Stopwatch | Quotes |
+| --- | --- | --- | --- |
+| ![Clock](public/readme/clock.png) | ![Timer](public/readme/timer.png) | ![Stopwatch](public/readme/stopwatch.png) | ![Quotes](public/readme/quotes.png) |
+| D-Day | Weather | Progress | Music Player |
+| ![D-Day](public/readme/dday.png) | ![Weather](public/readme/weather.png) | ![Progress](public/readme/progress.png) | ![Music Player](public/readme/music_player.png) |
+
+
+<video src="public/readme/clock-flip.mp4" autoplay loop muted playsinline></video>
+<video src="public/readme/music-player.mp4" autoplay loop muted playsinline></video>
 
 ## Quick Start
 
