@@ -1,4 +1,4 @@
-![Notion Widgets Banner](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/icons/repo_banner_new.png)
+![Notion Widgets Banner](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/repo_banner.png)
 
 <!-- ✱ ✻ ✷ ✮-->
 # ✮ Notion Widgets Framework
@@ -298,4 +298,4 @@ The script writes normalized results to `lib/quotes.notion.json`, which keeps ru
 
 ## Contact / Requests
 
-Feature requests, collaboration ideas, or questions: open an issue or discussion on the repo, or reach out via the GitHub profile linked above.*** End Patch
+Feature requests, collaboration ideas, or questions: open an issue or discussion on the repo, or reach out via the GitHub profile linked above.
