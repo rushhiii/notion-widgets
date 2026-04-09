@@ -1,4 +1,4 @@
-![Notion Widgets Banner](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/icons/repo_banner_new.png)
+![Notion Widgets Banner](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/repo_banner.png)
 
 # ✮ Notion Widgets Framework
 Static, embeddable Notion widgets built with Next.js App Router, TypeScript, and Tailwind CSS.
@@ -37,14 +37,20 @@ Includes clock, timer, stopwatch, D-Day, quotes, weather, progress, and music pl
 
 ## Showcase
 
-![Notion widgets dashboard](public/readme/hero_dashboard.png)
+![Notion widgets dashboard](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/hero_dashboard.png)
 
-Gallery (widget screenshots):
-| Clock | Timer | Stopwatch | Quotes |
-| --- | --- | --- | --- |
-| ![Clock](public/readme/clock.png) | ![Timer](public/readme/timer.png) | ![Stopwatch](public/readme/stopwatch.png) | ![Quotes](public/readme/quotes.png) |
-| D-Day | Weather | Progress | Music Player |
-| ![D-Day](public/readme/dday.png) | ![Weather](public/readme/weather.png) | ![Progress](public/readme/progress.png) | ![Music Player](public/readme/music_player.png) |
+Screenshots:
+| Clock | Timer | Stopwatch |
+| --- | --- | --- |
+| ![Clock](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/clock.png) | ![Timer](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/timer.png) | ![Stopwatch](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/stopwatch.png) |
+
+| Weather | Quotes | Progress |
+| --- | --- | --- |
+| ![Weather](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/weather.png) | ![Quotes](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/quotes.png) | ![Progress](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/progress.png) |
+
+| D-Day | Music Player | 
+| --- | --- |
+| ![D-Day](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/dday.png) | ![Music Player](https://raw.githubusercontent.com/rushhiii/notion-widgets/refs/heads/main/public/readme/music_player.png) |
 
 
 <!-- <video src="public/readme/clock-flip.mp4" autoplay loop muted playsinline></video>
