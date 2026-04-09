@@ -3,7 +3,7 @@
 # ✮ Notion Widgets Framework
 Static, embeddable Notion widgets built with Next.js App Router, TypeScript, and Tailwind CSS.
 
-Includes clock, timer, stopwatch, D-Day, quotes, weather, and progress widgets with URL-based customization.
+Includes clock, timer, stopwatch, D-Day, quotes, weather, progress, and music player widgets with URL-based customization and per-instance settings.
 
 [![Notion](https://img.shields.io/badge/Notion-Platform-111827?style=flat-square&labelColor=0f0f11&logo=notion&logoColor=white)](https://www.notion.so/)
 [![Next.js](https://img.shields.io/badge/Next.js-Framework-111827?style=flat-square&labelColor=0f0f11&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
@@ -11,12 +11,28 @@ Includes clock, timer, stopwatch, D-Day, quotes, weather, and progress widgets w
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-Utility-06b6d4?style=flat-square&labelColor=0f0f11&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-Hosting-111827?style=flat-square&labelColor=0f0f11&logo=vercel&logoColor=white)](https://vercel.com/)
 
-## What’s Included
+## Table of Contents
+
+- [What's Included](#whats-included)
+- [Quick Start](#quick-start)
+- [Fork & Deploy Your Own](#fork--deploy-your-own)
+- [Widget Routes](#widget-routes)
+- [Instance IDs](#instance-ids)
+- [Common Query Params](#common-query-params)
+- [Music Player (English)](#music-player-english)
+- [Recent Updates](#recent-updates)
+- [Notion Quotes Sync](#notion-quotes-sync)
+- [Contact / Requests](#contact--requests)
+- [Notes](#notes)
+
+## What's Included
 
 - Clock, Timer, Stopwatch, Quotes, D-Day, Weather, and Progress widgets
+- Music Player widget (APlayer + MetingJS)
 - Static-compatible, iframe-safe embeds for Notion
 - Theme, layout, color, and behavior customization through query params
 - Responsive UI with transparent-friendly embeds
+- Per-instance settings for widgets that store state
 
 ## Quick Start
 
@@ -84,16 +100,26 @@ Your widgets will be live at `https://YOUR_VERCEL_APP.vercel.app/clock`, `/timer
 - `/progress`
 - `/music-player`
 
+## Instance IDs
+
+Use `instance` to isolate settings or saved state across multiple embeds of the same widget. Only `a-z`, `0-9`, `_`, and `-` are kept.
+
+Supported for stateful widgets (clock, progress, music player). Safe to include on quotes and D-Day for consistent link naming.
+
+Example:
+
+- `/progress?instance=work&embed=1`
+
 ## Common Query Params
 
-- Clock: `tz`, `format`, `seconds`, `theme`, `controls`, `size`
+- Clock: `tz`, `format`, `seconds`, `theme`, `controls`, `size`, `bg`, `text`, `instance`
 - Timer: `t`, `start`, `theme`, `controls`, `size`
 - Stopwatch: `t`, `start`, `theme`, `controls`, `size`
-- Quotes: `category`, `source`, `mode`, `rotate`, `interval`, `bg`, `border`, `text`, `accent`
-- D-Day: `date`, `mode`, `align`, `showdate`, `bg`, `color`, `titleColor`, `dayColor`, `timeColor`
+- Quotes: `category`, `source`, `mode`, `rotate`, `interval`, `bg`, `border`, `text`, `accent`, `instance`
+- D-Day: `date`, `mode`, `align`, `showdate`, `bg`, `color`, `titleColor`, `dayColor`, `timeColor`, `instance`
 - Weather: `location`, `lat`, `lon`, `units`, `mode`, `details`, `theme`, `bg`, `text`, `accent`
-- Progress: `title`, `label`, `goal`, `progress`, `prefix`, `suffix`, `accent`, `track`, `text`, `bg`, `embed`
-- Music Player: `server`, `type`, `id`, `colorscheme`, `theme`, `loop`, `order`, `preload`, `volume`, `list-folded`, `list-max-height`, `storage-name`
+- Progress: `title`, `label`, `goal`, `progress`, `prefix`, `suffix`, `accent`, `track`, `text`, `bg`, `embed`, `instance`
+- Music Player: `server`, `type`, `id`, `colorscheme`, `theme`, `loop`, `order`, `preload`, `volume`, `list-folded`, `list-max-height`, `storage-name`, `instance`
 
 ## Music Player (English)
 
@@ -124,9 +150,11 @@ Options:
 | list-folded | `false` | Fold playlist by default |
 | list-max-height | `340px` | Playlist max height (numeric values treated as px) |
 | storage-name | `metingjs` | localStorage key for player settings |
+| instance | (optional) | Suffixes storage-name and isolates settings per embed |
 
 ## Recent Updates
 
+- Instance IDs added to progress, quotes, D-Day, and music player builders; stateful widgets now scope storage by instance.
 - D-Day builder now supports compact mode, default/dark/light theme handling, centered compact tiles, and separate title/text color controls.
 - Progress widget now persists +/- edits in embedded mode across refreshes.
 - Landing page typography and hero styling were updated to use Libre Baskerville for headings.

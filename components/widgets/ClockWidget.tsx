@@ -9,6 +9,7 @@ import {
   faBars,
   faClock,
   faCompress,
+  faDisplay,
   faExpand,
   faLink,
   faMoon,
@@ -21,6 +22,7 @@ import { THEME_ORDER, THEMES, type ThemeName } from "./theme";
 
 type TransparentBgMode = "off" | "dark" | "light";
 type ClockMode = "flip" | "minimal";
+type LineColorMode = "background" | "holder";
 type EmbedParams = Record<string, string | number | boolean | undefined>;
 
 function isValidTimeZone(timeZone: string): boolean {
@@ -118,6 +120,8 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const minimalAmPmFromQuery = parseBool(getParam("minampm"), true);
   const minimalFullDateFromQuery = parseBool(getParam("mindate"), false);
   const minimalDateFormatFromQuery = getParam("mindateformat") || "dddd, MMMM D, YYYY";
+  const lineColorModeFromQuery: LineColorMode =
+    (getParam("linecolor") || "").trim().toLowerCase() === "holder" ? "holder" : "background";
   const modeFromQueryRaw = (getParam("mode") || "flip").trim().toLowerCase();
   const modeFromQuery: ClockMode =
     modeFromQueryRaw === "minimal" || modeFromQueryRaw === "minimal-clock" ? "minimal" : "flip";
@@ -138,6 +142,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const [showMinimalAmPm, setShowMinimalAmPm] = useState<boolean>(minimalAmPmFromQuery);
   const [showMinimalFullDate, setShowMinimalFullDate] = useState<boolean>(minimalFullDateFromQuery);
   const [minimalDateFormat, setMinimalDateFormat] = useState<string>(minimalDateFormatFromQuery);
+  const [lineColorMode, setLineColorMode] = useState<LineColorMode>(lineColorModeFromQuery);
   const [mode, setMode] = useState<ClockMode>(modeFromQuery);
   const [transparentBgMode, setTransparentBgMode] = useState<TransparentBgMode>(transparentBgModeFromQuery);
   const [themeName, setThemeName] = useState<ThemeName>(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
@@ -164,6 +169,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     setShowMinimalAmPm(minimalAmPmFromQuery);
     setShowMinimalFullDate(minimalFullDateFromQuery);
     setMinimalDateFormat(minimalDateFormatFromQuery);
+    setLineColorMode(lineColorModeFromQuery);
     setMode(modeFromQuery);
     setTransparentBgMode(transparentBgModeFromQuery);
     setThemeName(THEME_ORDER.includes(themeFromQuery) ? themeFromQuery : "default");
@@ -180,6 +186,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     minimalAmPmFromQuery,
     minimalFullDateFromQuery,
     minimalDateFormatFromQuery,
+    lineColorModeFromQuery,
     modeFromQuery,
     transparentBgModeFromQuery,
     themeFromQuery,
@@ -228,6 +235,10 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     if (storedMinimalFullDate === "false") setShowMinimalFullDate(false);
     const storedMinimalDateFormat = window.localStorage.getItem(storageKey("min_dateformat"));
     if (storedMinimalDateFormat) setMinimalDateFormat(storedMinimalDateFormat);
+    const storedLineColor = window.localStorage.getItem(storageKey("line_color"));
+    if (storedLineColor === "holder" || storedLineColor === "background") {
+      setLineColorMode(storedLineColor as LineColorMode);
+    }
     const storedMode = window.localStorage.getItem(storageKey("mode"));
     if (storedMode === "flip" || storedMode === "minimal") setMode(storedMode);
     const storedTransparentMode = parseTransparentBgMode(window.localStorage.getItem(storageKey("transparentbgmode")), "off");
@@ -306,6 +317,11 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     if (embedParams) return;
     window.localStorage.setItem(storageKey("min_dateformat"), minimalDateFormat);
   }, [minimalDateFormat, embedParams, storagePrefix]);
+
+  useEffect(() => {
+    if (embedParams) return;
+    window.localStorage.setItem(storageKey("line_color"), lineColorMode);
+  }, [lineColorMode, embedParams, storagePrefix]);
 
   useEffect(() => {
     if (embedParams) return;
@@ -441,6 +457,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
   const baseTextColor = themeVars.text;
   const resolvedBackground = customBackground || themeVars.background;
   const resolvedTextColor = customTextColor || baseTextColor;
+  const lineColor = lineColorMode === "holder" ? themeVars.holder : resolvedBackground;
   const toggleTheme = () => setThemeName((prev) => (prev === "light" ? "default" : "light"));
   const themeList = useMemo(() => THEME_ORDER.filter((name) => name !== "light"), []);
 
@@ -452,6 +469,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     background: resolvedBackground,
     color: resolvedTextColor,
     "--background": resolvedBackground,
+    "--line-color": lineColor,
     "--holder": themeVars.holder,
     "--text": resolvedTextColor,
     "--minimal-size-mult": minimalSizeMultiplier,
@@ -625,7 +643,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
               })}
             </div>
           </div>
-          <div className="fc-panel-section">
+          <div className="fc-panel-section items-center" style={{ display: "flex" }}>
             <label className="fc-panel-label" htmlFor="fc-instance">
               Instance
             </label>
@@ -641,7 +659,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
             />
           </div>
           <div className="fc-panel-section">
-            <span className="fc-panel-label">Colors</span>
+            <span className="fc-panel-label">Pick Custom Colors</span>
             <div className="fc-color-row">
               <label className="fc-color-label" htmlFor="fc-bg-color">
                 BG
@@ -654,7 +672,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
                 onChange={(e) => setCustomBackground(e.target.value)}
                 aria-label="Background color"
               />
-              <button className="fc-chip fc-color-reset" onClick={() => setCustomBackground("")}>CLR</button>
+              <button className="fc-chip fc-color-reset" onClick={() => setCustomBackground("")}>Reset-CLR</button>
             </div>
             <div className="fc-color-row">
               <label className="fc-color-label" htmlFor="fc-text-color">
@@ -668,9 +686,28 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
                 onChange={(e) => setCustomTextColor(e.target.value)}
                 aria-label="Text color"
               />
-              <button className="fc-chip fc-color-reset" onClick={() => setCustomTextColor("")}>CLR</button>
+              <button className="fc-chip fc-color-reset" onClick={() => setCustomTextColor("")}>Reset-CLR</button>
             </div>
           </div>
+          {!isMinimalMode && (
+            <div className="fc-panel-section items-center" style={{ display: "flex" }}>
+              <span className="fc-panel-label">divider line CLR?</span>
+              <div className="fc-panel-toggle-row">
+                <button
+                  className={lineColorMode === "background" ? "fc-chip is-active" : "fc-chip"}
+                  onClick={() => setLineColorMode("background")}
+                >
+                  BG
+                </button>
+                <button
+                  className={lineColorMode === "holder" ? "fc-chip is-active" : "fc-chip"}
+                  onClick={() => setLineColorMode("holder")}
+                >
+                  HOLDER
+                </button>
+              </div>
+            </div>
+          )}
           {isMinimalMode && (
             <div className="fc-minimal-format-wrap">
               <label htmlFor="minimal-date-format" className="fc-minimal-format-label">
@@ -798,6 +835,11 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
                 url.searchParams.set("text", customTextColor);
               } else {
                 url.searchParams.delete("text");
+              }
+              if (lineColorMode === "holder") {
+                url.searchParams.set("linecolor", "holder");
+              } else {
+                url.searchParams.delete("linecolor");
               }
               url.searchParams.set("controls", "0");
               url.searchParams.set("day", showDay ? "1" : "0");
