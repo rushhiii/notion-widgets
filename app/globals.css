@@ -679,8 +679,8 @@
   display: block;
   left: 0;
   right: 0;
-  /* top: 50%; */
-  top: 49.9%;
+  top: 49.9999%;
+  /* top: 49.9%; */
   /* transform: translateY(-1px); */
   /* height: 2px; */
   /* background: #191919; */
