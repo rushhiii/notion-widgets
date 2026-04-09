@@ -680,6 +680,7 @@
   left: 0;
   right: 0;
   top: 50%;
+  transform: translateY(-50%);
   /* height: 2px; */
   /* background: #191919; */
   /* background: var(--line, var(--holder)); */
