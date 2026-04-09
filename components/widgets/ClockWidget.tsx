@@ -580,6 +580,16 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
             clearHideNav();
           }}
           onMouseLeave={scheduleHideNav}
+          onClick={() => {
+            if (!isVertical) return;
+            setShowNav(true);
+            clearHideNav();
+          }}
+          onTouchStart={() => {
+            if (!isVertical) return;
+            setShowNav(true);
+            clearHideNav();
+          }}
         />
 
         {showControls && <div className="fc-panel-backdrop" onClick={() => setShowControls(false)} />}
