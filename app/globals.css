@@ -679,8 +679,8 @@
   display: block;
   left: 0;
   right: 0;
-  top: 49.9999%;
-  /* top: 49.9%; */
+  /* top: 49.9999%; */
+  top: 50%;
   /* transform: translateY(-1px); */
   /* height: 2px; */
   /* background: #191919; */
@@ -689,7 +689,7 @@
   /* opacity: 0.65; */
   /* height: clamp(0.4vh, 0.6vh, 0.11vh); */
   background: var(--background);
-  height: 0.4vh !important;
+  height: 0.4999vh !important;
   pointer-events: none;
   /* width: 100%; */
   max-width: 100%;
