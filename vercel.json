@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-quotes",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "buildCommand": "npm run sync:quotes && next build"
+}

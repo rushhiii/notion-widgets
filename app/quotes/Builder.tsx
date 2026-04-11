@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Copy, RefreshCw, Info } from "lucide-react";
 import { QuoteWidget } from "@/components/widgets/QuoteWidget";
-import { getQuotes, Quote } from "@/lib/quotes";
+import { getQuotes, Quote, QUOTES_ADMIN_SECRET } from "@/lib/quotes";
 
 type ThemeKey = "dark" | "light";
 type TransparentBgMode = "off" | "dark" | "light";
@@ -96,9 +96,9 @@ function defaultsForTheme(theme: ThemeKey) {
   };
 }
 
-const RESTRICTED_AUTHORS = ["unknow", "unknown", "n/a", "rushi", "jane austen", "atticus", "emperor fushimi"];
+const RESTRICTED_AUTHORS = ["unknown", "n/a", "rushi", "jane austen", "atticus", "emperor fushimi"];
 const RESTRICTED_LANGUAGES = ["hindi", "punjabi", "punjabi/hindi"];
-const RESTRICTED_SOURCE_TYPES = ["poetry", "quote", "saying", "series", "song", "lines", "my thought"];
+const RESTRICTED_SOURCE_TYPES = ["poetry", "quote", "saying", "series", "song", "lines", "movie", "my thought"];
 
 export function QuotesBuilder() {
   const [authors, setAuthors] = useState<string[]>([]);
@@ -128,8 +128,7 @@ export function QuotesBuilder() {
   const [instanceId, setInstanceId] = useState(instanceParam);
   const normalizedInstance = sanitizeInstance(instanceId);
   const adminParam = (searchParams.get("admin") ?? "").trim();
-  const ADMIN_SECRET = "dumbass";
-  const isAdminBypass = adminParam === ADMIN_SECRET;
+  const isAdminBypass = adminParam === QUOTES_ADMIN_SECRET;
   const sourceQuotes = useMemo<Quote[]>(() => getQuotes(source), [source]);
 
   const availableAuthors = useMemo<FancyOption[]>(() => {

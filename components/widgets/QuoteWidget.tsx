@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { WidgetContainer } from "@/components/ui/WidgetContainer";
-import { getQuotes, Quote } from "@/lib/quotes";
+import { getQuotes, Quote, QUOTES_ADMIN_SECRET } from "@/lib/quotes";
 import { parseBooleanParam, parsePositiveIntParam, parseColorParam, resolveTheme } from "@/lib/utils";
 
 type TransparentBgMode = "off" | "dark" | "light";
@@ -105,8 +105,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
         : "off";
   const adminParam = (embedParams?.admin ?? searchParams.get("admin") ?? "").trim();
 
-  const ADMIN_SECRET = "ajf9c4899rtVmFLZAFajw";
-  const isAdminBypass = adminParam === ADMIN_SECRET;
+  const isAdminBypass = adminParam === QUOTES_ADMIN_SECRET;
   const effectiveShowPinned = isAdminBypass ? showPinned : false;
   const effectiveShowPersonal = isAdminBypass ? showPersonal : false;
 
@@ -248,7 +247,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
         heightClassName="min-h-[260px] max-h-[90vw]"
       >
         <article
-          className="relative flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border px-6 py-8 md:px-10 md:py-10"
+          className="group relative flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border px-6 py-8 md:px-10 md:py-10"
           style={{
             backgroundColor: cardBackground,
             borderColor: cardBorder,
@@ -279,7 +278,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
             <>
               <button
                 // className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 px-3 py-2 shadow-lg transition hover:bg-black/45"
-                className="absolute left-3 top-1/2 -translate-y-1/2 transition opacity-70 hover:opacity-100"
+                className="absolute left-3 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
                 onClick={() => stepCard(-1)}
                 aria-label="Previous quote"
                 style={{ color: quoteColor }}
@@ -288,7 +287,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
               </button>
               <button
                 // className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 px-3 py-2 shadow-lg transition hover:bg-black/45"
-                className="absolute w-fit h-fit right-3 top-1/2 -translate-y-1/2 transition opacity-70 hover:opacity-100"
+                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
 
                 onClick={() => stepCard(1)}
                 aria-label="Next quote"

@@ -14,6 +14,8 @@ export type Quote = {
   personal?: boolean;
 };
 
+export const QUOTES_ADMIN_SECRET = process.env.NEXT_PUBLIC_QUOTES_ADMIN_KEY || "error";
+
 export const QUOTES: Quote[] = [
   {
     text: "You have power over your mind—not outside events. Realize this, and you will find strength.",
@@ -61,7 +63,7 @@ function sanitizeQuote(input: Partial<Quote>): Quote | null {
   const text = (input.text ?? "").trim();
   const author = (input.author ?? "").trim() || "Unknown";
   const category = (input.category ?? "general").trim().toLowerCase() || "general";
-  if (!text) return null;
+  if (!text || text.toLowerCase() === "untitled") return null;
 
   return {
     text,
