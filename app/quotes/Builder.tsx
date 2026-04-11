@@ -4,10 +4,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Copy, RefreshCw, Info } from "lucide-react";
 import { QuoteWidget } from "@/components/widgets/QuoteWidget";
-import { getQuotes, Quote, QUOTES_ADMIN_SECRET } from "@/lib/quotes";
+import {
+  getQuotes,
+  Quote,
+  QUOTES_ADMIN_SECRET,
+  QUOTE_STYLE_ORDER,
+  QUOTE_STYLE_PRESETS,
+  QUOTE_FONT_OPTIONS,
+  QuoteStyleKey,
+  QuoteFontKey,
+} from "@/lib/quotes";
 
 type ThemeKey = "dark" | "light";
 type TransparentBgMode = "off" | "dark" | "light";
+type CustomQuoteMode = "custom" | "database";
 
 type FancyOption = { value: string; label: string };
 
@@ -122,6 +132,16 @@ export function QuotesBuilder() {
   const [pageMatch, setPageMatch] = useState(true);
   const [transparentBgMode, setTransparentBgMode] = useState<TransparentBgMode>("off");
   const [copied, setCopied] = useState(false);
+  const [customMode, setCustomMode] = useState<CustomQuoteMode>("database");
+  const [customText, setCustomText] = useState("");
+  const [customAuthor, setCustomAuthor] = useState("");
+  const [stylePreset, setStylePreset] = useState<QuoteStyleKey | "">("");
+  const [quoteFont, setQuoteFont] = useState<QuoteFontKey | "">("");
+  const [authorFont, setAuthorFont] = useState<QuoteFontKey | "">("");
+  const [cardWidth, setCardWidth] = useState(0);
+  const [quoteSize, setQuoteSize] = useState(0);
+  const [authorSize, setAuthorSize] = useState(0);
+  const [customStorageReady, setCustomStorageReady] = useState(false);
   const searchParams = useSearchParams();
   const sanitizeInstance = (value: string) => value.replace(/[^a-z0-9_-]/gi, "");
   const instanceParam = (searchParams.get("instance") ?? "").trim();
@@ -130,6 +150,64 @@ export function QuotesBuilder() {
   const adminParam = (searchParams.get("admin") ?? "").trim();
   const isAdminBypass = adminParam === QUOTES_ADMIN_SECRET;
   const sourceQuotes = useMemo<Quote[]>(() => getQuotes(source), [source]);
+
+  useEffect(() => {
+    const modeParam = (searchParams.get("custommode") ?? "").trim().toLowerCase();
+    const textParam = (searchParams.get("customtext") ?? "").trim();
+    const authorParam = (searchParams.get("customauthor") ?? "").trim();
+    const styleParam = (searchParams.get("style") ?? "").trim().toLowerCase();
+    const quoteFontParam = (searchParams.get("quotefont") ?? "").trim().toLowerCase();
+    const authorFontParam = (searchParams.get("authorfont") ?? "").trim().toLowerCase();
+    const widthParam = Number.parseInt(searchParams.get("width") ?? "", 10);
+    const quoteSizeParam = Number.parseInt(searchParams.get("quotesize") ?? "", 10);
+    const authorSizeParam = Number.parseInt(searchParams.get("authorsize") ?? "", 10);
+
+    if (modeParam === "custom") setCustomMode("custom");
+    if (textParam) setCustomText(textParam);
+    if (authorParam) setCustomAuthor(authorParam);
+    if (styleParam && styleParam in QUOTE_STYLE_PRESETS) {
+      setStylePreset(styleParam as QuoteStyleKey);
+    }
+    if (quoteFontParam && quoteFontParam in QUOTE_FONT_OPTIONS) {
+      setQuoteFont(quoteFontParam as QuoteFontKey);
+    }
+    if (authorFontParam && authorFontParam in QUOTE_FONT_OPTIONS) {
+      setAuthorFont(authorFontParam as QuoteFontKey);
+    }
+    if (Number.isFinite(widthParam) && widthParam > 0) setCardWidth(widthParam);
+    if (Number.isFinite(quoteSizeParam) && quoteSizeParam > 0) setQuoteSize(quoteSizeParam);
+    if (Number.isFinite(authorSizeParam) && authorSizeParam > 0) setAuthorSize(authorSizeParam);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setCustomStorageReady(false);
+    try {
+      const key = `quotes:custom:${normalizedInstance || "default"}`;
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<{ text: string; author: string; mode: CustomQuoteMode }>;
+      if (parsed.text !== undefined) setCustomText(parsed.text);
+      if (parsed.author !== undefined) setCustomAuthor(parsed.author);
+      if (parsed.mode === "custom" || parsed.mode === "database") setCustomMode(parsed.mode);
+    } catch {
+      // ignore storage errors
+    } finally {
+      setCustomStorageReady(true);
+    }
+  }, [normalizedInstance]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!customStorageReady) return;
+    try {
+      const key = `quotes:custom:${normalizedInstance || "default"}`;
+      const payload = JSON.stringify({ text: customText, author: customAuthor, mode: customMode });
+      window.localStorage.setItem(key, payload);
+    } catch {
+      // ignore storage errors
+    }
+  }, [customStorageReady, customText, customAuthor, customMode, normalizedInstance]);
 
   const availableAuthors = useMemo<FancyOption[]>(() => {
     const vals = Array.from(new Set(sourceQuotes.map((q) => (q.author || "").trim()).filter(Boolean))).sort();
@@ -157,6 +235,16 @@ export function QuotesBuilder() {
     setAccent(next.accent);
   }, [theme]);
 
+  useEffect(() => {
+    if (!stylePreset) return;
+    const preset = QUOTE_STYLE_PRESETS[stylePreset];
+    if (!preset) return;
+    setBg(preset.bg);
+    setBorder(preset.border);
+    setText(preset.text);
+    setAccent(preset.accent);
+  }, [stylePreset]);
+
   const reset = () => {
     setAuthors([]);
     setTags([]);
@@ -180,6 +268,15 @@ export function QuotesBuilder() {
     setPageMatch(true);
     setTransparentBgMode("off");
     setInstanceId(instanceParam);
+    setCustomMode("database");
+    setCustomText("");
+    setCustomAuthor("");
+    setStylePreset("");
+    setQuoteFont("");
+    setAuthorFont("");
+    setCardWidth(0);
+    setQuoteSize(0);
+    setAuthorSize(0);
   };
 
   const params = useMemo(() => {
@@ -210,8 +307,17 @@ export function QuotesBuilder() {
       p.set("pagetransparent", "1");
       p.set("pagetransparentmode", transparentBgMode);
     }
+    if (stylePreset) p.set("style", stylePreset);
+    if (quoteFont) p.set("quotefont", quoteFont);
+    if (authorFont) p.set("authorfont", authorFont);
+    if (cardWidth > 0) p.set("width", String(cardWidth));
+    if (quoteSize > 0) p.set("quotesize", String(quoteSize));
+    if (authorSize > 0) p.set("authorsize", String(authorSize));
+    if (customMode === "custom") p.set("custommode", "custom");
+    if (customText.trim()) p.set("customtext", customText.trim());
+    if (customAuthor.trim()) p.set("customauthor", customAuthor.trim());
     return p;
-  }, [adminParam, normalizedInstance, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]);
+  }, [adminParam, normalizedInstance, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, customMode, customText, customAuthor]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -238,8 +344,17 @@ export function QuotesBuilder() {
       pageMatch,
       pageTransparent: transparentBgMode !== "off",
       pageTransparentMode: transparentBgMode,
+      style: stylePreset || undefined,
+      quoteFont: quoteFont || undefined,
+      authorFont: authorFont || undefined,
+      width: cardWidth || undefined,
+      quoteSize: quoteSize || undefined,
+      authorSize: authorSize || undefined,
+      customMode,
+      customText,
+      customAuthor,
     }),
-    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, normalizedInstance, adminParam, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode]
+    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, normalizedInstance, adminParam, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, customMode, customText, customAuthor]
   );
 
   const copyLink = () => {
@@ -464,6 +579,134 @@ export function QuotesBuilder() {
             </label>
 
             <div className="grid grid-cols-1 gap-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-200">Custom quote</h3>
+                    <p className="text-xs text-zinc-400">Saved per instance on this device.</p>
+                  </div>
+                  <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-white/20 bg-white/10"
+                      checked={customMode === "custom"}
+                      onChange={(e) => setCustomMode(e.target.checked ? "custom" : "database")}
+                    />
+                    Use custom only
+                  </label>
+                </div>
+
+                <div className="mt-3 grid gap-2">
+                  <label className="space-y-1 text-xs text-zinc-300">
+                    <span className="text-zinc-400">Quote text</span>
+                    <textarea
+                      rows={3}
+                      className="w-full resize-none rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                      value={customText}
+                      onChange={(e) => setCustomText(e.target.value)}
+                      placeholder="Write your own quote"
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs text-zinc-300">
+                    <span className="text-zinc-400">Author</span>
+                    <input
+                      className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                      value={customAuthor}
+                      onChange={(e) => setCustomAuthor(e.target.value)}
+                      placeholder="Your name"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Notion-style preset</span>
+                <FancySelect
+                  value={stylePreset}
+                  onChange={(val) => setStylePreset(val ? (val as QuoteStyleKey) : "")}
+                  options={[
+                    { value: "", label: "Custom colors" },
+                    ...QUOTE_STYLE_ORDER.map((key) => ({ value: key, label: QUOTE_STYLE_PRESETS[key].label })),
+                  ]}
+                />
+                <p className="text-xs text-zinc-500">Selecting a preset updates colors + typography.</p>
+              </label>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="mb-3">
+                  <h3 className="text-sm font-semibold text-zinc-200">Typography</h3>
+                  <p className="text-xs text-zinc-400">Set fonts and sizing for the quote card.</p>
+                </div>
+
+                <div className="grid gap-3">
+                  <label className="space-y-1 text-sm">
+                    <span className="text-zinc-300">Quote font</span>
+                    <FancySelect
+                      value={quoteFont}
+                      onChange={(val) => setQuoteFont(val ? (val as QuoteFontKey) : "")}
+                      options={[
+                        { value: "", label: "Preset default" },
+                        ...Object.entries(QUOTE_FONT_OPTIONS).map(([key, value]) => ({ value: key, label: value.label })),
+                      ]}
+                    />
+                  </label>
+                  <label className="space-y-1 text-sm">
+                    <span className="text-zinc-300">Author font</span>
+                    <FancySelect
+                      value={authorFont}
+                      onChange={(val) => setAuthorFont(val ? (val as QuoteFontKey) : "")}
+                      options={[
+                        { value: "", label: "Preset default" },
+                        ...Object.entries(QUOTE_FONT_OPTIONS).map(([key, value]) => ({ value: key, label: value.label })),
+                      ]}
+                    />
+                  </label>
+
+                  <label className="space-y-1 text-sm">
+                    <span className="text-zinc-300">Card width</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1200}
+                      step={10}
+                      className="w-full"
+                      value={cardWidth}
+                      onChange={(e) => setCardWidth(Number(e.target.value))}
+                    />
+                    <span className="text-xs text-zinc-400">{cardWidth > 0 ? `${cardWidth}px` : "Auto"}</span>
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="space-y-1 text-sm">
+                      <span className="text-zinc-300">Quote size</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={44}
+                        step={1}
+                        className="w-full"
+                        value={quoteSize}
+                        onChange={(e) => setQuoteSize(Number(e.target.value))}
+                      />
+                      <span className="text-xs text-zinc-400">{quoteSize > 0 ? `${quoteSize}px` : "Auto"}</span>
+                    </label>
+                    <label className="space-y-1 text-sm">
+                      <span className="text-zinc-300">Author size</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={28}
+                        step={1}
+                        className="w-full"
+                        value={authorSize}
+                        onChange={(e) => setAuthorSize(Number(e.target.value))}
+                      />
+                      <span className="text-xs text-zinc-400">{authorSize > 0 ? `${authorSize}px` : "Auto"}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3 items-center">
                 <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
                   <input

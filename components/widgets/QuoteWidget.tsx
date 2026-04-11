@@ -4,10 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { WidgetContainer } from "@/components/ui/WidgetContainer";
-import { getQuotes, Quote, QUOTES_ADMIN_SECRET } from "@/lib/quotes";
+import {
+  getQuotes,
+  Quote,
+  QUOTES_ADMIN_SECRET,
+  QUOTE_STYLE_PRESETS,
+  QUOTE_FONT_OPTIONS,
+  QuoteStyleKey,
+  QuoteFontKey,
+} from "@/lib/quotes";
 import { parseBooleanParam, parsePositiveIntParam, parseColorParam, resolveTheme } from "@/lib/utils";
 
 type TransparentBgMode = "off" | "dark" | "light";
+type CustomQuoteMode = "custom" | "database";
 
 type QuoteEmbedParams = {
   instance?: string;
@@ -21,6 +30,12 @@ type QuoteEmbedParams = {
   sourceTypes?: string;
   source?: "auto" | "local" | "notion";
   theme?: "dark" | "light";
+  style?: QuoteStyleKey;
+  width?: number;
+  quoteSize?: number;
+  authorSize?: number;
+  quoteFont?: QuoteFontKey;
+  authorFont?: QuoteFontKey;
   rotate?: boolean;
   interval?: number;
   mode?: "daily" | "random" | "interval" | "flashcard";
@@ -37,6 +52,9 @@ type QuoteEmbedParams = {
   pageTransparent?: boolean;
   pageTransparentMode?: TransparentBgMode;
   admin?: string;
+  customText?: string;
+  customAuthor?: string;
+  customMode?: CustomQuoteMode;
 };
 
 function randomFrom<T>(items: T[]): T {
@@ -64,8 +82,20 @@ function normalizeList(raw: string | undefined | null) {
     .map((v) => v.toLowerCase());
 }
 
+function sanitizeInstance(value: string) {
+  return value.replace(/[^a-z0-9_-]/gi, "");
+}
+
+function getCustomQuoteStorageKey(instance: string) {
+  const safeInstance = sanitizeInstance(instance);
+  return `quotes:custom:${safeInstance || "default"}`;
+}
+
 export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams }) {
   const searchParams = useSearchParams();
+
+  const instanceParam = (embedParams?.instance ?? searchParams.get("instance") ?? "").trim();
+  const normalizedInstance = sanitizeInstance(instanceParam);
 
   const categoryParam = (embedParams?.category ?? searchParams.get("category") ?? "").trim().toLowerCase();
   const categoriesParam = normalizeList(embedParams?.categories ?? searchParams.get("categories") ?? categoryParam);
@@ -77,6 +107,13 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const sourceTypeParam = (embedParams?.sourceType ?? searchParams.get("sourcetype") ?? "").trim().toLowerCase();
   const sourceParam = (embedParams?.source ?? searchParams.get("source") ?? "auto").trim().toLowerCase();
   const rawThemeParam = (embedParams?.theme ?? searchParams.get("theme") ?? "").trim().toLowerCase();
+  const styleParam = (embedParams?.style ?? searchParams.get("style") ?? "").trim().toLowerCase();
+  const widthParam = embedParams?.width ?? parsePositiveIntParam(searchParams.get("width"), 0);
+  const quoteSizeParam = embedParams?.quoteSize ?? parsePositiveIntParam(searchParams.get("quotesize"), 0);
+  const authorSizeParam = embedParams?.authorSize ?? parsePositiveIntParam(searchParams.get("authorsize"), 0);
+  const quoteFontParam = (embedParams?.quoteFont ?? searchParams.get("quotefont") ?? "").trim().toLowerCase();
+  const authorFontParam = (embedParams?.authorFont ?? searchParams.get("authorfont") ?? "").trim().toLowerCase();
+  const stylePreset = QUOTE_STYLE_PRESETS[styleParam as QuoteStyleKey];
   const requestedTheme = resolveTheme(rawThemeParam);
   const theme: "dark" | "light" = requestedTheme === "light" ? "light" : "dark";
   const autoRotate = embedParams?.rotate ?? parseBooleanParam(searchParams.get("rotate"), false);
@@ -104,6 +141,46 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
         ? "dark"
         : "off";
   const adminParam = (embedParams?.admin ?? searchParams.get("admin") ?? "").trim();
+  const customTextParam = (embedParams?.customText ?? searchParams.get("customtext") ?? "").trim();
+  const customAuthorParam = (embedParams?.customAuthor ?? searchParams.get("customauthor") ?? "").trim();
+  const customModeParam = (embedParams?.customMode ?? searchParams.get("custommode") ?? "").trim().toLowerCase();
+
+  const [storedCustom, setStoredCustom] = useState<{ text: string; author: string; mode: CustomQuoteMode }>(
+    { text: "", author: "", mode: "database" },
+  );
+
+  useEffect(() => {
+    const hasCustomOverrides =
+      customTextParam.length > 0 || customAuthorParam.length > 0 || customModeParam.length > 0;
+    if (hasCustomOverrides || typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(getCustomQuoteStorageKey(normalizedInstance));
+      if (!raw) {
+        setStoredCustom({ text: "", author: "", mode: "database" });
+        return;
+      }
+      const parsed = JSON.parse(raw) as Partial<{ text: string; author: string; mode: CustomQuoteMode }>;
+      const nextMode = parsed.mode === "custom" ? "custom" : "database";
+      setStoredCustom({ text: parsed.text ?? "", author: parsed.author ?? "", mode: nextMode });
+    } catch {
+      setStoredCustom({ text: "", author: "", mode: "database" });
+    }
+  }, [embedParams?.customText, embedParams?.customAuthor, embedParams?.customMode, normalizedInstance]);
+
+  const customText = customTextParam || storedCustom.text;
+  const customAuthor = customAuthorParam || storedCustom.author;
+  const customMode = (customModeParam === "custom" || customModeParam === "database")
+    ? (customModeParam as CustomQuoteMode)
+    : storedCustom.mode;
+  const customTextValue = customText.trim();
+  const hasCustomQuote = customTextValue.length > 0;
+  const useCustomOnly = customMode === "custom" && hasCustomQuote;
+  const customQuote: Quote = {
+    text: customTextValue,
+    author: customAuthor.trim() || "Unknown",
+    category: "custom",
+  };
 
   const isAdminBypass = adminParam === QUOTES_ADMIN_SECRET;
   const effectiveShowPinned = isAdminBypass ? showPinned : false;
@@ -122,9 +199,11 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const source: "local" | "notion" | "auto" =
     sourceParam === "local" || sourceParam === "notion" ? sourceParam : "auto";
 
-  const baseQuotes = useMemo(() => getQuotes(source), [source]);
+  const baseQuotes = useMemo(() => (useCustomOnly ? [customQuote] : getQuotes(source)), [source, useCustomOnly, customQuote]);
 
   const filteredQuotes = useMemo(() => {
+    if (useCustomOnly) return baseQuotes;
+
     const candidates = baseQuotes.filter((q) => {
       const hidden = q.show === false;
       if (!isAdminBypass && hidden) return false;
@@ -148,6 +227,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
     return candidates;
   }, [
     baseQuotes,
+    useCustomOnly,
     isAdminBypass,
     effectiveShowPinned,
     effectiveShowPersonal,
@@ -162,7 +242,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
     queryTerms,
   ]);
 
-  const filtersApplied = Boolean(
+  const filtersApplied = !useCustomOnly && Boolean(
     categoriesParam.length ||
       categoryParam ||
         safeAuthorsParam.length ||
@@ -228,10 +308,21 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
     });
   };
 
-  const cardBackground = bgParam ?? (theme === "dark" ? "#000" : "#f4f4f5");
-  const cardBorder = borderParam ?? (theme === "dark" ? "#7c3aed" : "#d4d4d8");
-  const quoteColor = textParam ?? (theme === "dark" ? "#e5e7eb" : "#0f172a");
-  const authorColor = accentParam ?? (theme === "dark" ? "#a1a1aa" : "#475569");
+  const cardBackground = bgParam ?? stylePreset?.bg ?? (theme === "dark" ? "#000" : "#f4f4f5");
+  const cardBorder = borderParam ?? stylePreset?.border ?? (theme === "dark" ? "#7c3aed" : "#d4d4d8");
+  const quoteColor = textParam ?? stylePreset?.text ?? (theme === "dark" ? "#e5e7eb" : "#0f172a");
+  const authorColor = accentParam ?? stylePreset?.accent ?? (theme === "dark" ? "#a1a1aa" : "#475569");
+  const quoteFont =
+    QUOTE_FONT_OPTIONS[quoteFontParam as QuoteFontKey]?.family ??
+    stylePreset?.quoteFont ??
+    "var(--font-playfair), serif";
+  const authorFont =
+    QUOTE_FONT_OPTIONS[authorFontParam as QuoteFontKey]?.family ??
+    stylePreset?.authorFont ??
+    "var(--font-karla), sans-serif";
+  const cardMaxWidth = widthParam > 0 ? `${widthParam}px` : undefined;
+  const quoteFontSize = quoteSizeParam > 0 ? `${quoteSizeParam}px` : undefined;
+  const authorFontSize = authorSizeParam > 0 ? `${authorSizeParam}px` : undefined;
   const pageBackground = transparentBgMode !== "off"
     ? (transparentBgMode === "dark" ? "#191919" : "#ffffff")
     : pageMatch
@@ -239,7 +330,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
       : pageBgParam ?? (theme === "dark" ? "#191919" : "#f4f4f5");
 
   return (
-    <div style={{ backgroundColor: pageBackground }} className="w-full h-full">
+    <div style={{ backgroundColor: pageBackground }} className="w-full h-full scroll-smooth md:scroll-auto">
       <WidgetContainer
         theme={theme}
         className="bg-transparent"
@@ -247,21 +338,22 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
         heightClassName="min-h-[260px] max-h-[90vw]"
       >
         <article
-          className="group relative flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border px-6 py-8 md:px-10 md:py-10"
+          className="group relative flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border px-11 py-9 md:px-12 md:py-12"
           style={{
             backgroundColor: cardBackground,
             borderColor: cardBorder,
+            maxWidth: cardMaxWidth,
           }}
         >
           <blockquote
             className="w-full max-w-[900px] whitespace-pre-wrap break-words text-center font-serif text-[clamp(1.25rem,2vw,2.1rem)] italic leading-[1.45]"
-            style={{ color: quoteColor }}
+            style={{ color: quoteColor, fontFamily: quoteFont, fontSize: quoteFontSize }}
           >
             “{noQuotes ? "No quotes match your filters." : quote?.text ?? "Loading quote..."}”
           </blockquote>
           <footer
             className="mt-3 text-[clamp(1rem,1.2vw,1.2rem)] leading-none"
-            style={{ color: authorColor }}
+            style={{ color: authorColor, fontFamily: authorFont, fontSize: authorFontSize }}
           >
             {noQuotes ? "" : quote?.author ?? ""}
           </footer>
@@ -278,22 +370,25 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
             <>
               <button
                 // className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 px-3 py-2 shadow-lg transition hover:bg-black/45"
-                className="absolute left-3 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
+                className="absolute -translate-x-0 md:left-3 left-2 top-1/2 -translate-y-1/2 opacity-1 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
+                // className="absolute -translate-x-1 left-2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
                 onClick={() => stepCard(-1)}
                 aria-label="Previous quote"
                 style={{ color: quoteColor }}
               >
-                <ChevronLeft size={25} strokeWidth={2} aria-hidden />
+                <ChevronLeft size={30} strokeWidth={2} aria-hidden />
               </button>
               <button
                 // className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 px-3 py-2 shadow-lg transition hover:bg-black/45"
-                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
+                className="absolute translate-x-0 md:right-3 right-2 top-1/2 -translate-y-1/2 opacity-1 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
+                // className="absolute translate-x-1.5 right-2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
 
                 onClick={() => stepCard(1)}
                 aria-label="Next quote"
                 style={{ color: quoteColor }}
               >
-                <ChevronRight size={25} strokeWidth={2} aria-hidden />
+                <ChevronRight size={30} strokeWidth={2} aria-hidden />
+                {/* <ChevronLeft size={30} strokeWidth={2} aria-hidden /> */}
               </button>
             </>
           )}
