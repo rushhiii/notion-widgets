@@ -13,7 +13,7 @@ import {
   QuoteStyleKey,
   QuoteFontKey,
 } from "@/lib/quotes";
-import { parseBooleanParam, parsePositiveIntParam, parseColorParam, resolveTheme } from "@/lib/utils";
+import { cn, parseBooleanParam, parsePositiveIntParam, parseColorParam, resolveTheme } from "@/lib/utils";
 
 type TransparentBgMode = "off" | "dark" | "light";
 type CustomQuoteMode = "custom" | "database";
@@ -36,6 +36,8 @@ type QuoteEmbedParams = {
   authorSize?: number;
   quoteFont?: QuoteFontKey;
   authorFont?: QuoteFontKey;
+  arrowColor?: string;
+  counterColor?: string;
   rotate?: boolean;
   interval?: number;
   mode?: "daily" | "random" | "interval" | "flashcard";
@@ -91,6 +93,15 @@ function getCustomQuoteStorageKey(instance: string) {
   return `quotes:custom:${safeInstance || "default"}`;
 }
 
+function withAlphaHex(color: string, alpha: number) {
+  if (!color) return color;
+  const raw = color.startsWith("#") ? color.slice(1) : color;
+  const expanded = raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw;
+  if (expanded.length !== 6) return color;
+  const alphaHex = Math.round(alpha * 255).toString(16).padStart(2, "0");
+  return `#${expanded}${alphaHex}`;
+}
+
 export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams }) {
   const searchParams = useSearchParams();
 
@@ -113,6 +124,8 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const authorSizeParam = embedParams?.authorSize ?? parsePositiveIntParam(searchParams.get("authorsize"), 0);
   const quoteFontParam = (embedParams?.quoteFont ?? searchParams.get("quotefont") ?? "").trim().toLowerCase();
   const authorFontParam = (embedParams?.authorFont ?? searchParams.get("authorfont") ?? "").trim().toLowerCase();
+  const arrowColorParam = parseColorParam(embedParams?.arrowColor ?? searchParams.get("arrowcolor"));
+  const counterColorParam = parseColorParam(embedParams?.counterColor ?? searchParams.get("countercolor"));
   const stylePreset = QUOTE_STYLE_PRESETS[styleParam as QuoteStyleKey];
   const requestedTheme = resolveTheme(rawThemeParam);
   const theme: "dark" | "light" = requestedTheme === "light" ? "light" : "dark";
@@ -320,9 +333,29 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
     QUOTE_FONT_OPTIONS[authorFontParam as QuoteFontKey]?.family ??
     stylePreset?.authorFont ??
     "var(--font-karla), sans-serif";
+  const arrowColor = arrowColorParam ?? quoteColor;
+  const counterColor = counterColorParam ?? quoteColor;
   const cardMaxWidth = widthParam > 0 ? `${widthParam}px` : undefined;
   const quoteFontSize = quoteSizeParam > 0 ? `${quoteSizeParam}px` : undefined;
   const authorFontSize = authorSizeParam > 0 ? `${authorSizeParam}px` : undefined;
+  const displayText = noQuotes ? "No quotes match your filters." : quote?.text ?? "Loading quote...";
+  const displayAuthor = noQuotes ? "" : quote?.author ?? "";
+  const quoteLength = displayText.length;
+  const isLongQuote = quoteLength > 180;
+  const isMediumQuote = quoteLength > 120;
+  const quoteSizeClass = quoteSizeParam > 0
+    ? "text-[clamp(1.25rem,2vw,2.1rem)]"
+    : isLongQuote
+      ? "text-[clamp(1rem,1.4vw,1.6rem)]"
+      : isMediumQuote
+        ? "text-[clamp(1.1rem,1.7vw,1.9rem)]"
+        : "text-[clamp(1.25rem,2vw,2.1rem)]";
+  const cardPaddingClass = isLongQuote
+    ? "px-5 py-6 sm:px-7 sm:py-7 md:px-10 md:py-10"
+    : isMediumQuote
+      ? "px-7 py-7 sm:px-9 sm:py-8 md:px-11 md:py-10"
+      : "px-11 py-9 md:px-12 md:py-12";
+  const counterPaddingClass = modeParam === "flashcard" ? "pb-12 md:pb-14" : "";
   const pageBackground = transparentBgMode !== "off"
     ? (transparentBgMode === "dark" ? "#191919" : "#ffffff")
     : pageMatch
@@ -338,7 +371,11 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
         heightClassName="min-h-[260px] max-h-[90vw]"
       >
         <article
-          className="group relative flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border px-11 py-9 md:px-12 md:py-12"
+          className={cn(
+            "group relative flex h-full w-full flex-col items-center justify-center rounded-[1.1rem] border",
+            cardPaddingClass,
+            counterPaddingClass,
+          )}
           style={{
             backgroundColor: cardBackground,
             borderColor: cardBorder,
@@ -346,21 +383,32 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
           }}
         >
           <blockquote
-            className="w-full max-w-[900px] whitespace-pre-wrap break-words text-center font-serif text-[clamp(1.25rem,2vw,2.1rem)] italic leading-[1.45]"
+            className={cn(
+              "w-full max-w-[900px] whitespace-pre-wrap break-words text-center font-serif italic leading-[1.45]",
+              quoteSizeClass,
+            )}
             style={{ color: quoteColor, fontFamily: quoteFont, fontSize: quoteFontSize }}
           >
-            “{noQuotes ? "No quotes match your filters." : quote?.text ?? "Loading quote..."}”
+            “{displayText}”
           </blockquote>
           <footer
             className="mt-3 text-[clamp(1rem,1.2vw,1.2rem)] leading-none"
             style={{ color: authorColor, fontFamily: authorFont, fontSize: authorFontSize }}
           >
-            {noQuotes ? "" : quote?.author ?? ""}
+            {displayAuthor}
           </footer>
 
           {modeParam === "flashcard" && (
-            <div className="mt-6 flex w-full items-center justify-center">
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">
+            <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100">
+              <span
+                className="rounded-full border px-3 py-1 text-sm backdrop-blur"
+                style={{
+                  color: counterColor,
+                  fontFamily: "var(--font-karla), sans-serif",
+                  backgroundColor: withAlphaHex(counterColor, 0.18),
+                  borderColor: withAlphaHex(counterColor, 0.35),
+                }}
+              >
                 {availableQuotes.length ? cardIndex + 1 : 0}/{availableQuotes.length}
               </span>
             </div>
@@ -370,22 +418,22 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
             <>
               <button
                 // className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 px-3 py-2 shadow-lg transition hover:bg-black/45"
-                className="absolute -translate-x-0 md:left-3 left-2 top-1/2 -translate-y-1/2 opacity-1 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
+                className="absolute -translate-x-0 md:left-3 left-2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
                 // className="absolute -translate-x-1 left-2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
                 onClick={() => stepCard(-1)}
                 aria-label="Previous quote"
-                style={{ color: quoteColor }}
+                style={{ color: arrowColor }}
               >
                 <ChevronLeft size={30} strokeWidth={2} aria-hidden />
               </button>
               <button
                 // className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 px-3 py-2 shadow-lg transition hover:bg-black/45"
-                className="absolute translate-x-0 md:right-3 right-2 top-1/2 -translate-y-1/2 opacity-1 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
+                className="absolute translate-x-0 md:right-3 right-2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
                 // className="absolute translate-x-1.5 right-2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
 
                 onClick={() => stepCard(1)}
                 aria-label="Next quote"
-                style={{ color: quoteColor }}
+                style={{ color: arrowColor }}
               >
                 <ChevronRight size={30} strokeWidth={2} aria-hidden />
                 {/* <ChevronLeft size={30} strokeWidth={2} aria-hidden /> */}

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Copy, RefreshCw, Info } from "lucide-react";
 import { QuoteWidget } from "@/components/widgets/QuoteWidget";
+import { parseColorParam } from "@/lib/utils";
 import {
   getQuotes,
   Quote,
@@ -141,6 +142,8 @@ export function QuotesBuilder() {
   const [cardWidth, setCardWidth] = useState(0);
   const [quoteSize, setQuoteSize] = useState(0);
   const [authorSize, setAuthorSize] = useState(0);
+  const [arrowColor, setArrowColor] = useState("");
+  const [counterColor, setCounterColor] = useState("");
   const [customStorageReady, setCustomStorageReady] = useState(false);
   const searchParams = useSearchParams();
   const sanitizeInstance = (value: string) => value.replace(/[^a-z0-9_-]/gi, "");
@@ -161,6 +164,8 @@ export function QuotesBuilder() {
     const widthParam = Number.parseInt(searchParams.get("width") ?? "", 10);
     const quoteSizeParam = Number.parseInt(searchParams.get("quotesize") ?? "", 10);
     const authorSizeParam = Number.parseInt(searchParams.get("authorsize") ?? "", 10);
+    const arrowParam = parseColorParam(searchParams.get("arrowcolor"));
+    const counterParam = parseColorParam(searchParams.get("countercolor"));
 
     if (modeParam === "custom") setCustomMode("custom");
     if (textParam) setCustomText(textParam);
@@ -177,6 +182,8 @@ export function QuotesBuilder() {
     if (Number.isFinite(widthParam) && widthParam > 0) setCardWidth(widthParam);
     if (Number.isFinite(quoteSizeParam) && quoteSizeParam > 0) setQuoteSize(quoteSizeParam);
     if (Number.isFinite(authorSizeParam) && authorSizeParam > 0) setAuthorSize(authorSizeParam);
+    if (arrowParam) setArrowColor(arrowParam);
+    if (counterParam) setCounterColor(counterParam);
   }, [searchParams]);
 
   useEffect(() => {
@@ -277,6 +284,8 @@ export function QuotesBuilder() {
     setCardWidth(0);
     setQuoteSize(0);
     setAuthorSize(0);
+    setArrowColor("");
+    setCounterColor("");
   };
 
   const params = useMemo(() => {
@@ -313,11 +322,13 @@ export function QuotesBuilder() {
     if (cardWidth > 0) p.set("width", String(cardWidth));
     if (quoteSize > 0) p.set("quotesize", String(quoteSize));
     if (authorSize > 0) p.set("authorsize", String(authorSize));
+    if (arrowColor) p.set("arrowcolor", arrowColor.replace("#", ""));
+    if (counterColor) p.set("countercolor", counterColor.replace("#", ""));
     if (customMode === "custom") p.set("custommode", "custom");
     if (customText.trim()) p.set("customtext", customText.trim());
     if (customAuthor.trim()) p.set("customauthor", customAuthor.trim());
     return p;
-  }, [adminParam, normalizedInstance, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, customMode, customText, customAuthor]);
+  }, [adminParam, normalizedInstance, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, arrowColor, counterColor, customMode, customText, customAuthor]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -350,11 +361,13 @@ export function QuotesBuilder() {
       width: cardWidth || undefined,
       quoteSize: quoteSize || undefined,
       authorSize: authorSize || undefined,
+      arrowColor: arrowColor || undefined,
+      counterColor: counterColor || undefined,
       customMode,
       customText,
       customAuthor,
     }),
-    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, normalizedInstance, adminParam, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, customMode, customText, customAuthor]
+    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, normalizedInstance, adminParam, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, arrowColor, counterColor, customMode, customText, customAuthor]
   );
 
   const copyLink = () => {
@@ -705,6 +718,27 @@ export function QuotesBuilder() {
                     </label>
                   </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="space-y-1 text-sm">
+                  <span className="text-zinc-300">Arrow color</span>
+                  <input
+                    type="color"
+                    className="color-swatch"
+                    value={arrowColor || text}
+                    onChange={(e) => setArrowColor(e.target.value)}
+                  />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-zinc-300">Counter color</span>
+                  <input
+                    type="color"
+                    className="color-swatch"
+                    value={counterColor || text}
+                    onChange={(e) => setCounterColor(e.target.value)}
+                  />
+                </label>
               </div>
 
               <div className="grid grid-cols-2 gap-3 items-center">
