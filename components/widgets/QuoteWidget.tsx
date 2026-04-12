@@ -127,6 +127,7 @@ function withAlphaHex(color: string, alpha: number) {
 
 export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams }) {
   const searchParams = useSearchParams();
+  const [hasMounted, setHasMounted] = useState(false);
 
   const instanceParam = (embedParams?.instance ?? searchParams.get("instance") ?? "").trim();
   const normalizedInstance = sanitizeInstance(instanceParam);
@@ -183,21 +184,18 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const customAuthorParam = (embedParams?.customAuthor ?? searchParams.get("customauthor") ?? "").trim();
   const customModeParam = (embedParams?.customMode ?? searchParams.get("custommode") ?? "").trim().toLowerCase();
 
-  const [storedIndex, setStoredIndex] = useState<number | null>(() => {
-    if (typeof window === "undefined" || !indexChase) return null;
-    try {
-      return parseStoredIndex(window.localStorage.getItem(getIndexChaseStorageKey(normalizedInstance)));
-    } catch {
-      return null;
-    }
-  });
+  const [storedIndex, setStoredIndex] = useState<number | null>(null);
 
   const [storedCustom, setStoredCustom] = useState<{ text: string; author: string; mode: CustomQuoteMode }>(
     { text: "", author: "", mode: "database" },
   );
 
   useEffect(() => {
-    if (typeof window === "undefined" || !indexChase) {
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasMounted || typeof window === "undefined" || !indexChase) {
       setStoredIndex(null);
       return;
     }
@@ -206,7 +204,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
     } catch {
       setStoredIndex(null);
     }
-  }, [indexChase, normalizedInstance]);
+  }, [hasMounted, indexChase, normalizedInstance]);
 
   useEffect(() => {
     const hasCustomOverrides =
@@ -327,23 +325,26 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
     if (!availableQuotes.length) return 0;
     const fallback = Math.max(0, startIndexParam - 1);
     const fallbackIndex = Number.isFinite(fallback) ? fallback % availableQuotes.length : 0;
-    const randomIndex = Math.floor(Math.random() * availableQuotes.length);
+    const randomIndex = hasMounted ? Math.floor(Math.random() * availableQuotes.length) : fallbackIndex;
 
     if (indexChase) {
-      const chased = storedIndex ?? (startIndexProvided ? fallbackIndex : randomIndex);
+      const chased = hasMounted ? (storedIndex ?? (startIndexProvided ? fallbackIndex : randomIndex)) : fallbackIndex;
       const normalized = Number.isFinite(chased) ? chased : fallbackIndex;
       return normalized % availableQuotes.length;
     }
 
-    if (!startIndexProvided) return randomIndex;
+    if (!startIndexProvided) return hasMounted ? randomIndex : fallbackIndex;
     return fallbackIndex;
-  }, [availableQuotes.length, startIndexParam, startIndexProvided, indexChase, storedIndex]);
+  }, [availableQuotes.length, startIndexParam, startIndexProvided, indexChase, storedIndex, hasMounted]);
 
   const initialQuote = useMemo(() => {
-    if (modeParam === "random") return availableQuotes.length ? randomFrom(availableQuotes) : null;
+    if (modeParam === "random") {
+      if (!hasMounted) return availableQuotes[initialIndex] ?? null;
+      return availableQuotes.length ? randomFrom(availableQuotes) : null;
+    }
     if (modeParam === "flashcard" || modeParam === "interval") return availableQuotes[initialIndex] ?? null;
     return pickDailyQuote(availableQuotes, categoryParam, source);
-  }, [availableQuotes, categoryParam, source, modeParam, initialIndex]);
+  }, [availableQuotes, categoryParam, source, modeParam, initialIndex, hasMounted]);
 
   const [quote, setQuote] = useState<Quote | null>(initialQuote);
   const [cardIndex, setCardIndex] = useState<number>(initialIndex);

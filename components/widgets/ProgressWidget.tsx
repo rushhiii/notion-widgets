@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ClipboardEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { Copy, Plus, RefreshCw, Trash } from "lucide-react";
 
@@ -19,6 +19,7 @@ type PreviewProps = {
   progress: number;
   prefix: string;
   suffix: string;
+  tintImages: boolean;
   accent: string;
   track: string;
   text: string;
@@ -105,6 +106,7 @@ const THEME_PRESETS: Record<
 };
 
 const STORAGE_KEY = "progress_widget_progress";
+const IMAGE_TOKEN_STORAGE_KEY = "progress_widget_token";
 
 let milestoneId = 0;
 function nextId() {
@@ -174,6 +176,116 @@ function parseBarRow(raw: string): BarRow | null {
 
 function formatNumber(value: number) {
   return value.toLocaleString("en-US");
+}
+
+const IMAGE_EXT_PATTERN = /\.(png|jpe?g|gif|svg|webp|avif|bmp|ico)(\?.*)?$/i;
+
+function isLikelyImageToken(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith("data:image/")) return true;
+  if (/^https?:\/\//i.test(trimmed)) return true;
+  if (/^(\/|\.\.?\/)/.test(trimmed) && IMAGE_EXT_PATTERN.test(trimmed)) return true;
+  return false;
+}
+
+function renderValueToken(value: string) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (isLikelyImageToken(trimmed)) return renderImageToken(trimmed);
+  return <span>{value}</span>;
+}
+
+function renderImageToken(value: string, tintColor?: string | null, sizeClass = "h-[1em] w-[1em]") {
+  if (tintColor) {
+    const url = `url("${value}")`;
+    return (
+      <span
+        aria-hidden
+        className={`inline-block ${sizeClass} align-text-bottom`}
+        style={{
+          backgroundColor: tintColor,
+          maskImage: url,
+          WebkitMaskImage: url,
+          maskRepeat: "no-repeat",
+          WebkitMaskRepeat: "no-repeat",
+          maskPosition: "center",
+          WebkitMaskPosition: "center",
+          maskSize: "contain",
+          WebkitMaskSize: "contain",
+        }}
+      />
+    );
+  }
+  return (
+    <img
+      src={value}
+      alt=""
+      aria-hidden
+      className={`inline-block ${sizeClass} object-contain align-text-bottom`}
+      decoding="async"
+    />
+  );
+}
+
+function renderValueTokenWithTint(value: string, tintColor?: string | null) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (isLikelyImageToken(trimmed)) return renderImageToken(trimmed, tintColor);
+  return <span>{value}</span>;
+}
+
+function renderValue(value: number, prefix: string, suffix: string, tintColor?: string | null) {
+  const prefixNode = renderValueTokenWithTint(prefix, tintColor);
+  const suffixNode = renderValueTokenWithTint(suffix, tintColor);
+  const useGap = isLikelyImageToken(prefix) || isLikelyImageToken(suffix);
+  return (
+    <span className={useGap ? "inline-flex items-center gap-1" : "inline-flex items-center"}>
+      {prefixNode}
+      <span>{formatNumber(value)}</span>
+      {suffixNode}
+    </span>
+  );
+}
+
+function renderTokenPreview(value: string, tintColor?: string | null) {
+  if (!isLikelyImageToken(value)) return null;
+  const label = tintColor ? "Tinted preview" : "Image preview";
+  return (
+    <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-zinc-400">
+      {renderImageToken(value.trim(), tintColor, "h-6 w-6")}
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function handleTokenPaste(
+  event: ClipboardEvent<HTMLInputElement>,
+  onValue: (value: string) => void,
+) {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+
+  const imageItem = Array.from(items).find((item) => item.type.startsWith("image/"));
+  if (imageItem) {
+    event.preventDefault();
+    const file = imageItem.getAsFile();
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") onValue(reader.result);
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  const text = event.clipboardData?.getData("text/plain");
+  if (text && isLikelyImageToken(text)) {
+    event.preventDefault();
+    onValue(text.trim());
+  }
 }
 
 type FancyOption = { value: string; label: string };
@@ -257,6 +369,7 @@ function ProgressPreview({
   progress,
   prefix,
   suffix,
+  tintImages,
   accent,
   track,
   text,
@@ -295,6 +408,7 @@ function ProgressPreview({
   const transparent = fullPage && isEmbedView;
   const transparentBgColor = transparentBgMode === "dark" ? "#191919" : "#ffffff";
   const effectiveBg = transparentBgMode === "off" ? (transparent ? "transparent" : background) : transparentBgColor;
+  const tintColor = tintImages ? text : null;
   const isMidnight = themeName === "midnight";
   const containerClass = transparent
     ? "flex w-full flex-col justify-center gap-3 p-2 sm:p-6"
@@ -380,11 +494,7 @@ function ProgressPreview({
                 {showProgressLabel && row.label.trim() !== "" && (
                   <div className="flex items-center justify-between text-sm font-semibold" style={{ color: text }}>
                     <span>{row.label.trim()}</span>
-                    <span>
-                      {prefix}
-                      {formatNumber(row.goal)}
-                      {suffix}
-                    </span>
+                    <span>{renderValue(row.goal, prefix, suffix, tintColor)}</span>
                   </div>
                 )}
 
@@ -462,7 +572,7 @@ function ProgressPreview({
                               -
                             </button>
                           )}
-                          <span>{formatNumber(row.progress)}</span>
+                          <span>{renderValue(row.progress, prefix, suffix, tintColor)}</span>
                           {onAdjustBar && (
                             <button
                               className="rounded px-1 text-base font-semibold leading-none opacity-0 transition-opacity duration-150 group-hover/value:opacity-100"
@@ -548,7 +658,7 @@ function ProgressPreview({
 
                   <div className="text-center">
                     <div className="text-5xl font-semibold leading-none" style={{ color: text }}>
-                      {formatNumber(row.progress)}
+                      {renderValue(row.progress, prefix, suffix, tintColor)}
                     </div>
                     {showPct && <div className="mt-2 text-sm opacity-80" style={{ color: text }}>{progressPct.toFixed(1)}%</div>}
                   </div>
@@ -577,7 +687,7 @@ function ProgressPreview({
 
                 {showTotals && (
                   <div className="text-center text-sm" style={{ color: text }}>
-                    target: {formatNumber(row.goal)}
+                    target: {renderValue(row.goal, prefix, suffix, tintColor)}
                   </div>
                 )}
               </div>
@@ -589,11 +699,7 @@ function ProgressPreview({
               {showProgressLabel && row.label.trim() !== "" && (
                 <div className="flex items-center justify-between text-sm font-semibold" style={{ color: text }}>
                   <span>{row.label.trim()}</span>
-                  <span>
-                    {prefix}
-                    {formatNumber(row.goal)}
-                    {suffix}
-                  </span>
+                  <span>{renderValue(row.goal, prefix, suffix, tintColor)}</span>
                 </div>
               )}
 
@@ -653,7 +759,7 @@ function ProgressPreview({
 
               <div className="flex items-center justify-between px-1 text-sm text-zinc-600" style={{ color: text }}>
                 <span>{showPct ? `${pct.toFixed(1)}%` : ""}</span>
-                <span>{showTotals ? `${formatNumber(row.progress)}` : ""}</span>
+                <span>{showTotals ? renderValue(row.progress, prefix, suffix, tintColor) : ""}</span>
               </div>
 
               {showMilestoneList && (
@@ -713,6 +819,11 @@ export function ProgressWidget() {
   const [instanceId, setInstanceId] = useState(instanceParam);
   const normalizedInstance = sanitizeInstance(instanceId);
   const storageKey = normalizedInstance ? `${STORAGE_KEY}:${normalizedInstance}` : STORAGE_KEY;
+  const imageTokenStorageKey = normalizedInstance
+    ? `${IMAGE_TOKEN_STORAGE_KEY}:${normalizedInstance}`
+    : `${IMAGE_TOKEN_STORAGE_KEY}:default`;
+  const hasPrefixParam = searchParams.has("prefix");
+  const hasSuffixParam = searchParams.has("suffix");
 
   const initial = useMemo(() => {
     const themeParam = searchParams.get("theme") || DEFAULTS.themeName;
@@ -741,6 +852,7 @@ export function ProgressWidget() {
     const backgroundParam = parseColorParam(searchParams.get("bg")) ?? themePreset?.background ?? DEFAULTS.background;
     const widthParam = clampNumber(parseNumberParam(searchParams.get("width"), DEFAULTS.widthPct), 40, 140);
     const fontSizeParam = clampNumber(parseNumberParam(searchParams.get("fsize"), DEFAULTS.fontSizePct), 70, 160);
+    const tintImagesParam = parseBooleanParam(searchParams.get("imagetint"), false);
 
     return {
       title: searchParams.get("title") ?? DEFAULTS.title,
@@ -749,6 +861,7 @@ export function ProgressWidget() {
       progress: parseNumberParam(searchParams.get("progress"), DEFAULTS.progress),
       prefix: searchParams.get("prefix") ?? DEFAULTS.prefix,
       suffix: searchParams.get("suffix") ?? DEFAULTS.suffix,
+      tintImages: tintImagesParam,
       accent: accentParam,
       track: trackParam,
       text: textParam,
@@ -781,6 +894,8 @@ export function ProgressWidget() {
   const [progress, setProgress] = useState(initial.progress);
   const [prefix, setPrefix] = useState(initial.prefix);
   const [suffix, setSuffix] = useState(initial.suffix);
+  const [tintImages, setTintImages] = useState(initial.tintImages ?? false);
+  const [imageTokenLoadedFor, setImageTokenLoadedFor] = useState<string | null>(null);
   const [accent, setAccent] = useState(initial.accent);
   const [track, setTrack] = useState(initial.track);
   const [text, setText] = useState(initial.text);
@@ -813,6 +928,40 @@ export function ProgressWidget() {
   const [storageApplied, setStorageApplied] = useState(false);
   const [storageAttempted, setStorageAttempted] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
+
+  const getImageTokenKey = (field: "prefix" | "suffix") => `${imageTokenStorageKey}:${field}`;
+  const storeImageToken = (field: "prefix" | "suffix", value: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(getImageTokenKey(field), value.trim());
+    } catch {
+      // ignore storage errors
+    }
+  };
+  const clearImageToken = (field: "prefix" | "suffix") => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.removeItem(getImageTokenKey(field));
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (imageTokenLoadedFor === imageTokenStorageKey) return;
+
+    if (!hasPrefixParam) {
+      const storedPrefix = window.localStorage.getItem(getImageTokenKey("prefix"));
+      if (storedPrefix) setPrefix(storedPrefix);
+    }
+    if (!hasSuffixParam) {
+      const storedSuffix = window.localStorage.getItem(getImageTokenKey("suffix"));
+      if (storedSuffix) setSuffix(storedSuffix);
+    }
+
+    setImageTokenLoadedFor(imageTokenStorageKey);
+  }, [imageTokenLoadedFor, imageTokenStorageKey, hasPrefixParam, hasSuffixParam]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -867,6 +1016,7 @@ export function ProgressWidget() {
     setProgress(initial.progress);
     setPrefix(initial.prefix);
     setSuffix(initial.suffix);
+    setTintImages(initial.tintImages ?? false);
     setAccent(initial.accent);
     setTrack(initial.track);
     setText(initial.text);
@@ -943,8 +1093,9 @@ export function ProgressWidget() {
     url.searchParams.set("theme", themeName || "custom");
     if (widthPct !== DEFAULTS.widthPct) url.searchParams.set("width", String(widthPct));
     if (fontSizePct !== DEFAULTS.fontSizePct) url.searchParams.set("fsize", String(fontSizePct));
-    if (prefix) url.searchParams.set("prefix", prefix);
-    if (suffix) url.searchParams.set("suffix", suffix);
+    if (prefix && !prefix.trim().startsWith("data:image/")) url.searchParams.set("prefix", prefix);
+    if (suffix && !suffix.trim().startsWith("data:image/")) url.searchParams.set("suffix", suffix);
+    if (tintImages) url.searchParams.set("imagetint", "1");
     if (accent) url.searchParams.set("accent", accent.replace("#", ""));
     if (track) url.searchParams.set("track", track.replace("#", ""));
     if (text) url.searchParams.set("text", text.replace("#", ""));
@@ -985,6 +1136,7 @@ export function ProgressWidget() {
     progress,
     prefix,
     suffix,
+    tintImages,
     accent,
     track,
     text,
@@ -1070,6 +1222,9 @@ export function ProgressWidget() {
                 setProgress(DEFAULTS.progress);
                 setPrefix(DEFAULTS.prefix);
                 setSuffix(DEFAULTS.suffix);
+                setTintImages(false);
+                clearImageToken("prefix");
+                clearImageToken("suffix");
                 setAccent(DEFAULTS.accent);
                 setTrack(DEFAULTS.track);
                 setText(DEFAULTS.text);
@@ -1243,13 +1398,63 @@ export function ProgressWidget() {
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Value Prefix</span>
-                <input className={fieldClass} value={prefix} onChange={(e) => setPrefix(e.target.value)} />
+                <input
+                  className={fieldClass}
+                  value={prefix}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setPrefix(next);
+                    if (isLikelyImageToken(next)) {
+                      storeImageToken("prefix", next);
+                    } else {
+                      clearImageToken("prefix");
+                    }
+                  }}
+                  onPaste={(e) =>
+                    handleTokenPaste(e, (value) => {
+                      setPrefix(value);
+                      storeImageToken("prefix", value);
+                    })
+                  }
+                  placeholder="Paste text or image URL"
+                />
+                {renderTokenPreview(prefix, tintImages ? text : null)}
               </label>
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Value Suffix</span>
-                <input className={fieldClass} value={suffix} onChange={(e) => setSuffix(e.target.value)} />
+                <input
+                  className={fieldClass}
+                  value={suffix}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setSuffix(next);
+                    if (isLikelyImageToken(next)) {
+                      storeImageToken("suffix", next);
+                    } else {
+                      clearImageToken("suffix");
+                    }
+                  }}
+                  onPaste={(e) =>
+                    handleTokenPaste(e, (value) => {
+                      setSuffix(value);
+                      storeImageToken("suffix", value);
+                    })
+                  }
+                  placeholder="Paste text or image URL"
+                />
+                {renderTokenPreview(suffix, tintImages ? text : null)}
               </label>
             </div>
+
+            <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-white/20 bg-white/10"
+                checked={tintImages}
+                onChange={(e) => setTintImages(e.target.checked)}
+              />
+              Tint prefix/suffix images (uses text color)
+            </label>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1 text-sm">
