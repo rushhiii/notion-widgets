@@ -42,6 +42,7 @@ type QuoteEmbedParams = {
   interval?: number;
   mode?: "daily" | "random" | "interval" | "flashcard";
   startIndex?: number;
+  indexChase?: boolean;
   q?: string;
   showPinned?: boolean;
   showPersonal?: boolean;
@@ -93,6 +94,28 @@ function getCustomQuoteStorageKey(instance: string) {
   return `quotes:custom:${safeInstance || "default"}`;
 }
 
+function getIndexChaseStorageKey(instance: string) {
+  const safeInstance = sanitizeInstance(instance);
+  return `quotes:index:${safeInstance || "default"}`;
+}
+
+function parseStoredIndex(raw: string | null) {
+  if (!raw) return null;
+  const direct = Number.parseInt(raw, 10);
+  if (Number.isFinite(direct) && direct >= 0) return direct;
+  try {
+    const parsed = JSON.parse(raw) as { index?: number } | number;
+    if (typeof parsed === "number" && Number.isFinite(parsed) && parsed >= 0) return parsed;
+    if (parsed && typeof parsed === "object") {
+      const value = parsed.index;
+      if (typeof value === "number" && Number.isFinite(value) && value >= 0) return value;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function withAlphaHex(color: string, alpha: number) {
   if (!color) return color;
   const raw = color.startsWith("#") ? color.slice(1) : color;
@@ -134,6 +157,8 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const modeParam = (embedParams?.mode ?? searchParams.get("mode") ?? "daily").trim().toLowerCase() as QuoteEmbedParams["mode"];
   const startIndexOneBased = embedParams?.startIndex ?? parsePositiveIntParam(searchParams.get("index"), 1);
   const startIndexParam = Math.max(1, startIndexOneBased);
+  const startIndexProvided = embedParams?.startIndex !== undefined || searchParams.has("index");
+  const indexChase = embedParams?.indexChase ?? parseBooleanParam(searchParams.get("indexchase"), false);
   const queryParam = (embedParams?.q ?? searchParams.get("q") ?? "").trim().toLowerCase();
   const queryTerms = useMemo(() => queryParam.split(/\s+/).map((t) => t.trim()).filter(Boolean), [queryParam]);
   const showPinned = embedParams?.showPinned ?? parseBooleanParam(searchParams.get("pinned"), false);
@@ -158,9 +183,30 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const customAuthorParam = (embedParams?.customAuthor ?? searchParams.get("customauthor") ?? "").trim();
   const customModeParam = (embedParams?.customMode ?? searchParams.get("custommode") ?? "").trim().toLowerCase();
 
+  const [storedIndex, setStoredIndex] = useState<number | null>(() => {
+    if (typeof window === "undefined" || !indexChase) return null;
+    try {
+      return parseStoredIndex(window.localStorage.getItem(getIndexChaseStorageKey(normalizedInstance)));
+    } catch {
+      return null;
+    }
+  });
+
   const [storedCustom, setStoredCustom] = useState<{ text: string; author: string; mode: CustomQuoteMode }>(
     { text: "", author: "", mode: "database" },
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !indexChase) {
+      setStoredIndex(null);
+      return;
+    }
+    try {
+      setStoredIndex(parseStoredIndex(window.localStorage.getItem(getIndexChaseStorageKey(normalizedInstance))));
+    } catch {
+      setStoredIndex(null);
+    }
+  }, [indexChase, normalizedInstance]);
 
   useEffect(() => {
     const hasCustomOverrides =
@@ -279,10 +325,19 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
 
   const initialIndex = useMemo(() => {
     if (!availableQuotes.length) return 0;
-    const zeroBased = Math.max(0, startIndexParam - 1);
-    if (Number.isFinite(zeroBased)) return zeroBased % availableQuotes.length;
-    return 0;
-  }, [availableQuotes.length, startIndexParam]);
+    const fallback = Math.max(0, startIndexParam - 1);
+    const fallbackIndex = Number.isFinite(fallback) ? fallback % availableQuotes.length : 0;
+    const randomIndex = Math.floor(Math.random() * availableQuotes.length);
+
+    if (indexChase) {
+      const chased = storedIndex ?? (startIndexProvided ? fallbackIndex : randomIndex);
+      const normalized = Number.isFinite(chased) ? chased : fallbackIndex;
+      return normalized % availableQuotes.length;
+    }
+
+    if (!startIndexProvided) return randomIndex;
+    return fallbackIndex;
+  }, [availableQuotes.length, startIndexParam, startIndexProvided, indexChase, storedIndex]);
 
   const initialQuote = useMemo(() => {
     if (modeParam === "random") return availableQuotes.length ? randomFrom(availableQuotes) : null;
@@ -297,6 +352,16 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
     setQuote(initialQuote);
     setCardIndex(initialIndex);
   }, [initialQuote, initialIndex]);
+
+  useEffect(() => {
+    if (!indexChase || typeof window === "undefined") return;
+    if (!availableQuotes.length) return;
+    try {
+      window.localStorage.setItem(getIndexChaseStorageKey(normalizedInstance), String(cardIndex));
+    } catch {
+      // ignore storage errors
+    }
+  }, [indexChase, cardIndex, availableQuotes.length, normalizedInstance]);
 
   useEffect(() => {
     if (!(modeParam === "interval" || autoRotate) || availableQuotes.length <= 1) return;

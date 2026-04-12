@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Copy, RefreshCw, Info } from "lucide-react";
 import { QuoteWidget } from "@/components/widgets/QuoteWidget";
-import { parseColorParam } from "@/lib/utils";
+import { parseBooleanParam, parseColorParam } from "@/lib/utils";
 import {
   getQuotes,
   Quote,
@@ -118,6 +118,7 @@ export function QuotesBuilder() {
   const [sourceTypes, setSourceTypes] = useState<string[]>([]);
   const [mode, setMode] = useState<"daily" | "random" | "interval" | "flashcard">("daily");
   const [startIndex, setStartIndex] = useState(1);
+  const [indexChase, setIndexChase] = useState(false);
   const [query, setQuery] = useState("");
   const [showPinned, setShowPinned] = useState(false);
   const [showPersonal, setShowPersonal] = useState(false);
@@ -158,6 +159,7 @@ export function QuotesBuilder() {
     const modeParam = (searchParams.get("custommode") ?? "").trim().toLowerCase();
     const textParam = (searchParams.get("customtext") ?? "").trim();
     const authorParam = (searchParams.get("customauthor") ?? "").trim();
+    const indexChaseParam = parseBooleanParam(searchParams.get("indexchase"), false);
     const styleParam = (searchParams.get("style") ?? "").trim().toLowerCase();
     const quoteFontParam = (searchParams.get("quotefont") ?? "").trim().toLowerCase();
     const authorFontParam = (searchParams.get("authorfont") ?? "").trim().toLowerCase();
@@ -170,6 +172,7 @@ export function QuotesBuilder() {
     if (modeParam === "custom") setCustomMode("custom");
     if (textParam) setCustomText(textParam);
     if (authorParam) setCustomAuthor(authorParam);
+    setIndexChase(indexChaseParam);
     if (styleParam && styleParam in QUOTE_STYLE_PRESETS) {
       setStylePreset(styleParam as QuoteStyleKey);
     }
@@ -259,6 +262,7 @@ export function QuotesBuilder() {
     setSourceTypes([]);
     setMode("daily");
     setStartIndex(1);
+    setIndexChase(false);
     setQuery("");
     setShowPinned(false);
     setShowPersonal(false);
@@ -301,6 +305,7 @@ export function QuotesBuilder() {
     if (source !== "auto") p.set("source", source);
     p.set("mode", mode);
     if (startIndex > 1) p.set("index", String(startIndex));
+    if (indexChase) p.set("indexchase", "1");
     if (query.trim()) p.set("q", query.trim());
     if (showPinned) p.set("pinned", "1");
     if (showPersonal) p.set("personal", "1");
@@ -328,7 +333,7 @@ export function QuotesBuilder() {
     if (customText.trim()) p.set("customtext", customText.trim());
     if (customAuthor.trim()) p.set("customauthor", customAuthor.trim());
     return p;
-  }, [adminParam, normalizedInstance, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, arrowColor, counterColor, customMode, customText, customAuthor]);
+  }, [adminParam, normalizedInstance, authors, tags, languages, sourceTypes, source, theme, mode, startIndex, indexChase, query, showPinned, showPersonal, rotate, interval, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, arrowColor, counterColor, customMode, customText, customAuthor]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -341,7 +346,8 @@ export function QuotesBuilder() {
       rotate,
       interval,
       mode,
-      startIndex,
+      startIndex: startIndex > 1 ? startIndex : undefined,
+      indexChase,
       q: query,
       instance: normalizedInstance || undefined,
       admin: adminParam,
@@ -367,7 +373,7 @@ export function QuotesBuilder() {
       customText,
       customAuthor,
     }),
-    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, query, normalizedInstance, adminParam, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, arrowColor, counterColor, customMode, customText, customAuthor]
+    [authors, tags, languages, sourceTypes, source, theme, rotate, interval, mode, startIndex, indexChase, query, normalizedInstance, adminParam, showPinned, showPersonal, bg, border, text, accent, pageBg, pageMatch, transparentBgMode, stylePreset, quoteFont, authorFont, cardWidth, quoteSize, authorSize, arrowColor, counterColor, customMode, customText, customAuthor]
   );
 
   const copyLink = () => {
@@ -517,6 +523,16 @@ export function QuotesBuilder() {
                 />
               </label>
             </div>
+
+            <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-white/20 bg-white/10"
+                checked={indexChase}
+                onChange={(e) => setIndexChase(e.target.checked)}
+              />
+              Chase index between sessions
+            </label>
 
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Search text</span>
