@@ -991,17 +991,41 @@ export function ProgressWidget() {
     if (typeof window === "undefined") return;
     if (imageTokenLoadedFor === imageTokenStorageKey) return;
 
-    if (!hasPrefixParam) {
-      const storedPrefix = window.localStorage.getItem(getImageTokenKey("prefix"));
-      if (storedPrefix) setPrefix(storedPrefix);
-    }
-    if (!hasSuffixParam) {
-      const storedSuffix = window.localStorage.getItem(getImageTokenKey("suffix"));
-      if (storedSuffix) setSuffix(storedSuffix);
-    }
+    const loadToken = (field: "prefix" | "suffix", setValue: (value: string) => void) => {
+      const stored = window.localStorage.getItem(getImageTokenKey(field));
+      if (stored) {
+        setValue(stored);
+        return;
+      }
+      if (!normalizedInstance) return;
+      const fallback = window.localStorage.getItem(getImageTokenKeyFor("", field));
+      if (fallback) {
+        setValue(fallback);
+        storeImageTokenFor(normalizedInstance, field, fallback);
+      }
+    };
+
+    if (!hasPrefixParam) loadToken("prefix", setPrefix);
+    if (!hasSuffixParam) loadToken("suffix", setSuffix);
 
     setImageTokenLoadedFor(imageTokenStorageKey);
-  }, [imageTokenLoadedFor, imageTokenStorageKey, hasPrefixParam, hasSuffixParam]);
+  }, [
+    imageTokenLoadedFor,
+    imageTokenStorageKey,
+    hasPrefixParam,
+    hasSuffixParam,
+    normalizedInstance,
+  ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (hasPrefixParam && isLikelyImageToken(prefix)) {
+      storeImageTokenFor(normalizedInstance, "prefix", prefix);
+    }
+    if (hasSuffixParam && isLikelyImageToken(suffix)) {
+      storeImageTokenFor(normalizedInstance, "suffix", suffix);
+    }
+  }, [hasPrefixParam, hasSuffixParam, prefix, suffix, normalizedInstance]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
