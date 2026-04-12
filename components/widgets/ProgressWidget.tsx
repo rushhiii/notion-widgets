@@ -817,7 +817,10 @@ export function ProgressWidget() {
   const sanitizeInstance = (value: string) => value.replace(/[^a-z0-9_-]/gi, "");
   const instanceParam = (searchParams.get("instance") ?? "").trim();
   const [instanceId, setInstanceId] = useState(instanceParam);
+  const [instanceDraft, setInstanceDraft] = useState(instanceParam);
   const normalizedInstance = sanitizeInstance(instanceId);
+  const normalizedDraft = sanitizeInstance(instanceDraft.trim());
+  const canApplyInstance = normalizedDraft !== normalizedInstance;
   const storageKey = normalizedInstance ? `${STORAGE_KEY}:${normalizedInstance}` : STORAGE_KEY;
   const imageTokenStorageKey = normalizedInstance
     ? `${IMAGE_TOKEN_STORAGE_KEY}:${normalizedInstance}`
@@ -929,11 +932,31 @@ export function ProgressWidget() {
   const [storageAttempted, setStorageAttempted] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
 
-  const getImageTokenKey = (field: "prefix" | "suffix") => `${imageTokenStorageKey}:${field}`;
+  const getImageTokenKeyFor = (instance: string, field: "prefix" | "suffix") => {
+    const base = instance ? `${IMAGE_TOKEN_STORAGE_KEY}:${instance}` : `${IMAGE_TOKEN_STORAGE_KEY}:default`;
+    return `${base}:${field}`;
+  };
+  const getImageTokenKey = (field: "prefix" | "suffix") => getImageTokenKeyFor(normalizedInstance, field);
+  const storeImageTokenFor = (instance: string, field: "prefix" | "suffix", value: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(getImageTokenKeyFor(instance, field), value.trim());
+    } catch {
+      // ignore storage errors
+    }
+  };
   const storeImageToken = (field: "prefix" | "suffix", value: string) => {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(getImageTokenKey(field), value.trim());
+    } catch {
+      // ignore storage errors
+    }
+  };
+  const clearImageTokenFor = (instance: string, field: "prefix" | "suffix") => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.removeItem(getImageTokenKeyFor(instance, field));
     } catch {
       // ignore storage errors
     }
@@ -944,6 +967,23 @@ export function ProgressWidget() {
       window.localStorage.removeItem(getImageTokenKey(field));
     } catch {
       // ignore storage errors
+    }
+  };
+
+  const applyInstance = () => {
+    const next = normalizedDraft;
+    if (next === normalizedInstance) return;
+    setInstanceId(next);
+    setInstanceDraft(next);
+    if (isLikelyImageToken(prefix)) {
+      storeImageTokenFor(next, "prefix", prefix);
+    } else {
+      clearImageTokenFor(next, "prefix");
+    }
+    if (isLikelyImageToken(suffix)) {
+      storeImageTokenFor(next, "suffix", suffix);
+    } else {
+      clearImageTokenFor(next, "suffix");
     }
   };
 
@@ -1252,6 +1292,7 @@ export function ProgressWidget() {
                 setTransparentBgMode("off");
                 setAdjustMode("add");
                 setInstanceId(instanceParam);
+                setInstanceDraft(instanceParam);
               }}
               aria-label="Reset"
             >
@@ -1262,13 +1303,22 @@ export function ProgressWidget() {
           <div className="grid grid-cols-1 gap-3">
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Instance</span>
-              <input
-                className={fieldClass}
-                value={instanceId}
-                onChange={(e) => setInstanceId(e.target.value)}
-                onBlur={(e) => setInstanceId(sanitizeInstance(e.target.value))}
-                placeholder="main"
-              />
+              <div className="flex gap-2">
+                <input
+                  className={fieldClass}
+                  value={instanceDraft}
+                  onChange={(e) => setInstanceDraft(e.target.value)}
+                  placeholder="main"
+                />
+                <button
+                  type="button"
+                  className="rounded-lg border border-white/10 px-3 text-sm text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={applyInstance}
+                  disabled={!canApplyInstance}
+                >
+                  Save
+                </button>
+              </div>
             </label>
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Title</span>

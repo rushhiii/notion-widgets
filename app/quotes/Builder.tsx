@@ -150,7 +150,10 @@ export function QuotesBuilder() {
   const sanitizeInstance = (value: string) => value.replace(/[^a-z0-9_-]/gi, "");
   const instanceParam = (searchParams.get("instance") ?? "").trim();
   const [instanceId, setInstanceId] = useState(instanceParam);
+  const [instanceDraft, setInstanceDraft] = useState(instanceParam);
   const normalizedInstance = sanitizeInstance(instanceId);
+  const normalizedDraft = sanitizeInstance(instanceDraft.trim());
+  const canApplyInstance = normalizedDraft !== normalizedInstance;
   const adminParam = (searchParams.get("admin") ?? "").trim();
   const isAdminBypass = adminParam === QUOTES_ADMIN_SECRET;
   const sourceQuotes = useMemo<Quote[]>(() => getQuotes(source), [source]);
@@ -255,6 +258,13 @@ export function QuotesBuilder() {
     setAccent(preset.accent);
   }, [stylePreset]);
 
+  const applyInstance = () => {
+    const next = normalizedDraft;
+    if (next === normalizedInstance) return;
+    setInstanceId(next);
+    setInstanceDraft(next);
+  };
+
   const reset = () => {
     setAuthors([]);
     setTags([]);
@@ -279,6 +289,7 @@ export function QuotesBuilder() {
     setPageMatch(true);
     setTransparentBgMode("off");
     setInstanceId(instanceParam);
+    setInstanceDraft(instanceParam);
     setCustomMode("database");
     setCustomText("");
     setCustomAuthor("");
@@ -410,13 +421,22 @@ export function QuotesBuilder() {
           <div className="grid grid-cols-1 gap-3">
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Instance</span>
-              <input
-                className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
-                value={instanceId}
-                onChange={(e) => setInstanceId(e.target.value)}
-                onBlur={(e) => setInstanceId(sanitizeInstance(e.target.value))}
-                placeholder="main"
-              />
+              <div className="flex gap-2">
+                <input
+                  className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none"
+                  value={instanceDraft}
+                  onChange={(e) => setInstanceDraft(e.target.value)}
+                  placeholder="main"
+                />
+                <button
+                  type="button"
+                  className="rounded-lg border border-white/10 px-3 text-sm text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={applyInstance}
+                  disabled={!canApplyInstance}
+                >
+                  Save
+                </button>
+              </div>
             </label>
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Authors</span>

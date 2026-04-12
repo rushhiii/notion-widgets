@@ -104,7 +104,10 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
 
   const instanceParam = (getParam("instance") || "").trim();
   const [instanceId, setInstanceId] = useState(instanceParam);
+  const [instanceDraft, setInstanceDraft] = useState(instanceParam);
   const normalizedInstance = instanceId.replace(/[^a-z0-9_-]/gi, "");
+  const normalizedDraft = instanceDraft.replace(/[^a-z0-9_-]/gi, "");
+  const canApplyInstance = normalizedDraft !== normalizedInstance;
   const storagePrefix = normalizedInstance ? `fc_${normalizedInstance}_` : "fc_";
   const storageKey = (suffix: string) => `${storagePrefix}${suffix}`;
 
@@ -176,6 +179,7 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     setShowControls(controlsFromQuery);
     setCustomBackground(bgFromQuery);
     setCustomTextColor(textFromQuery);
+    setInstanceDraft(instanceParam);
   }, [
     embedParams,
     instanceParam,
@@ -475,9 +479,10 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
     "--minimal-size-mult": minimalSizeMultiplier,
   };
 
-  const handleInstanceBlur = (value: string) => {
-    const sanitized = value.replace(/[^a-z0-9_-]/gi, "");
+  const applyInstance = () => {
+    const sanitized = normalizedDraft;
     setInstanceId(sanitized);
+    setInstanceDraft(sanitized);
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     if (sanitized) {
@@ -643,20 +648,31 @@ export function ClockWidget({ embedParams }: { embedParams?: EmbedParams }) {
               })}
             </div>
           </div>
-          <div className="fc-panel-section items-center" style={{ display: "flex" }}>
+          <div className="fc-panel-section items-center" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
             <label className="fc-panel-label" htmlFor="fc-instance">
               Instance
             </label>
-            <input
-              id="fc-instance"
-              className="fc-panel-input"
-              value={instanceId}
-              onChange={(e) => setInstanceId(e.target.value)}
-              onBlur={(e) => handleInstanceBlur(e.target.value)}
-              placeholder="Main"
-              autoComplete="off"
-              spellCheck={false}
-            />
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flex: 1 }}>
+              <input
+                id="fc-instance"
+                className="fc-panel-input"
+                value={instanceDraft}
+                onChange={(e) => setInstanceDraft(e.target.value)}
+                placeholder="Main"
+                autoComplete="off"
+                spellCheck={false}
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                className="fc-chip"
+                onClick={applyInstance}
+                disabled={!canApplyInstance}
+                aria-disabled={!canApplyInstance}
+              >
+                Save
+              </button>
+            </div>
           </div>
           <div className="fc-panel-section">
             <span className="fc-panel-label">Pick Custom Colors</span>
