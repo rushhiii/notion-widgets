@@ -446,7 +446,7 @@ function ProgressPreview({
         }}
       >
       {(showTitle || showLabelText) && (title || labelText) && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {showTitle && title && (
             <h2 className="text-3xl text-left font-semibold tracking-tight" style={{ color: accent }}>
               {title}
