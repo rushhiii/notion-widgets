@@ -5,8 +5,8 @@ import WeatherClient from "./WeatherClient";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Countdowns",
-  description: "Embeddable Countdown/elapsed badges with days, weeks, months and much more",
+  title: "Weather Widget",
+  description: "Embeddable weather widget with city or lat/lon support and metric/imperial units",
   icons: {
     // icon: "/icons/accuweather_icon.png",
     icon: "/icons/weather_icon.png",

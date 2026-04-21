@@ -1,10 +1,42 @@
-export const runtime = "nodejs";
+import type { NextRequest } from "next/server";
 
-export async function GET(request: Request) {
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function getBearerToken(authHeader: string | null): string | null {
+  if (!authHeader) return null;
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || null;
+}
+
+function authorizeRequest(request: NextRequest): { ok: boolean; source: string } {
+  if (process.env.NODE_ENV !== "production") {
+    return { ok: true, source: "development" };
+  }
+
   const userAgent = request.headers.get("user-agent") ?? "";
   const isVercelCron = userAgent.includes("vercel-cron/1.0");
 
-  if (process.env.NODE_ENV === "production" && !isVercelCron) {
+  const cronSecret = process.env.CRON_SECRET;
+  const bearerToken = getBearerToken(request.headers.get("authorization"));
+  const querySecret = request.nextUrl.searchParams.get("secret");
+  const hasValidSecret = Boolean(cronSecret) && (bearerToken === cronSecret || querySecret === cronSecret);
+
+  if (hasValidSecret) {
+    return { ok: true, source: isVercelCron ? "vercel-cron" : "manual-secret" };
+  }
+
+  // Backward-compatible fallback for setups that have not added CRON_SECRET yet.
+  if (!cronSecret && isVercelCron) {
+    return { ok: true, source: "vercel-cron-user-agent" };
+  }
+
+  return { ok: false, source: "unauthorized" };
+}
+
+async function triggerQuotesSync(request: NextRequest) {
+  const auth = authorizeRequest(request);
+  if (!auth.ok) {
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -15,8 +47,23 @@ export async function GET(request: Request) {
 
   const hookResponse = await fetch(deployHookUrl, { method: "POST" });
   if (!hookResponse.ok) {
-    return new Response("Deploy hook failed", { status: 502 });
+    const details = await hookResponse.text().catch(() => "");
+    return new Response(`Deploy hook failed (${hookResponse.status})${details ? `: ${details.slice(0, 200)}` : ""}`, {
+      status: 502,
+    });
   }
 
-  return Response.json({ ok: true });
+  return Response.json({
+    ok: true,
+    triggeredBy: auth.source,
+    message: "Deploy queued. Quotes will sync during the next production build.",
+  });
+}
+
+export async function GET(request: NextRequest) {
+  return triggerQuotesSync(request);
+}
+
+export async function POST(request: NextRequest) {
+  return triggerQuotesSync(request);
 }

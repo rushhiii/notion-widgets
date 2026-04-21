@@ -23,6 +23,11 @@ Includes clock, timer, stopwatch, D-Day, quotes, weather, progress, and music pl
 - [Music Player (English)](#music-player-english)
 - [Recent Updates](#recent-updates)
 - [Notion Quotes Sync](#notion-quotes-sync)
+- [Vercel Quote Sync (Free Plan)](#vercel-quote-sync-free-plan)
+- [Trigger Sync On Notion Changes](#trigger-sync-on-notion-changes)
+- [SEO and Indexing](#seo-and-indexing)
+- [Contributing](#contributing)
+- [Repo Structure](#repo-structure)
 - [Contact / Requests](#contact--requests)
 - [Notes](#notes)
 
@@ -188,6 +193,75 @@ Options:
 2. Set `NOTION_TOKEN` and `NOTION_DATABASE_ID`.
 3. Share your Notion database with the integration.
 4. Run `npm run sync:quotes`.
+
+## Vercel Quote Sync (Free Plan)
+
+This repo is configured so production deploys always sync Notion quotes before building:
+
+- `vercel.json` uses `buildCommand: npm run sync:quotes && next build`
+- A daily cron is configured at `/api/cron/sync-quotes`
+
+Important for Vercel Hobby (free) plan:
+
+- Cron frequency is limited to once per day.
+- Invocation can happen any minute within the configured hour (UTC).
+
+Required Vercel environment variables:
+
+- `NOTION_TOKEN`
+- `NOTION_DATABASE_ID`
+- `VERCEL_DEPLOY_HOOK_URL`
+- `CRON_SECRET` (recommended, must be random and long)
+
+Set up steps:
+
+1. In Vercel, create a Deploy Hook for your production branch.
+2. Add `VERCEL_DEPLOY_HOOK_URL` from that hook.
+3. Add a random `CRON_SECRET`.
+4. Redeploy once so cron + env changes are active.
+
+## Trigger Sync On Notion Changes
+
+Because Hobby cron only runs daily, you can trigger an early sync whenever new quotes are added.
+
+Use this endpoint:
+
+- `POST /api/cron/sync-quotes`
+
+Authorize with either:
+
+- Header: `Authorization: Bearer <CRON_SECRET>`
+- Or query param: `?secret=<CRON_SECRET>`
+
+What happens next:
+
+1. Endpoint verifies secret.
+2. Endpoint calls your Vercel deploy hook.
+3. New production build runs `npm run sync:quotes`.
+4. Updated quotes are included in your live site.
+
+You can connect this endpoint to any automation tool (for example Make/Zapier/n8n) that fires on Notion database changes.
+
+## SEO and Indexing
+
+SEO baseline added in this repo:
+
+- Rich global metadata in `app/layout.tsx`
+- `app/sitemap.ts` for all public widget routes
+- `app/robots.ts` with sitemap reference and crawl rules
+- Private routes under `app/prvt/` are marked `noindex`
+
+To use your real domain in canonical metadata and sitemap, set:
+
+- `NEXT_PUBLIC_SITE_URL=https://your-domain.com`
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for workflow, PR checklist, and test expectations.
+
+## Repo Structure
+
+See [`docs/REPO_STRUCTURE.md`](docs/REPO_STRUCTURE.md) for architecture and folder conventions.
 
 ## Contact / Requests
 

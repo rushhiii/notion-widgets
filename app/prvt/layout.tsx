@@ -16,6 +16,16 @@ export const metadata: Metadata = {
     template: "%s | Rn. Widgets",
   },
   description: "Private dashboard for Notion Widgets",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
   icons: {
     icon: "/icons/r_icon.png",
   },

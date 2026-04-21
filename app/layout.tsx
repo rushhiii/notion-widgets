@@ -10,13 +10,62 @@ import {
   fontSpaceGrotesk,
 } from "./fonts";
 import AuthProvider from "../components/AuthProvider";
+import { getSiteUrl } from "@/lib/site";
+
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Rushi's Notion Widgets",
     template: "%s | Rn. Widgets",
   },
-  description: "Static, embeddable Notion widgets built with Next.js",
+  description:
+    "Embeddable Notion widgets for clock, timer, stopwatch, quotes, weather, progress, d-day, and music player use cases.",
+  applicationName: "Notion Widgets",
+  keywords: [
+    "notion widgets",
+    "notion clock widget",
+    "notion timer widget",
+    "notion weather widget",
+    "notion quote widget",
+    "embeddable widgets",
+    "next.js notion widgets",
+  ],
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "Rushi's Notion Widgets",
+    title: "Rushi's Notion Widgets",
+    description:
+      "Embeddable Notion widgets for clock, timer, stopwatch, quotes, weather, progress, d-day, and music player use cases.",
+    images: [
+      {
+        url: "/readme/hero_dashboard.png",
+        width: 1600,
+        height: 860,
+        alt: "Notion widgets dashboard preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Rushi's Notion Widgets",
+    description:
+      "Embeddable Notion widgets for clock, timer, stopwatch, quotes, weather, progress, d-day, and music player use cases.",
+    images: ["/readme/hero_dashboard.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   icons: {
     icon: "/icons/ees.png",
   },
@@ -32,12 +81,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
       lang="en"
       className={`h-full bg-transparent ${fontSpaceGrotesk.variable} ${fontSora.variable} ${fontPlusJakarta.variable} ${fontManrope.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable} ${fontKarla.variable}`}
     >
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        />
-      </head>
       <body className="h-full bg-transparent antialiased" suppressHydrationWarning>
         <AuthProvider>{children}</AuthProvider>
       </body>
