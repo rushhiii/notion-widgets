@@ -24,9 +24,13 @@ Includes clock, timer, stopwatch, D-Day, quotes, weather, progress, and music pl
 - [Recent Updates](#recent-updates)
 - [Notion Quotes Sync](#notion-quotes-sync)
 - [Vercel Quote Sync (Free Plan)](#vercel-quote-sync-free-plan)
+- [How to Confirm Cron Is Running](#how-to-confirm-cron-is-running)
 - [Trigger Sync On Notion Changes](#trigger-sync-on-notion-changes)
 - [SEO and Indexing](#seo-and-indexing)
+- [Code of Conduct](#code-of-conduct)
 - [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
 - [Repo Structure](#repo-structure)
 - [Contact / Requests](#contact--requests)
 - [Notes](#notes)
@@ -220,6 +224,29 @@ Set up steps:
 3. Add a random `CRON_SECRET`.
 4. Redeploy once so cron + env changes are active.
 
+## How to Confirm Cron Is Running
+
+Use this quick checklist in Vercel:
+
+1. Open project Settings -> Cron Jobs.
+2. Confirm `/api/cron/sync-quotes` is listed and enabled.
+3. Click View Logs on that cron entry.
+4. Look for logs from `app/api/cron/sync-quotes` like:
+   - `[cron/sync-quotes] Trigger accepted`
+   - `[cron/sync-quotes] Deploy hook queued successfully`
+5. Open Deployments and confirm a new production deployment was created near that timestamp.
+
+Manual health test (recommended):
+
+- Send `POST https://YOUR_DOMAIN/api/cron/sync-quotes` with header `Authorization: Bearer <CRON_SECRET>`
+- Expected response: JSON with `ok: true`
+- Then verify a new deployment starts in Vercel.
+
+Notes for Hobby plan:
+
+- Cron can run any minute within the configured hour (UTC), not always exact minute.
+- Cron failures are not retried automatically, so check logs when a run is missed.
+
 ## Trigger Sync On Notion Changes
 
 Because Hobby cron only runs daily, you can trigger an early sync whenever new quotes are added.
@@ -255,9 +282,21 @@ To use your real domain in canonical metadata and sitemap, set:
 
 - `NEXT_PUBLIC_SITE_URL=https://your-domain.com`
 
+## Code of Conduct
+
+See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for workflow, PR checklist, and test expectations.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting and security practices.
+
+## License
+
+This project is licensed under MIT. See [LICENSE](LICENSE).
 
 ## Repo Structure
 

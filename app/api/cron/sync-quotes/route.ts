@@ -37,11 +37,21 @@ function authorizeRequest(request: NextRequest): { ok: boolean; source: string }
 async function triggerQuotesSync(request: NextRequest) {
   const auth = authorizeRequest(request);
   if (!auth.ok) {
+    console.warn("[cron/sync-quotes] Unauthorized request", {
+      source: "unknown",
+      userAgent: request.headers.get("user-agent") ?? "",
+    });
     return new Response("Unauthorized", { status: 401 });
   }
 
+  console.info("[cron/sync-quotes] Trigger accepted", {
+    source: auth.source,
+    timestamp: new Date().toISOString(),
+  });
+
   const deployHookUrl = process.env.VERCEL_DEPLOY_HOOK_URL;
   if (!deployHookUrl) {
+    console.error("[cron/sync-quotes] Missing VERCEL_DEPLOY_HOOK_URL");
     return new Response("Missing VERCEL_DEPLOY_HOOK_URL", { status: 500 });
   }
 
@@ -52,6 +62,11 @@ async function triggerQuotesSync(request: NextRequest) {
       status: 502,
     });
   }
+
+  console.info("[cron/sync-quotes] Deploy hook queued successfully", {
+    source: auth.source,
+    timestamp: new Date().toISOString(),
+  });
 
   return Response.json({
     ok: true,
