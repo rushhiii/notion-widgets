@@ -1046,7 +1046,7 @@ export function ProgressWidget() {
           );
           setStorageApplied(true);
         }
-      }
+      }  
     } catch (err) {
       console.error("progress load failed", err);
     } finally {
