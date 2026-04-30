@@ -1,10 +1,13 @@
 "use client"
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
+const MHeader: any = motion.header
+
 export default function ModernNavbar() {
   return (
-    <motion.header
+    <MHeader
       initial={{ y: -30, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -20,6 +23,6 @@ export default function ModernNavbar() {
         <Link href="/clock" className="opacity-80 hover:opacity-100">Widgets</Link>
         <a href="https://github.com/" target="_blank" rel="noreferrer" className="px-3 py-2 rounded-lg bg-white/5">GitHub</a>
       </nav>
-    </motion.header>
+    </MHeader>
   )
 }

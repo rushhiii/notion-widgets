@@ -11,6 +11,8 @@ import {
 } from "./fonts";
 import AuthProvider from "../components/AuthProvider";
 import { getSiteUrl } from "@/lib/site";
+import ModernNavbar from "../components/ui/ModernNavbar";
+import ModernFooter from "../components/ui/ModernFooter";
 
 const siteUrl = getSiteUrl();
 const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "ScLbPuILYWTWtNMP4oWQnBpW2VF037R5IA7QfrSvxyU";
@@ -86,7 +88,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
       className={`h-full bg-transparent ${fontSpaceGrotesk.variable} ${fontSora.variable} ${fontPlusJakarta.variable} ${fontManrope.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable} ${fontKarla.variable}`}
     >
       <body className="h-full bg-transparent antialiased" suppressHydrationWarning>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ModernNavbar />
+          <main className="min-h-screen">{children}</main>
+          <ModernFooter />
+        </AuthProvider>
       </body>
     </html>
   );

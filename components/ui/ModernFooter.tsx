@@ -1,9 +1,12 @@
 "use client"
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { motion } from 'framer-motion'
+
+const MFooter: any = motion.footer
 
 export default function ModernFooter() {
   return (
-    <motion.footer
+    <MFooter
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.45 }}
@@ -16,6 +19,6 @@ export default function ModernFooter() {
           <a href="/terms" className="hover:underline">Terms</a>
         </div>
       </div>
-    </motion.footer>
+    </MFooter>
   )
 }

@@ -1,6 +1,7 @@
-"use client"
 import ModernNavbar from '../../components/ui/ModernNavbar'
 import Hero from '../../components/ui/Hero'
+import Features from '../../components/ui/Features'
+import Showcase from '../../components/ui/Showcase'
 import ModernFooter from '../../components/ui/ModernFooter'
 
 export const metadata = {
@@ -16,20 +17,9 @@ export default function LandingPage() {
       <main className="pt-10">
         <Hero />
 
-        <section className="max-w-6xl mx-auto px-6 mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-6 bg-white/3 rounded-xl">
-            <h3 className="font-semibold text-lg">Embeddable</h3>
-            <p className="mt-2 text-sm text-slate-200">Copy embed links with all URL settings preserved.</p>
-          </div>
-          <div className="p-6 bg-white/3 rounded-xl">
-            <h3 className="font-semibold text-lg">Accessible</h3>
-            <p className="mt-2 text-sm text-slate-200">Small, high-contrast components that work anywhere.</p>
-          </div>
-          <div className="p-6 bg-white/3 rounded-xl">
-            <h3 className="font-semibold text-lg">Customizable</h3>
-            <p className="mt-2 text-sm text-slate-200">Theme and URL params keep widget appearance consistent.</p>
-          </div>
-        </section>
+        <Features />
+
+        <Showcase />
       </main>
 
       <ModernFooter />
