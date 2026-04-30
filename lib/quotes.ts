@@ -6,6 +6,8 @@ export type Quote = {
   text: string;
   author: string;
   category: QuoteCategory;
+  reference?: string;
+  resources?: string;
   sourceType?: string;
   language?: string;
   tags?: string[];
@@ -135,14 +137,35 @@ export const QUOTES: Quote[] = [
 ];
 
 function sanitizeQuote(input: Partial<Quote>): Quote | null {
+  const raw = input as Record<string, unknown>;
+  const resolveResourceValue = () => {
+    const candidates = [
+      input.resources,
+      input.reference,
+      raw.resources,
+      raw.resource,
+      raw.reference,
+      raw.Resources,
+      raw.Resource,
+      raw.Reference,
+    ];
+    for (const value of candidates) {
+      if (typeof value === "string" && value.trim()) return value.trim();
+    }
+    return undefined;
+  };
+
   const text = (input.text ?? "").trim();
   const author = (input.author ?? "").trim() || "Unknown";
   const category = (input.category ?? "general").trim().toLowerCase() || "general";
+  const resourceValue = resolveResourceValue();
   if (!text || text.toLowerCase() === "untitled") return null;
 
   return {
     text,
     author,
+    reference: resourceValue,
+    resources: resourceValue,
     category,
     sourceType: input.sourceType?.trim().toLowerCase() || undefined,
     language: input.language?.trim().toLowerCase() || undefined,

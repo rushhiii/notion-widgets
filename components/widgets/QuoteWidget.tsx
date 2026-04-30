@@ -405,7 +405,18 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const quoteFontSize = quoteSizeParam > 0 ? `${quoteSizeParam}px` : undefined;
   const authorFontSize = authorSizeParam > 0 ? `${authorSizeParam}px` : undefined;
   const displayText = noQuotes ? "No quotes match your filters." : quote?.text ?? "Loading quote...";
-  const displayAuthor = noQuotes ? "" : quote?.author ?? "";
+  const quoteSourceType = (quote?.sourceType || "").toLowerCase();
+  const isSongSource = quoteSourceType.includes("song");
+  const displayReference = (quote?.resources ?? quote?.reference ?? "").trim();
+  const rawAuthor = (quote?.author ?? "").trim();
+  const authorLooksPlaceholder = ["n/a", "na", "unknown", "unknow"].includes(rawAuthor.toLowerCase());
+  const displayAuthor = noQuotes
+    ? ""
+    : isSongSource
+      ? (displayReference || rawAuthor)
+      : authorLooksPlaceholder
+        ? (displayReference || rawAuthor)
+        : rawAuthor;
   const quoteLength = displayText.length;
   const isLongQuote = quoteLength > 180;
   const isMediumQuote = quoteLength > 120;

@@ -91,6 +91,7 @@ function normalizePage(page) {
   const categoryProperty = pickProperty(properties, ["category", "tag", "type"]);
   const languageProperty = pickProperty(properties, ["language", "lang"]);
   const sourceTypeProperty = pickProperty(properties, ["source type", "sourcetype", "source"]);
+  const resourcesProperty = pickProperty(properties, ["resources", "resource", "reference", "song", "track", "from"]);
   const tagsProperty = pickProperty(properties, ["tags", "tag list", "labels"]);
   const pinnedProperty = pickProperty(properties, ["pinned", "pin"]);
   const personalProperty = pickProperty(properties, ["personal", "private"]);
@@ -120,6 +121,7 @@ function normalizePage(page) {
   return {
     text,
     author: getPlainText(authorProperty) || "Unknown",
+    resources: getPlainText(resourcesProperty) || undefined,
     category: (getPlainText(resolvedCategory) || "general").toLowerCase(),
     language: resolvedLanguageValues[0]?.toLowerCase(),
     sourceType: resolvedSourceTypeValues[0]?.toLowerCase(),
