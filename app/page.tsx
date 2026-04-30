@@ -4,15 +4,10 @@ import Link from "next/link";
 
 export const dynamic = "force-static";
 
-
-// For each card, track hover and mouse position
 function useCardHover() {
   const cardRef = useRef<HTMLDivElement>(null);
-  // Track if the card has ever been hovered
   const [hasHovered, setHasHovered] = useState(false);
-  // Store the last mouse position (SSR-safe: fixed initial value)
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 80, y: 80 });
-  // On mount (client only), set a random position if never hovered
   React.useEffect(() => {
     if (cardRef.current && !hasHovered) {
       const rect = cardRef.current.getBoundingClientRect();
@@ -21,8 +16,7 @@ function useCardHover() {
         y: Math.floor(Math.random() * (rect.height - 60) + 30),
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hasHovered]);
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     if (!cardRef.current) return;
@@ -34,23 +28,21 @@ function useCardHover() {
     setHasHovered(true);
   }
 
-  // Always use the last mousePos (even after mouse leave)
   const cardBg = {
     background:
-      `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04) 0%, transparent 30%),` +
-      `rgba(17,17,23,.8)`
+      `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(20,184,184,0.08) 0%, transparent 40%),` +
+      `linear-gradient(135deg, rgba(15,23,42,0.8) 0%, rgba(20,25,40,0.9) 100%)`
   };
 
   return { cardRef, handleMouseMove, cardBg };
 }
 
 export default function HomePage() {
-
-  // Card data for mapping
   const cards = [
     {
       title: "Clock Widget",
       desc: "Live clock with timezone, 12/24-hour format, seconds toggle, and dark-first theme.",
+      icon: "🕐",
       links: [
         { label: "/clock", url: "/clock" },
         { label: "/clock?tz=America/Toronto&format=24&theme=dark", url: null },
@@ -62,6 +54,7 @@ export default function HomePage() {
     {
       title: "Progress Widget",
       desc: "Customizable progress bar with milestones, prefixes/suffixes, and a built-in embed link copier.",
+      icon: "📊",
       links: [
         { label: "/progress", url: "/progress" },
         { label: "/progress?goal=23300&progress=5000&prefix=%2A&ms=+1:8200&ms=+bundle:15000&ms=+3:20000&embed=1", url: null },
@@ -71,10 +64,10 @@ export default function HomePage() {
         { label: "View", url: "/progress/?embed=1" },
       ],
     },
-
     {
       title: "Quotes Widget",
       desc: "Rotating quotes from local data or synced Notion source, with category and timing controls.",
+      icon: "💬",
       links: [
         { label: "/quotes", url: "/quotes" },
         { label: "/quotes?source=notion&theme=dark&rotate=true&interval=8", url: null },
@@ -87,6 +80,7 @@ export default function HomePage() {
     {
       title: "D-Day Widget",
       desc: "Countdown/elapsed badges with days, weeks, months, years, hours, minutes, seconds, and mega-seconds.",
+      icon: "⏳",
       links: [
         { label: "/dday", url: "/dday" },
         { label: "/dday?date=2026-12-31&day=1&hours=1&minutes=1&seconds=1&timeColor=0d9488&totalseconds=1&megaseconds=1&units=1&weeks=1&months=1&years=1", url: null },
@@ -99,6 +93,7 @@ export default function HomePage() {
     {
       title: "Weather Widget",
       desc: "Current conditions from OpenWeather with city or lat/lon, metric or imperial units, optional details.",
+      icon: "🌤️",
       links: [
         { label: "/weather", url: "/weather" },
         { label: "/weather?location=Toronto&units=metric&bg=eaf1ec&accent=10b981", url: null },
@@ -111,6 +106,7 @@ export default function HomePage() {
     {
       title: "Music Player Widget",
       desc: "APlayer + MetingJS embed with Netease and Tencent support, playlist/song/album/search/artist modes.",
+      icon: "🎵",
       links: [
         { label: "/music-player", url: "/music-player" },
         { label: "/music-player?server=tencent&type=playlist&id=7888484143&embed=1", url: null },
@@ -123,75 +119,62 @@ export default function HomePage() {
   ];
 
   return (
-    <main className="landing relative h-screen w-full overflow-hidden bg-zinc-950 px-6 py-0 text-zinc-100">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.2),transparent_55%)]" />
+    <main className="landing relative min-h-screen w-full overflow-hidden bg-slate-950 text-slate-100">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(20,184,184,0.15),rgba(200,100,255,0.05),transparent_80%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.05),transparent_70%)]" />
 
-      <div className="relative mx-auto flex h-full w-full px-0 py-10 max-w-6xl flex-col overflow-y-auto scrollbar-hide">
-        <header className="mb-7">
-          <div className="flex justify-between items-center">
-            <p className="badge inline-flex rounded-full border px-3 py-1 text-xs font-medium tracking-wide">
+      <div className="relative mx-auto flex w-full flex-col px-6 py-12 max-w-7xl">
+        <header className="mb-20 pt-6">
+          <div className="flex justify-between items-start mb-8">
+            <div className="inline-flex rounded-full border border-teal-500/30 bg-teal-500/5 px-4 py-2 text-sm font-medium text-teal-300 tracking-wide">
               Notion Widget Suite
-            </p>
-            {/* <div className="relative group flex items-center">
-              <a aria-label="GitHub repository" target="_blank" rel="noopener noreferrer" href="https://github.com/rushhiii/notion-widgets" className="rounded-full bg-[#22222dcc] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-1 text-xs font-medium tracking-wide">
-                <svg viewBox="0 0 20 20" className="size-7 fill-[#E0DBFD]">
-                  <path d="M10 0C4.475 0 0 4.475 0 10a9.994 9.994 0 006.838 9.488c.5.087.687-.213.687-.476 0-.237-.013-1.024-.013-1.862-2.512.463-3.162-.612-3.362-1.175-.113-.287-.6-1.175-1.025-1.412-.35-.188-.85-.65-.013-.663.788-.013 1.35.725 1.538 1.025.9 1.512 2.337 1.087 2.912.825.088-.65.35-1.088.638-1.338-2.225-.25-4.55-1.112-4.55-4.937 0-1.088.387-1.987 1.025-2.688-.1-.25-.45-1.274.1-2.65 0 0 .837-.262 2.75 1.026a9.28 9.28 0 012.5-.338c.85 0 1.7.112 2.5.337 1.912-1.3 2.75-1.024 2.75-1.024.55 1.375.2 2.4.1 2.65.637.7 1.025 1.587 1.025 2.687 0 3.838-2.337 4.688-4.562 4.938.362.312.675.912.675 1.85 0 1.337-.013 2.412-.013 2.75 0 .262.188.574.688.474A10.016 10.016 0 0020 10c0-5.525-4.475-10-10-10z" />
-                </svg>
-              </a>
-              <div className="pointer-events-none absolute -right-2 -top-2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 bg-zinc-900 text-white text-xs px-4 py-1 rounded-lg shadow-lg border border-zinc-700 select-none min-w-max max-w-xs whitespace-nowrap">
-                Visit Repo
-              </div>
-            </div> */}
-
-              <div className="relative group rounded-full">
-
-              <div className="relative flex items-center rounded-full">
-                <a
-                  // onClick={() => setShowAccountModal(true)}
-               aria-label="GitHub repository" target="_blank" rel="noopener noreferrer" href="https://github.com/rushhiii/notion-widgets"
-               className="rounded-full bg-[#22222dcc] opacity-70 transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-auto text-xs font-medium tracking-wide"
-
-                  // className="rounded-full bg-[#22222D00] opacity-70 h-max w-max transition duration-700 ease-in-out hover:opacity-100 inline-flex mx-0 my-0 text-xs font-medium tracking-wide text-white"
-                >
-                <svg viewBox="0 0 20 20" className="size-7 fill-[#E0DBFD]">
-                  <path d="M10 0C4.475 0 0 4.475 0 10a9.994 9.994 0 006.838 9.488c.5.087.687-.213.687-.476 0-.237-.013-1.024-.013-1.862-2.512.463-3.162-.612-3.362-1.175-.113-.287-.6-1.175-1.025-1.412-.35-.188-.85-.65-.013-.663.788-.013 1.35.725 1.538 1.025.9 1.512 2.337 1.087 2.912.825.088-.65.35-1.088.638-1.338-2.225-.25-4.55-1.112-4.55-4.937 0-1.088.387-1.987 1.025-2.688-.1-.25-.45-1.274.1-2.65 0 0 .837-.262 2.75 1.026a9.28 9.28 0 012.5-.338c.85 0 1.7.112 2.5.337 1.912-1.3 2.75-1.024 2.75-1.024.55 1.375.2 2.4.1 2.65.637.7 1.025 1.587 1.025 2.687 0 3.838-2.337 4.688-4.562 4.938.362.312.675.912.675 1.85 0 1.337-.013 2.412-.013 2.75 0 .262.188.574.688.474A10.016 10.016 0 0020 10c0-5.525-4.475-10-10-10z" />
-                </svg>
-                </a>
-              <div className="pointer-events-none absolute -right-2 -top-2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 bg-zinc-900 text-white text-xs px-4 py-1 rounded-lg shadow-lg border border-zinc-700 select-none min-w-max max-w-xs whitespace-nowrap">
-                Visit Repo
-                </div>
-              </div>
-
             </div>
-
+            <a
+              aria-label="GitHub repository"
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://github.com/rushhiii/notion-widgets"
+              className="group relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors duration-300"
+              title="View on GitHub"
+            >
+              <svg viewBox="0 0 20 20" className="w-5 h-5 fill-slate-300 group-hover:fill-teal-300 transition-colors">
+                <path d="M10 0C4.475 0 0 4.475 0 10a9.994 9.994 0 006.838 9.488c.5.087.687-.213.687-.476 0-.237-.013-1.024-.013-1.862-2.512.463-3.162-.612-3.362-1.175-.113-.287-.6-1.175-1.025-1.412-.35-.188-.85-.65-.013-.663.788-.013 1.35.725 1.538 1.025.9 1.512 2.337 1.087 2.912.825.088-.65.35-1.088.638-1.338-2.225-.25-4.55-1.112-4.55-4.937 0-1.088.387-1.987 1.025-2.688-.1-.25-.45-1.274.1-2.65 0 0 .837-.262 2.75 1.026a9.28 9.28 0 012.5-.338c.85 0 1.7.112 2.5.337 1.912-1.3 2.75-1.024 2.75-1.024.55 1.375.2 2.4.1 2.65.637.7 1.025 1.587 1.025 2.687 0 3.838-2.337 4.688-4.562 4.938.362.312.675.912.675 1.85 0 1.337-.013 2.412-.013 2.75 0 .262.188.574.688.474A10.016 10.016 0 0020 10c0-5.525-4.475-10-10-10z" />
+              </svg>
+            </a>
           </div>
-          <h1 className="hero-title mt-4 text-3xl tracking-tight md:text-5xl">
-            Beautiful, embeddable widgets for Notion
-          </h1>
-          <p className="lead mt-3 max-w-3xl text-sm md:text-base">
-            Use the links below to open widgets directly, customize through URL params, and paste them into Notion via
-            /embed.
-          </p>
+
+          <div className="space-y-6">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+              <span className="block text-slate-100">Embeddable widgets</span>
+              <span className="block bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                for Notion.
+              </span>
+            </h1>
+            <p className="text-lg text-slate-400 max-w-2xl leading-relaxed">
+              Create beautiful, interactive widgets and embed them directly into your Notion pages. Customize via URL parameters, then paste with /embed.
+            </p>
+          </div>
         </header>
 
-        <section className="grid flex-1 grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <section className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
           {cards.map((card) => (
             <Card key={card.title} card={card} />
           ))}
         </section>
-        <footer className="mt-6 text-xs text-zinc-500 space-y-1">
-          <p>Tip: In Notion, type /embed and paste any widget URL.</p>
+
+        <footer className="mt-8 pt-12 border-t border-slate-800 text-center text-sm text-slate-500 space-y-2">
+          <p>💡 In Notion, type <code className="text-teal-400 bg-slate-900 px-2 py-1 rounded">/embed</code> and paste any widget URL to add it to your page.</p>
         </footer>
       </div>
     </main>
   );
 }
 
-// Card component moved outside HomePage for correct hook usage
 type CardProps = {
   card: {
     title: string;
     desc: string;
+    icon?: string;
     links: { label: string; url: string | null }[];
     actions: { label: string; url: string | null }[];
   };
@@ -202,32 +185,41 @@ function Card({ card }: CardProps) {
   return (
     <article
       ref={cardRef}
-      className="landing-card flex flex-col rounded-3xl border p-6 backdrop-blur transition-colors duration-300"
+      className="landing-card group flex flex-col rounded-2xl border border-slate-700/40 p-7 backdrop-blur-sm transition-all duration-300 hover:border-teal-500/50 hover:shadow-xl hover:shadow-teal-500/10"
       style={cardBg}
       onMouseMove={handleMouseMove}
     >
-      <h2 className="text-2xl text-white">{card.title}</h2>
-      <p className="mt-2 text-sm text-zinc-400">{card.desc}</p>
-      <div className="mt-5 space-y-2 text-sm">
+      {card.icon && (
+        <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
+          {card.icon}
+        </div>
+      )}
+      <h2 className="text-xl font-bold text-slate-100 group-hover:text-teal-300 transition-colors">{card.title}</h2>
+      <p className="mt-3 text-sm text-slate-400 leading-relaxed">{card.desc}</p>
+
+      <div className="mt-6 space-y-2">
         {card.links.map((l, i) => (
-          <p key={i} className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-zinc-300 overflow-hidden overflow-x-auto scrollbar-hide">
-            {l.label}
-          </p>
+          <div key={i} className="group/link">
+            <p className="rounded-lg border border-slate-700/60 bg-slate-900/30 px-3 py-2 text-xs text-slate-400 overflow-hidden overflow-x-auto scrollbar-hide font-mono group-hover/link:border-teal-500/30 group-hover/link:text-slate-300 transition-all">
+              {l.label}
+            </p>
+          </div>
         ))}
       </div>
-      <div className="mt-auto pt-6 flex items-center gap-3">
+
+      <div className="mt-auto pt-6 flex items-center gap-2 flex-wrap">
         {card.actions.map((a, i) => (
           a.url ? (
             <Link
               key={i}
               href={a.url}
               target="_blank"
-              className="cta inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium text-white transition"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/30 hover:-translate-y-0.5"
             >
               {a.label}
-              {a.label === "View" || a.label === "Open Clock" ? (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 ml-1 lucide lucide-square-arrow-up-right-icon lucide-square-arrow-up-right"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 8h8v8" /><path d="m8 16 8-8" /></svg>
-              ) : null}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                <path d="M7 7h10v10M7 17l10-10" />
+              </svg>
             </Link>
           ) : null
         ))}
