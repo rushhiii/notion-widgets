@@ -123,9 +123,9 @@ export default function HomePage() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(20,184,184,0.15),rgba(200,100,255,0.05),transparent_80%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.05),transparent_70%)]" />
 
-      <div className="relative mx-auto flex w-full flex-col px-6 py-12 max-w-7xl">
-        <header className="mb-20 pt-6">
-          <div className="flex justify-between items-start mb-8">
+      <div className="relative mx-auto flex w-full flex-col px-6 py-16 max-w-7xl">
+        <header className="mb-24 pt-4">
+          <div className="flex justify-between items-start mb-12">
             <div className="inline-flex rounded-full border border-teal-500/30 bg-teal-500/5 px-4 py-2 text-sm font-medium text-teal-300 tracking-wide">
               Notion Widget Suite
             </div>
@@ -143,27 +143,29 @@ export default function HomePage() {
             </a>
           </div>
 
-          <div className="space-y-6">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-              <span className="block text-slate-100">Embeddable widgets</span>
+          <div className="space-y-8">
+            <h1 className="text-6xl md:text-7xl font-bold tracking-tight leading-tight">
+              <span className="block text-slate-100">Embeddable</span>
               <span className="block bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                for Notion.
+                widgets for Notion.
               </span>
             </h1>
-            <p className="text-lg text-slate-400 max-w-2xl leading-relaxed">
-              Create beautiful, interactive widgets and embed them directly into your Notion pages. Customize via URL parameters, then paste with /embed.
+            <p className="text-xl text-slate-400 max-w-2xl leading-relaxed">
+              Beautiful, interactive widgets you can customize and embed directly into your Notion pages. Use URL parameters for configuration, then paste with <code className="text-teal-300 font-mono bg-slate-900/50 px-2 py-1 rounded">/embed</code>.
             </p>
           </div>
         </header>
 
-        <section className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
+        <section className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mb-16">
           {cards.map((card) => (
             <Card key={card.title} card={card} />
           ))}
         </section>
 
-        <footer className="mt-8 pt-12 border-t border-slate-800 text-center text-sm text-slate-500 space-y-2">
-          <p>💡 In Notion, type <code className="text-teal-400 bg-slate-900 px-2 py-1 rounded">/embed</code> and paste any widget URL to add it to your page.</p>
+        <footer className="mt-8 pt-12 border-t border-slate-800/50 text-center space-y-4">
+          <p className="text-sm text-slate-500">
+            💡 <span className="text-slate-400">Tip: All widgets are fully embeddable and customizable via URL parameters.</span>
+          </p>
         </footer>
       </div>
     </main>
