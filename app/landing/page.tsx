@@ -11,18 +11,14 @@ export const metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900/95 to-black text-white">
-      <ModernNavbar />
-
-      <main className="pt-10">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-white">
+      <main>
         <Hero />
 
         <Features />
 
         <Showcase />
       </main>
-
-      <ModernFooter />
     </div>
   )
 }

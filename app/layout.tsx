@@ -85,9 +85,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`h-full bg-transparent ${fontSpaceGrotesk.variable} ${fontSora.variable} ${fontPlusJakarta.variable} ${fontManrope.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable} ${fontKarla.variable}`}
+      className={`h-full bg-slate-950 ${fontSpaceGrotesk.variable} ${fontSora.variable} ${fontPlusJakarta.variable} ${fontManrope.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable} ${fontKarla.variable}`}
     >
-      <body className="h-full bg-transparent antialiased" suppressHydrationWarning>
+      <body className="h-full bg-slate-950 antialiased" suppressHydrationWarning>
         <AuthProvider>
           <ModernNavbar />
           <main className="min-h-screen">{children}</main>

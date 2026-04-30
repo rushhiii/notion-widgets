@@ -2,31 +2,61 @@
 import { motion } from 'framer-motion'
 
 const MSection: any = motion.section
+const MDiv: any = motion.div
+
+const featureCards = [
+  {
+    icon: '📋',
+    title: 'Copy-friendly embeds',
+    description: 'Embed links keep all URL params so your saved embeds look the same everywhere.'
+  },
+  {
+    icon: '⚡',
+    title: 'Lightweight',
+    description: 'Minimal JS footprint and focused features keep pages fast.'
+  },
+  {
+    icon: '♿',
+    title: 'Accessible',
+    description: 'High contrast and keyboard-friendly controls out of the box.'
+  },
+  {
+    icon: '🎨',
+    title: 'Customizable',
+    description: 'Theme and URL params keep widget appearance consistent.'
+  }
+]
 
 export default function Features() {
   return (
-    <MSection className="max-w-6xl mx-auto px-6 py-20 grid grid-cols-1 md:grid-cols-2 gap-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
-      <div className="space-y-6">
-        <h2 className="text-3xl font-extrabold">Tiny, powerful widgets</h2>
-        <p className="text-slate-300">Designed to be dropped into Notion or any page. Preserve query settings, theme, and embed behavior.</p>
-        <div className="grid gap-4 mt-6">
-          <div className="p-4 bg-white/3 rounded-lg">
-            <h4 className="font-semibold">Copy-friendly embeds</h4>
-            <p className="text-sm text-slate-300">Embed links keep all URL params so your saved embeds look the same everywhere.</p>
-          </div>
-          <div className="p-4 bg-white/3 rounded-lg">
-            <h4 className="font-semibold">Lightweight</h4>
-            <p className="text-sm text-slate-300">Minimal JS footprint and focused features keep pages fast.</p>
-          </div>
-          <div className="p-4 bg-white/3 rounded-lg">
-            <h4 className="font-semibold">Accessible</h4>
-            <p className="text-sm text-slate-300">High contrast and keyboard-friendly controls out of the box.</p>
-          </div>
-        </div>
+    <MSection
+      className="max-w-6xl mx-auto px-6 py-24 space-y-16"
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+      viewport={{ once: true }}
+    >
+      <div className="text-center space-y-4">
+        <h2 className="text-4xl md:text-5xl font-black text-white">Why you'll love it</h2>
+        <p className="text-lg text-slate-400 max-w-2xl mx-auto">Built for simplicity, designed for everyone</p>
       </div>
 
-      <div className="p-6 bg-gradient-to-br from-purple-900/30 to-indigo-900/20 rounded-xl border border-white/5 flex items-center justify-center">
-        <img src="/readme/hero_dashboard.png" alt="widgets preview" className="w-full h-auto rounded-md shadow-lg" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {featureCards.map((card, i) => (
+          <MDiv
+            key={card.title}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: i * 0.1 }}
+            viewport={{ once: true }}
+            whileHover={{ y: -5, backgroundColor: 'rgba(255,255,255,0.08)' }}
+            className="p-6 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all"
+          >
+            <div className="text-4xl mb-4">{card.icon}</div>
+            <h3 className="font-bold text-lg text-white mb-2">{card.title}</h3>
+            <p className="text-slate-400 text-sm">{card.description}</p>
+          </MDiv>
+        ))}
       </div>
     </MSection>
   )
