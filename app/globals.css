@@ -26,100 +26,503 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 } */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,700&display=swap");
+/* Font files now loaded from /public/fonts - local copies */
+
+:root {
+  /* --acc: oklch(0.78 0.2 270); */
+  --acc: #8301e8;
+  --acc-muted: #89828D;
+  /* --acc-1: oklch(0.86 0.16 270); */
+  --acc-1: oklch(0.82 0.01 80);
+  --acc-dim: oklch(0.55 0.14 270);
+  --acc-bg: oklch(0.78 0.2 270 / 0.12);
+  --acc-bg-2: oklch(0.78 0.2 270 / 0.22);
+  --ok: oklch(0.82 0.14 150);
+  /* --ff-sans: 'Geist', -apple-system, 'Inter', system-ui, sans-serif;
+  --ff-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --ff-serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif; */
+  --ff-sans: 'Geist', -apple-system, 'Inter', system-ui, sans-serif;
+  --ff-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --ff-serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+
+  --pad: clamp(20px, 4vw, 72px);
+  --maxw: 1320px;
+  color-scheme: dark;
+}
 
 @font-face {
-  font-family: "Bebas Neue";
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/geist.woff2') format('woff2');
+  unicode-range: U +0301, U +0400 -045F, U +0490 -0491, U +04B0 -04B1, U +2116;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("https://fonts.gstatic.com/s/bebasneue/v16/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
-    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
-    U+2113, U+2C60-2C7F, U+A720-A7FF;
+  src: url('/fonts/geistmono.woff2') format('woff2');
+  unicode-range: U +0301, U +0400 -045F, U +0490 -0491, U +04B0 -04B1, U +2116;
 }
 
+
 @font-face {
-  font-family: "Bebas Neue";
-  font-style: normal;
+  font-family: 'Instrument Serif';
+  font-style: italic;
   font-weight: 400;
   font-display: swap;
-  src: url("https://fonts.gstatic.com/s/bebasneue/v16/JTUSjIg69CK48gW7PXoo9Wlhyw.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
-    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF,
-    U+FFFD;
+  src: url('/fonts/instrumentserif.woff2') format('woff2');
+  unicode-range: U +0100 -02BA, U +02BD -02C5, U +02C7 -02CC, U +02CE -02D7, U +02DD -02FF, U +0304, U +0308, U +0329, U +1D00 -1DBF, U +1E00 -1E9F, U +1EF2 -1EFF, U +2020, U +20A0 -20AB, U +20AD -20C0, U +2113, U +2C60 -2C7F, U + A720-A7FF;
 }
 
-@font-face {
-  font-family: "Karla Local";
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url("/fonts/Karla.woff2") format("woff2");
+.ital {
+  font-family: var(--ff-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--acc);
+  letter-spacing: -0.01em;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Sora:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&family=Manrope:wght@400;600;700&family=Playfair+Display:wght@400;600;700&display=swap');
+/* Ensure monospace text uses normal letter spacing */
+code,
+pre,
+kbd,
+samp,
+.mono,
+.font-mono {
+  letter-spacing: normal !important;
+}
+
+/* Navbar brand (mono) styling - small, aligned with icon */
+.nav-brand {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: normal;
+}
+
+.nav-brand img,
+.nav-brand svg {
+  width: 1.25rem;
+  /* 20px */
+  height: 1.25rem;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Modern navbar styling and scrolled state */
+.modern-navbar {
+  position: fixed;
+  top: 0;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  border-bottom-color: color-mix(in srgb, var(--acc) 12%, transparent);
+
+  background: rgba(11 8 20 / 0.77);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 14px 34px rgba(3, 2, 6, 0.52);
+  transition: background-color 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+/* .modern-navbar.scrolled {
+  position: sticky;
+  top:0;
+  background: rgba(11, 8, 20, 0.48);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 14px 34px rgba(3,2,6,0.52);
+  border-bottom-color: color-mix(in srgb, var(--acc) 12%, transparent);
+} */
+
+/* Nav links styling - plain text, color change on hover only */
+.nav-link {
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  /* text-transform: uppercase; */
+  /* color: oklch(0.62 0.008 80); */
+  color: var(--acc-muted);
+  transition: color 160ms ease;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: oklch(0.97 0.01 80);
+}
+
+/* Button styling */
+.btn-github {
+  font-family: var(--ff-mono);
+
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid oklch(0.34 0.01 60);
+  /* background: rgba(255, 255, 255, 0.05); */
+  /* background: transparent; */
+  color: oklch(0.97 0.01 80);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+
+
+  /* font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em; */
+  /* text-transform: uppercase; */
+  transition: all 160ms ease;
+  text-decoration: none;
+}
+
+.btn-github:hover {
+  border-color: var(--acc);
+  background: rgba(135, 0, 241, 0.1);
+  /* color: var(--acc); */
+}
+
+.btn-github-hero {
+  font-family: var(--ff-mono);
+
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: rgba(135, 0, 241, 0.08);
+  /* #8700f1 with low alpha */
+  border: 1px solid rgba(135, 0, 241, 0.22);
+
+  color: oklch(0.97 0.01 80);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+
+
+  /* font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em; */
+  /* text-transform: uppercase; */
+  transition: all 160ms ease;
+  text-decoration: none;
+}
+
+.btn-github:hover {
+  border-color: var(--acc);
+  background: rgba(135, 0, 241, 0.1);
+}
+
+
+.btn-github-hero:hover {
+  border-color: var(--acc);
+  background: rgba(135, 0, 241, 0.1);
+  /* color: var(--acc); */
+}
+
+.btn-primary-hero {
+
+  font-family: var(--ff-mono);
+
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 12px;
+  border: 1px solid oklch(0.34 0.01 60);
+  /* background: rgba(255, 255, 255, 0.05); */
+  /* background: transparent; */
+  color: oklch(0.97 0.01 80);
+
+  /* border-color: oklch(0.97 0.01 80); */
+  letter-spacing: 0.01em;
+
+  /* border-color: oklch(0.97 0.01 80); */
+  /* font-size: 0.75rem; */
+  font-weight: 600;
+  /* letter-spacing: 0.18em; */
+  /* text-transform: uppercase; */
+  transition: all 160ms ease;
+  text-decoration: none;
+}
+
+.btn-primary-hero:hover {
+  border-color: var(--acc);
+  background: rgba(135, 0, 241, 0.1);
+
+
+}
+
+.btn-primary {
+  font-family: var(--ff-mono);
+
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  background: oklch(0.97 0.01 80);
+  color: oklch(0.13 0.008 60);
+  font-size: 12px;
+  border-color: oklch(0.97 0.01 80);
+  letter-spacing: 0.01em;
+
+  border-color: oklch(0.97 0.01 80);
+  /* font-size: 0.75rem; */
+  font-weight: 600;
+  /* letter-spacing: 0.18em; */
+  /* text-transform: uppercase; */
+  transition: all 160ms ease;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: var(--acc);
+  /* color: white; */
+}
+
+/* Brand (logo + name) styling: slightly larger, mono, uppercase, accent color */
+.modern-navbar .nav-brand {
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: oklch(0.97 0.01 80);
+}
+
+/* Button hover/accent: subtle accent fill and white text on hover for rounded buttons */
+.modern-navbar .rounded-full:hover {
+  background: color-mix(in srgb, var(--acc) 14%, transparent) !important;
+  color: white !important;
+  /* transform: translateY(-1px) !important; */
+}
+
+/* Ensure brand (logo + name) shows no hover effects */
+.modern-navbar .nav-brand,
+.modern-navbar img[alt$="logo"] {
+  transition: none !important;
+}
+
+.modern-navbar .nav-brand:hover,
+.modern-navbar img[alt$="logo"]:hover {
+  transform: none !important;
+  color: inherit !important;
+  filter: none !important;
+}
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 .landing {
-  font-family: Inter, SF Pro Display, system-ui, -apple-system, sans-serif;
-  letter-spacing: 0.01em;
+  font-family: var(--ff-sans);
+  letter-spacing: 0.005em;
 }
 
-.hero-title,
-.landing h1,
+.landing h1 {
+  font-family: var(--ff-serif);
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.landing .hero-title {
+  font-family: var(--ff-sans);
+  /* letter-spacing: -0.02em; */
+  font-weight: 600;
+}
+
+.landing .hero-italic {
+  font-family: var(--ff-serif);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--acc);
+  /* text-[#8E6BDF] */
+}
+
+.landing .hero-description {
+  max-width: 60ch;
+  font-size: clamp(17px, 1.6vw, 20px);
+  color: oklch(0.82 0.01 80);
+  line-height: 1.5;
+  margin: 0 0 36px;
+  text-wrap: pretty;
+}
+
 .landing h2 {
-  font-family: "Libre Baskerville", "Times New Roman", serif;
+  font-family: var(--ff-sans);
   letter-spacing: -0.01em;
-}
-
-.hero-title {
-  font-style: oblique;
-  font-weight: 700;
-  background: linear-gradient(120deg, #f7f2ff, #f0e6ff 40%, #c8b8ff);
-  -webkit-background-clip: text;
-  color: transparent;
-  text-shadow: 0 10px 40px rgba(125, 108, 255, 0.22);
-  line-height: 1.08;
-  padding-block: 0.12em;
-}
-
-.landing h2 {
-  line-height: 1.12;
+  font-weight: 600;
 }
 
 .landing .lead {
-  font-family: "Inter", "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-family: var(--ff-sans);
   letter-spacing: 0;
-  color: #d6d6e0;
+  color: #d8d1e6;
 }
 
 .landing-card {
-
   border: 1px solid rgba(255, 255, 255, 0.06);
-  /* Remove the first radial-gradient (the circle) and keep only the secondary gradient and solid bg */
   background: rgba(17, 17, 23, 0.8);
-
   box-shadow: 0 25px 70px rgba(0, 0, 0, 0.55), 0 10px 30px rgba(64, 36, 114, 0.25);
 }
 
+.landing .card-title {
+  font-family: var(--ff-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
 .landing .badge {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(34, 34, 45, 0.8);
-  color: #e7e3ff;
+  border-color: rgba(167, 139, 250, 0.4);
+  background: rgba(167, 139, 250, 0.08);
+  color: #ddd6fe;
+}
+
+/* Accent pill like example image (uses site accent color) */
+.accent-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(135, 0, 241, 0.08);
+  /* #8700f1 with low alpha */
+  border: 1px solid rgba(135, 0, 241, 0.22);
+  color: #8700f1;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+
+.accent-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8700f1;
+  box-shadow: 0 0 0 0 color-mix(in oklab, #8700f1 55%, transparent);
+  animation: soonPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes accent-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(135, 0, 241, 0.28);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 10px rgba(135, 0, 241, 0.08);
+    opacity: 0.85;
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(135, 0, 241, 0.28);
+    opacity: 1;
+  }
+}
+
+/* Tag / soon badge styles (example-based) */
+.tag {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.9);
+  background: color-mix(in oklab, rgba(9, 9, 11, 1) 50%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tag--soon {
+  color: var(--acc);
+  /* accent */
+  border-color: color-mix(in oklab, #8700f1 40%, rgba(255, 255, 255, 0.06));
+  background: color-mix(in oklab, #8700f1 8%, rgba(10, 8, 18, 1));
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tag--muted {
+  /* color: oklch(0.62 0.008 80); */
+  /* color: oklch(0.62 0.008 80); */
+  color: #89828D;
+  /* color: #898681; */
+
+
+  border-color: color-mix(in oklab, oklch(0.62 0.008 80) 25%, rgba(255, 255, 255, 0.08));
+  border-style: dashed;
+  /* background: color-mix(in oklab, rgba(255,255,255,0.03) 70%, transparent); */
+}
+
+.tag--soon::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8700f1;
+  box-shadow: 0 0 0 0 color-mix(in oklab, #8700f1 55%, transparent);
+  animation: soonPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes soonPulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, #8700f1 55%, transparent);
+  }
+
+  70% {
+    box-shadow: 0 0 0 9px color-mix(in oklab, #8700f1 0%, transparent);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, #8700f1 0%, transparent);
+  }
+}
+
+::selection {
+  background: var(--acc-bg-2);
+  color: #ffffff;
 }
 
 .landing .cta {
-  background: linear-gradient(120deg, #a855f7, #7c3aed);
-  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.35);
+  /* background: linear-gradient(135deg, #a855f7, #6366f1); */
+  font-family: var(--ff-mono);
+  /* padding: 0.5rem 1rem; */
+  /* border-radius: 8px; */
+  /* border: 1px solid oklch(0.34 0.01 60); */
+  color: oklch(0.97 0.01 80);
+  /* font-size: 12px; */
+  letter-spacing: 0.01em;
+  transition: all 160ms ease;
+  /* text-decoration: none; */
+  background: var(--acc);
+  /* background: rgb(98 0 172); */
+  /* background: rgba(135, 0, 241, 0.1); */
+
+  box-shadow: 0 7px 25px rgba(139, 92, 246, 0.35);
 }
 
+
 .landing .cta:hover {
-  filter: brightness(1.08);
+  /* border-color: var(--acc); */
+  /* background: rgba(135, 0, 241, 0.1); */
+  /* background: rgba(0 0 0 / 0.1); */
+  /* background: var(--acc); */
+  /* background: rgb(98 0 172); */
+  /* color: var(--acc); */
+  /* filter: brightness(1.12) drop-shadow(0 8px 16px rgba(139, 92, 246, 0.4)); */
+  filter: brightness(1.12);
+
 }
+
 
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -1839,9 +2242,17 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   background: transparent;
-  overflow: hidden;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-y: auto;
+}
+
+body {
+  overflow-y: visible;
 }
 
 * {
