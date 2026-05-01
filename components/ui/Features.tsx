@@ -1,8 +1,8 @@
 "use client"
 import { motion } from 'framer-motion'
 
-const MSection: any = motion.section
-const MDiv: any = motion.div
+const MSection = motion.section
+const MDiv = motion.div
 
 const featureCards = [
   {
@@ -37,7 +37,7 @@ export default function Features() {
       viewport={{ once: true }}
     >
       <div className="text-center space-y-4">
-        <h2 className="text-4xl md:text-5xl font-black text-white">Why you'll love it</h2>
+        <h2 className="text-4xl md:text-5xl font-black text-white">Why you&apos;ll love it</h2>
         <p className="text-lg text-slate-400 max-w-2xl mx-auto">Built for simplicity, designed for everyone</p>
       </div>
 

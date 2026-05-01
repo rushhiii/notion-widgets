@@ -1,7 +1,7 @@
 "use client"
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import Image from 'next/image'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGithub } from '@fortawesome/free-brands-svg-icons'
@@ -9,7 +9,36 @@ import {
     ArrowUpRight
 } from "lucide-react";
 
-const MHeader: any = motion.header
+const MHeader = motion.header
+
+const mobileMenuVariants = {
+  hidden: {
+    opacity: 0,
+    height: 0,
+    y: -8,
+    transition: { duration: 0.2, ease: 'easeInOut' as const },
+  },
+  visible: {
+    opacity: 1,
+    height: 'auto',
+    y: 0,
+    transition: {
+      duration: 0.28,
+      ease: 'easeOut' as const,
+      when: 'beforeChildren',
+      staggerChildren: 0.05,
+    },
+  },
+}
+
+const mobileMenuItemVariants = {
+  hidden: { opacity: 0, y: -6 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.2, ease: 'easeOut' as const },
+  },
+}
 
 export default function ModernNavbar() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -45,10 +74,12 @@ export default function ModernNavbar() {
       <div className="max-w-[1200px] mx-auto px-4 py-3 flex items-center justify-between">
         {/* Left: Brand */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <img
+          <Image
             src="/icons/web_logo.svg"
             alt="Viora logo"
             className="w-5 h-5 bg-transparent"
+            width={20}
+            height={20}
             draggable={false}
           />
           <span className="nav-brand text-base text-white">Viora</span>
@@ -107,29 +138,46 @@ export default function ModernNavbar() {
         </button>
       </div>
 
-      {isMobileMenuOpen && (
-        <div id="mobile-nav-menu" className="sm:hidden px-4 pb-4">
-          <div className="mx-auto max-w-[1200px] rounded-lg border border-white/15 bg-black/35 p-4 backdrop-blur-sm">
-            <nav className="flex flex-col gap-3" onClick={() => setIsMobileMenuOpen(false)}>
-              <Link href="/" className="nav-link">Home</Link>
-              <Link href="/#widgets" className="nav-link">Widgets</Link>
-              <a
-                href="https://github.com/rushhiii/notion-widgets"
-                target="_blank"
-                rel="noreferrer"
-                className="btn-github inline-flex items-center justify-center gap-2.5"
-              >
-                <FontAwesomeIcon icon={faGithub} className='w-3.5 h-3.5'/>
-                <span>GitHub</span>
-              </a>
-              <a href="#widgets" className="btn-primary inline-flex items-center justify-center gap-2">
-                <span>Explore</span>
-                <ArrowUpRight className="w-4 h-4" />
-              </a>
-            </nav>
-          </div>
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {isMobileMenuOpen && (
+          <motion.div
+            id="mobile-nav-menu"
+            className="sm:hidden px-4 pb-4 overflow-hidden"
+            variants={mobileMenuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+          >
+            <div className="mx-auto max-w-[1200px] rounded-lg border border-white/15 bg-black/35 p-4 backdrop-blur-sm">
+              <motion.nav className="flex flex-col gap-3" onClick={() => setIsMobileMenuOpen(false)}>
+                <motion.div variants={mobileMenuItemVariants}>
+                  <Link href="/" className="nav-link block w-full text-center py-2">Home</Link>
+                </motion.div>
+                <motion.div variants={mobileMenuItemVariants}>
+                  <Link href="/#widgets" className="nav-link block w-full text-center py-2">Widgets</Link>
+                </motion.div>
+                <motion.div variants={mobileMenuItemVariants}>
+                  <a
+                    href="https://github.com/rushhiii/notion-widgets"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-github inline-flex w-full items-center justify-center gap-2.5"
+                  >
+                    <FontAwesomeIcon icon={faGithub} className='w-3.5 h-3.5'/>
+                    <span>GitHub</span>
+                  </a>
+                </motion.div>
+                <motion.div variants={mobileMenuItemVariants}>
+                  <a href="#widgets" className="btn-primary inline-flex w-full items-center justify-center gap-2">
+                    <span>Explore</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </a>
+                </motion.div>
+              </motion.nav>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </MHeader>
   )
 }

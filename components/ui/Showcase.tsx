@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
-const MDiv: any = motion.div
+const MDiv = motion.div
 
 const widgets = [
   {

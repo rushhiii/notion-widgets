@@ -1,9 +1,9 @@
 "use client"
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 
-const MFooter: any = motion.footer
+const MFooter = motion.footer
 
 export default function ModernFooter() {
   return (
@@ -18,10 +18,12 @@ export default function ModernFooter() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <Link href="/" className="flex items-center gap-2 shrink-0 mb-4">
-              <img
+              <Image
                 src="/icons/web_logo.svg"
                 alt="Viora logo"
                 className="w-4 h-4 bg-transparent"
+                width={16}
+                height={16}
                 draggable={false}
               />
               <span className="nav-brand font-semibold text-sm font-mono uppercase text-[var(--acc-muted)]">Viora</span>
