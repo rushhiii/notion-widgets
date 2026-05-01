@@ -1,18 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import {
-  fontKarla,
-  fontManrope,
-  fontPlayfair,
-  fontPlusJakarta,
-  fontLibreBaskerville,
-  fontSora,
-  fontSpaceGrotesk,
+  fontInstrumentSerif,
 } from "./fonts";
 import AuthProvider from "../components/AuthProvider";
 import { getSiteUrl } from "@/lib/site";
-import ModernNavbar from "../components/ui/ModernNavbar";
-import ModernFooter from "../components/ui/ModernFooter";
 
 const siteUrl = getSiteUrl();
 const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "ScLbPuILYWTWtNMP4oWQnBpW2VF037R5IA7QfrSvxyU";
@@ -20,7 +12,8 @@ const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Rushi's Notion Widgets",
+    // default: "Rushi's Notion Widgets",
+    default: "Viora — Minimal Notion widgets stack. static, embeddable, and themeable",
     template: "%s | Rn. Widgets",
   },
   description:
@@ -38,8 +31,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/",
-    siteName: "Rushi's Notion Widgets",
-    title: "Rushi's Notion Widgets",
+    siteName: "Viora",
+    title: "Viora —— Minimal Notion widgets stack. static, embeddable, and themeable",
     description:
       "Embeddable Notion widgets for clock, timer, stopwatch, quotes, weather, progress, d-day, and music player use cases.",
     images: [
@@ -85,13 +78,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`h-full bg-slate-950 ${fontSpaceGrotesk.variable} ${fontSora.variable} ${fontPlusJakarta.variable} ${fontManrope.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable} ${fontKarla.variable}`}
+      className={`h-full bg-slate-950 ${fontInstrumentSerif.variable}`}
     >
-      <body className="h-full bg-slate-950 antialiased" suppressHydrationWarning>
+      <body className="h-full bg-slate-950 antialiased overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" suppressHydrationWarning>
+        {/* <div class="overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"> */}
+
         <AuthProvider>
-          <ModernNavbar />
           <main className="min-h-screen">{children}</main>
-          <ModernFooter />
         </AuthProvider>
       </body>
     </html>
