@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     google: googleSiteVerification,
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: "icons/ees.png",
   },
 };
 
