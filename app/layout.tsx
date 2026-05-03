@@ -6,6 +6,9 @@ import {
 import AuthProvider from "../components/AuthProvider";
 import { getSiteUrl } from "@/lib/site";
 
+// Allow Vercel preview screenshots to load fresh content
+export const revalidate = 0;
+
 const siteUrl = getSiteUrl();
 const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "ScLbPuILYWTWtNMP4oWQnBpW2VF037R5IA7QfrSvxyU";
 

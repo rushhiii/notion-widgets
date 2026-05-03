@@ -11,12 +11,12 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           {
-            key: "X-Frame-Options",
-            value: "ALLOW-FROM https://vercel.com",
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'self' https://*.vercel.app https://vercel.com",
           },
           {
-            key: "Content-Security-Policy",
-            value: "frame-ancestors 'self' https://vercel.com",
+            key: "X-Robots-Tag",
+            value: "index, follow",
           },
         ],
       },
