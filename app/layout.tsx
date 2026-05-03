@@ -67,7 +67,7 @@ export const metadata: Metadata = {
   },
   icons: {
     // icon: "icons/ees.png",
-    icon: "favicon.png",
+    icon: "/favicon.png",
   },
 };
 
