@@ -10,7 +10,7 @@ export function ClockClient() {
 
   if (embed) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-transparent">
+      <main className="flex h-screen w-screen items-center justify-center bg-transparent">
         <ClockWidget />
       </main>
     );

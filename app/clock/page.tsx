@@ -13,5 +13,9 @@ export const metadata: Metadata = {
 };
 
 export default function ClockPage() {
-  return <ClockWidget />;
+  return (
+    <main className="flex h-screen w-screen items-center justify-center bg-transparent">
+      <ClockWidget />
+    </main>
+  );
 }

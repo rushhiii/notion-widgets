@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import {
+  fontBebasNeue,
   fontInstrumentSerif,
+  fontKarla,
+  fontLibreBaskerville,
+  fontManrope,
+  fontPlayfair,
+  fontPlusJakarta,
+  fontSora,
+  fontSpaceGrotesk,
 } from "./fonts";
 import AuthProvider from "../components/AuthProvider";
 import { getSiteUrl } from "@/lib/site";
@@ -82,7 +90,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`h-full bg-slate-950 ${fontInstrumentSerif.variable}`}
+      className={`h-full bg-slate-950 ${fontInstrumentSerif.variable} ${fontPlayfair.variable} ${fontLibreBaskerville.variable} ${fontKarla.variable} ${fontManrope.variable} ${fontSora.variable} ${fontSpaceGrotesk.variable} ${fontPlusJakarta.variable} ${fontBebasNeue.variable}`}
     >
       <body className="h-full bg-slate-950 antialiased overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" suppressHydrationWarning>
         {/* <div class="overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"> */}

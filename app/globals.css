@@ -579,7 +579,7 @@ samp,
   --slider-background: #353535;
   background: var(--background);
   color: var(--text);
-  font-family: "Bebas Neue", Arial, sans-serif;
+  font-family: var(--font-bebas), "Bebas Neue", Arial, sans-serif;
   width: 100%;
   height: 100%;
   display: flex;
@@ -621,7 +621,7 @@ samp,
 
 .fc-minimal-time {
   /* font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif !important; */
-  font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif !important;
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif !important;
   font-weight: 700;
   /* font-size: 1em; */
   line-height: 0;
@@ -724,7 +724,7 @@ samp,
   display: inline;
   text-align: center;
   color: var(--text);
-  font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif !important;
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif !important;
   /* font-size: .29em; */
   font-size: .3em;
   font-weight: 700;
@@ -749,7 +749,7 @@ samp,
   margin-top: 0;
   text-align: center;
   color: var(--text);
-  font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif;
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
   font-size: 0.16em;
   font-weight: 700;
   /* letter-spacing: 0.06em; */
@@ -763,7 +763,7 @@ samp,
   margin-top: 0;
   text-align: center;
   color: var(--text);
-  font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif;
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
   font-size: 0.14em;
   font-weight: 700;
   line-height: 1.05;
@@ -802,7 +802,7 @@ samp,
   color: var(--text);
   padding: 0 10px;
   font-size: 12px;
-  font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif;
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
   outline: none;
 }
 
@@ -1625,7 +1625,7 @@ samp,
   color: var(--text);
   padding: 0 8px;
   font-size: 11px;
-  font-family: "Karla Local", "Karla", "Inter", "Segoe UI", sans-serif;
+  font-family: var(--font-karla), "Karla", "Inter", "Segoe UI", sans-serif;
   outline: none;
 }
 
