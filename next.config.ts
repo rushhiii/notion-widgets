@@ -12,7 +12,8 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors 'self' https://*.vercel.app https://vercel.com",
+            value:
+              "frame-ancestors 'self' https://*.vercel.app https://vercel.com https://*.notion.so https://notion.so https://*.notion.site https://notion.site",
           },
           {
             key: "X-Robots-Tag",
