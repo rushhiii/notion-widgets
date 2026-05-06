@@ -19,6 +19,7 @@ import {
 type ThemeKey = "dark" | "light";
 type TransparentBgMode = "off" | "dark" | "light";
 type CustomQuoteMode = "custom" | "database";
+type QuoteThemeKey = "viora-gold";
 
 type FancyOption = { value: string; label: string };
 
@@ -111,6 +112,10 @@ const RESTRICTED_AUTHORS = ["unknown", "n/a", "rushi", "jane austen", "atticus",
 const RESTRICTED_LANGUAGES = ["hindi", "punjabi", "punjabi/hindi"];
 const RESTRICTED_SOURCE_TYPES = ["poetry", "quote", "saying", "series", "song", "lines", "movie", "my thought"];
 
+const QUOTE_THEME_PRESETS: Record<QuoteThemeKey, { label: string; requiresAdmin?: boolean }> = {
+  "viora-gold": { label: "Viora Gold (Flashcard)", requiresAdmin: true },
+};
+
 export function QuotesBuilder() {
   const [authors, setAuthors] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -137,6 +142,7 @@ export function QuotesBuilder() {
   const [customMode, setCustomMode] = useState<CustomQuoteMode>("database");
   const [customText, setCustomText] = useState("");
   const [customAuthor, setCustomAuthor] = useState("");
+  const [themePreset, setThemePreset] = useState<QuoteThemeKey | "">("");
   const [stylePreset, setStylePreset] = useState<QuoteStyleKey | "">("");
   const [quoteFont, setQuoteFont] = useState<QuoteFontKey | "">("");
   const [authorFont, setAuthorFont] = useState<QuoteFontKey | "">("");
@@ -258,6 +264,44 @@ export function QuotesBuilder() {
     setAccent(preset.accent);
   }, [stylePreset]);
 
+  useEffect(() => {
+    if (!themePreset) return;
+    if (themePreset === "viora-gold") {
+      setAuthors(["n/a"]);
+      setTags([]);
+      setLanguages([]);
+      setSourceTypes([]);
+      setMode("flashcard");
+      setStartIndex(1);
+      setIndexChase(false);
+      setQuery("");
+      setShowPinned(false);
+      setShowPersonal(false);
+      setSource("notion");
+      setTheme("dark");
+      setRotate(true);
+      setInterval(70);
+      setBg("#000000");
+      setBorder("#966919");
+      setText("#e6a433");
+      setAccent("#a1a1aa");
+      setPageBg("#0a0a0b");
+      setPageMatch(false);
+      setTransparentBgMode("dark");
+      setCustomMode("database");
+      setCustomText("");
+      setCustomAuthor("");
+      setStylePreset("");
+      setQuoteFont("");
+      setAuthorFont("libre");
+      setCardWidth(0);
+      setQuoteSize(0);
+      setAuthorSize(0);
+      setArrowColor("");
+      setCounterColor("");
+    }
+  }, [themePreset]);
+
   const applyInstance = () => {
     const next = normalizedDraft;
     if (next === normalizedInstance) return;
@@ -293,6 +337,7 @@ export function QuotesBuilder() {
     setCustomMode("database");
     setCustomText("");
     setCustomAuthor("");
+    setThemePreset("");
     setStylePreset("");
     setQuoteFont("");
     setAuthorFont("");
@@ -667,6 +712,22 @@ export function QuotesBuilder() {
                   </label>
                 </div>
               </div>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Theme preset</span>
+                <FancySelect
+                  value={themePreset}
+                  onChange={(val) => setThemePreset(val ? (val as QuoteThemeKey) : "")}
+                  options={[
+                    { value: "", label: "Custom" },
+                    ...Object.entries(QUOTE_THEME_PRESETS).map(([key, value]) => ({ value: key, label: value.label })),
+                  ]}
+                />
+                <p className="text-xs text-zinc-500">Applies source, mode, and color settings.</p>
+                {themePreset && QUOTE_THEME_PRESETS[themePreset as QuoteThemeKey]?.requiresAdmin && !isAdminBypass && (
+                  <p className="text-xs text-amber-300">Requires admin param for restricted authors.</p>
+                )}
+              </label>
 
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Notion-style preset</span>
