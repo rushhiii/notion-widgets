@@ -465,7 +465,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
               href={notionUrl}
               target="_blank"
               rel="noreferrer"
-              className="absolute right-3 top-3 z-10 flex h-3.5 w-3.5 rounded-full items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:pointer-events-auto"
+              className="absolute right-3 top-3 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
               aria-label="Open quote in Notion"
               title="Open in Notion"
               onMouseEnter={() => setDotHovered(true)}
@@ -500,7 +500,7 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
           </footer>
 
           {modeParam === "flashcard" && (
-            <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100">
+            <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100">
               <span
                 className="rounded-full border px-3 py-1 text-sm backdrop-blur"
                 style={{
