@@ -83,6 +83,13 @@ function firstPropertyOfType(properties, type) {
 function normalizePage(page) {
   const properties = page.properties ?? {};
 
+  const notionUrl =
+    typeof page?.public_url === "string" && page.public_url
+      ? page.public_url
+      : typeof page?.url === "string"
+        ? page.url
+        : undefined;
+
   const textProperty =
     pickProperty(properties, ["text", "quote", "content", "message"]) ??
     Object.values(properties).find((property) => property?.type === "title" || property?.type === "rich_text");
@@ -122,6 +129,7 @@ function normalizePage(page) {
     text,
     author: getPlainText(authorProperty) || "Unknown",
     resources: getPlainText(resourcesProperty) || undefined,
+    notionUrl,
     category: (getPlainText(resolvedCategory) || "general").toLowerCase(),
     language: resolvedLanguageValues[0]?.toLowerCase(),
     sourceType: resolvedSourceTypeValues[0]?.toLowerCase(),

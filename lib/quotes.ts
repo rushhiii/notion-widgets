@@ -8,6 +8,7 @@ export type Quote = {
   category: QuoteCategory;
   reference?: string;
   resources?: string;
+  notionUrl?: string;
   sourceType?: string;
   language?: string;
   tags?: string[];
@@ -155,6 +156,14 @@ function sanitizeQuote(input: Partial<Quote>): Quote | null {
     return undefined;
   };
 
+  const notionUrlRaw =
+    typeof input.notionUrl === "string"
+      ? input.notionUrl
+      : typeof raw.notionUrl === "string"
+        ? raw.notionUrl
+        : "";
+  const notionUrl = notionUrlRaw.trim() || undefined;
+
   const text = (input.text ?? "").trim();
   const author = (input.author ?? "").trim() || "Unknown";
   const category = (input.category ?? "general").trim().toLowerCase() || "general";
@@ -166,6 +175,7 @@ function sanitizeQuote(input: Partial<Quote>): Quote | null {
     author,
     reference: resourceValue,
     resources: resourceValue,
+    notionUrl,
     category,
     sourceType: input.sourceType?.trim().toLowerCase() || undefined,
     language: input.language?.trim().toLowerCase() || undefined,

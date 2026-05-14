@@ -128,6 +128,7 @@ function withAlphaHex(color: string, alpha: number) {
 export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams }) {
   const searchParams = useSearchParams();
   const [hasMounted, setHasMounted] = useState(false);
+  const [dotHovered, setDotHovered] = useState(false);
 
   const instanceParam = (embedParams?.instance ?? searchParams.get("instance") ?? "").trim();
   const normalizedInstance = sanitizeInstance(instanceParam);
@@ -405,18 +406,18 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
   const quoteFontSize = quoteSizeParam > 0 ? `${quoteSizeParam}px` : undefined;
   const authorFontSize = authorSizeParam > 0 ? `${authorSizeParam}px` : undefined;
   const displayText = noQuotes ? "No quotes match your filters." : quote?.text ?? "Loading quote...";
+  const notionUrl = (quote?.notionUrl ?? "").trim();
+  const hasNotionLink = notionUrl.length > 0;
   const quoteSourceType = (quote?.sourceType || "").toLowerCase();
   const isSongSource = quoteSourceType.includes("song");
   const displayReference = (quote?.resources ?? quote?.reference ?? "").trim();
   const rawAuthor = (quote?.author ?? "").trim();
-  const authorLooksPlaceholder = ["n/a", "na", "unknown", "unknow"].includes(rawAuthor.toLowerCase());
+  // Only show `reference` for quotes that are song sources; otherwise show the author.
   const displayAuthor = noQuotes
     ? ""
     : isSongSource
       ? (displayReference || rawAuthor)
-      : authorLooksPlaceholder
-        ? (displayReference || rawAuthor)
-        : rawAuthor;
+      : rawAuthor;
   const quoteLength = displayText.length;
   const isLongQuote = quoteLength > 180;
   const isMediumQuote = quoteLength > 120;
@@ -459,6 +460,29 @@ export function QuoteWidget({ embedParams }: { embedParams?: QuoteEmbedParams })
             maxWidth: cardMaxWidth,
           }}
         >
+          {hasNotionLink && (
+            <a
+              href={notionUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="absolute right-3 top-3 z-10 flex h-3.5 w-3.5 rounded-full items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:pointer-events-auto"
+              aria-label="Open quote in Notion"
+              title="Open in Notion"
+              onMouseEnter={() => setDotHovered(true)}
+              onMouseLeave={() => setDotHovered(false)}
+            >
+              <span
+                className="h-full w-full rounded-full border transition-colors duration-200 ease-out"
+                // className="h-2.5 w-2.5 rounded-full border transition-colors duration-200 ease-out"
+                style={{
+                  backgroundColor: dotHovered
+                    ? withAlphaHex(counterColor, 0.65)
+                    : withAlphaHex(counterColor, 0.18),
+                  borderColor: withAlphaHex(counterColor, 0.35),
+                }}
+              />
+            </a>
+          )}
           <blockquote
             className={cn(
               "w-full max-w-[900px] whitespace-pre-wrap break-words text-center font-serif italic leading-[1.45]",
