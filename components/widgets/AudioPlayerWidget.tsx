@@ -469,7 +469,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
-  }, [activeIndex, loopMode, filteredTracks.length, nextTrack, playTrackAt];
+  }, [activeIndex, loopMode, filteredTracks.length, nextTrack, playTrackAt]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
