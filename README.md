@@ -130,6 +130,7 @@ Your widgets will be live at `https://YOUR_VERCEL_APP.vercel.app/clock`, `/timer
 - `/weather`
 - `/progress`
 - `/music-player`
+- `/audio-player`
 
 ## Instance IDs
 
@@ -151,8 +152,169 @@ Example:
 - Weather: `location`, `lat`, `lon`, `units`, `mode`, `details`, `theme`, `bg`, `text`, `accent`
 - Progress: `title`, `label`, `goal`, `progress`, `prefix`, `suffix`, `accent`, `track`, `text`, `bg`, `embed`, `instance`
 - Music Player: `server`, `type`, `id`, `colorscheme`, `theme`, `loop`, `order`, `preload`, `volume`, `list-folded`, `list-max-height`, `storage-name`, `instance`
+- Audio Player: `layout`, `src`, `title`, `artist`, `cover`, `data`, `accent`, `bg`, `text`, `volume`, `start`, `loop`, `queue`, `autoplay`, `instance`
 
-## Music Player (English)
+## Audio Player (Custom MP3)
+
+Native HTML audio widget for custom MP3 files and JSON playlists hosted in your repo/CDN/object storage.
+
+Examples:
+
+- Small single-track:
+   `https://notion.busiyi.world/audio-player/?layout=small&src=/audio/instrumental.mp3&title=my%20magic%20shop&artist=instrumental&embed=1`
+- Medium card:
+   `https://notion.busiyi.world/audio-player/?layout=medium&src=/audio/satisfaction.mp3&title=Satisfaction&artist=The%20Rolling%20Stones&embed=1`
+- Large playlist from JSON:
+   `https://notion.busiyi.world/audio-player/?layout=large&data=/audio/playlist.json&queue=1&loop=playlist&embed=1`
+
+Playlist JSON shape:
+
+```json
+[
+  {
+    "src": "/audio/track-1.mp3",
+    "title": "Satellite",
+    "artist": "Harry Styles",
+    "cover": "/audio/covers/satellite.jpg"
+  }
+]
+```
+
+Options:
+
+| option | default | description |
+| --- | --- | --- |
+| layout | `small` | `small`, `medium`, or `large` |
+| src | optional | Single track mp3 URL (relative or absolute) |
+| title | `Instrumental Track` | Display title for single track |
+| artist | `Custom Source` | Display artist for single track |
+| cover | optional | Cover image URL |
+| data | optional | Playlist JSON URL (array or `{ "tracks": [] }`) |
+| accent | by layout | Accent color |
+| bg | by layout | Background color |
+| text | by layout | Text color |
+| volume | `0.8` | Initial volume (0..1) |
+| start | `0` | Initial track index for playlist mode |
+| loop | `none` | `none`, `track`, `playlist` |
+| queue | `1` | Show queue list in large mode |
+| autoplay | `0` | Autoplay on load |
+| instance | optional | Isolates data variations and link naming |
+
+### Using A Friend's Repo As Datasource
+
+Yes, this works. Keep the widget code in this repo and host audio files + playlist JSON in another public repo.
+
+Recommended hosting URL format (better than raw.githubusercontent):
+
+- `https://cdn.jsdelivr.net/gh/<owner>/<repo>@<branch>/<path-to-file>`
+
+Example friend repo layout:
+
+```txt
+audio-assets/
+   playlist.json
+   tracks/
+      intro.mp3
+      ambient-loop.mp3
+   covers/
+      intro.jpg
+      ambient-loop.jpg
+```
+
+Example `playlist.json` in your friend's repo:
+
+```json
+[
+   {
+      "src": "https://cdn.jsdelivr.net/gh/friendname/audio-assets@main/tracks/intro.mp3",
+      "title": "Intro",
+      "artist": "Instrumental",
+      "cover": "https://cdn.jsdelivr.net/gh/friendname/audio-assets@main/covers/intro.jpg"
+   }
+]
+```
+
+Then use this in your widget URL:
+
+- `/audio-player?layout=large&data=https://cdn.jsdelivr.net/gh/friendname/audio-assets@main/playlist.json&embed=1`
+
+Notes:
+
+- Repo/files must be public, or the browser cannot fetch them.
+- Keep file names stable and URL-safe.
+- Very large files are better on object storage/CDN (R2/S3) if you scale up.
+
+### Using Cloudflare R2
+
+Cloudflare R2 is the best fit if you want to host a few GB of MP3s with direct public URLs.
+
+1. Create an R2 bucket in Cloudflare.
+2. Upload your `tracks/` and `covers/` files.
+3. Make the bucket public, or expose it through a public custom domain.
+4. Build `playlist.json` so every `src` and `cover` points to the public R2 URL for that object.
+5. Point the audio player `data` parameter at the public `playlist.json` URL.
+
+Example playlist entry using a public R2 domain:
+
+```json
+[
+   {
+      "src": "https://media.example.com/tracks/ENG/21%20Savage%20-%20Rockstar.mp3",
+      "title": "Rockstar",
+      "artist": "21 Savage",
+      "cover": "https://media.example.com/covers/21-savage-rockstar.jpg",
+      "category": "eng",
+      "type": "speed up"
+   }
+]
+```
+
+If you keep the bucket private, the widget needs a small signing proxy so it can request short-lived URLs from your app before playback.
+
+If you do not want to add billing details, do not use R2. Cloudflare may still require a payment method to enable the subscription, even if you stay within the free monthly limits.
+
+### No-Card Alternative
+
+If you want public audio hosting without adding a card, use a host that supports public direct links with no payment setup. Internet Archive is the most practical fallback for a multi-GB audio library.
+
+Basic flow:
+
+1. Upload the MP3s to a public Internet Archive item.
+2. Copy the direct file URLs for each track.
+3. Generate `playlist.json` with those URLs.
+4. Point the audio-player `data` param at the JSON file.
+
+This avoids billing setup and still works with the widget's existing playlist loader.
+
+## Private Music Collection Setup
+
+If you are managing a private music collection repo (for example, [MyMusicCollection](https://github.com/V0idVanguard/MyMusicCollection)), you can use it as a datasource for the audio player while keeping files restricted.
+
+### Option A: Public Repo with Restrictive License (Simple)
+
+1. Host audio in a public repo with a restrictive "Personal Use" license.
+2. Use jsDelivr CDN links to the repo files (as shown in the friend repo section above).
+3. License restricts usage legally (not technically), but files are publicly accessible.
+4. Best for: small/medium collections, when you trust the license to deter misuse.
+
+Example:
+- Repository: `https://github.com/V0idVanguard/MyMusicCollection`
+- Playlist JSON: `https://cdn.jsdelivr.net/gh/V0idVanguard/MyMusicCollection@main/playlist.json`
+- Widget URL: `/audio-player?layout=large&data=<above-json-url>&embed=1`
+
+### Option B: Private Bucket with Signed URLs (Secure)
+
+1. Store audio in a private Cloudflare R2 bucket (free-tier friendly for ~3GB).
+2. Create an API endpoint in your widget app that generates short-lived signed URLs.
+3. Widget first fetches playlist metadata, then requests signed URLs from your API.
+4. Signed URLs expire quickly (2–10 minutes), so files stay private.
+5. Best for: full privacy, no direct public file access.
+
+Implementation coming soon. For a public bucket, use the R2 section above and skip signing.
+
+## License for Music Assets
+
+See `MUSIC_COLLECTION_LICENSE.txt` for the template license you can use in your private music collection repos.
 
 Powered by APlayer + MetingJS, supports both Netease and Tencent playlists/songs/albums/artists/search.
 

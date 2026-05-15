@@ -1,0 +1,14 @@
+Personal Use License
+
+Copyright (c) 2026 Repository Owner
+
+Permission is granted solely to the repository owner and their explicitly designated friend(s) to use the audio files in this repository for personal, non-commercial purposes in connection with the friend's audio widgets project.
+
+Prohibited actions (without express written permission):
+- Redistribution, sharing, uploading, or public performance of the audio files.
+- Copying, selling, sublicensing, or making the audio files available to third parties.
+- Any commercial use, creation of derivative works for public distribution, or public display.
+
+All rights not expressly granted are reserved. To request permission contact: [your-email@example.com]
+
+This repository and its audio files are provided for private use only.

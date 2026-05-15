@@ -36,4 +36,5 @@ export const PUBLIC_SITE_ROUTES = [
   "/weather",
   "/progress",
   "/music-player",
+  "/audio-player",
 ] as const;

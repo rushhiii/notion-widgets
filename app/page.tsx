@@ -138,6 +138,19 @@ export default function HomePage() {
         { label: "View", url: "/music-player/?server=netease&type=playlist&id=12528089157&embed=1" },
       ],
     },
+    {
+      title: "Audio Player Widget",
+      desc: "Custom MP3 widget with single-track or JSON playlist datasource, plus small/medium/large layouts.",
+      icon: "Music",
+      links: [
+        { label: "/audio-player", url: "/audio-player" },
+        { label: "/audio-player?layout=small&src=%2Faudio%2Finstrumental.mp3&title=my%20magic%20shop&artist=instrumental&embed=1", url: null },
+      ],
+      actions: [
+        { label: "Open Builder", url: "/audio-player" },
+        { label: "View", url: "/audio-player/?layout=large&data=%2Faudio%2Fplaylist.json&embed=1" },
+      ],
+    },
   ];
 
   return (

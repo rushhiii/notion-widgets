@@ -11,6 +11,7 @@ const ROUTE_PRIORITY: Record<string, number> = {
   "/progress": 0.8,
   "/dday": 0.8,
   "/music-player": 0.8,
+  "/audio-player": 0.8,
 };
 
 const ROUTE_FREQUENCY: Record<string, MetadataRoute.Sitemap[number]["changeFrequency"]> = {
@@ -23,6 +24,7 @@ const ROUTE_FREQUENCY: Record<string, MetadataRoute.Sitemap[number]["changeFrequ
   "/progress": "weekly",
   "/dday": "weekly",
   "/music-player": "weekly",
+  "/audio-player": "weekly",
 };
 
 export default function sitemap(): MetadataRoute.Sitemap {
