@@ -21,10 +21,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid URL protocol' }, { status: 400 });
     }
 
-    const response = await fetch(decodedUrl, {
+   const response = await fetch(decodedUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Range': request.headers.get('range') || undefined,
+       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
     });
 
@@ -36,11 +35,13 @@ export async function GET(request: NextRequest) {
     }
 
     const contentType = response.headers.get('content-type') || 'audio/mpeg';
-    const contentLength = response.headers.get('content-length');
-    const contentRange = response.headers.get('content-range');
 
-    const headers: Record<string, string> = {
+   // Buffer the entire audio file
+   const buffer = await response.arrayBuffer();
+
+   const headers: Record<string, string> = {
       'Content-Type': contentType,
+     'Content-Length': buffer.byteLength.toString(),
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Range',
@@ -48,12 +49,10 @@ export async function GET(request: NextRequest) {
       'Cache-Control': 'public, max-age=86400'
     };
 
-    if (contentLength) headers['Content-Length'] = contentLength;
-    if (contentRange) headers['Content-Range'] = contentRange;
 
-    // Stream the audio response directly
-    return new NextResponse(response.body, {
-      status: response.status,
+   // Return the buffered audio
+   return new NextResponse(buffer, {
+     status: 200,
       headers
     });
   } catch (error) {

@@ -36,6 +36,66 @@ const FALLBACK_AUDIO_SOURCES = [
   "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
 ];
 
+const PUBLIC_ALLOWED_TYPES_BY_CATEGORY: Record<string, string[]> = {
+  eng: ["normal", "slowed"],
+  hindi: ["normal", "slowed"],
+  otherz: ["normal"],
+  punjab: ["normal"],
+  nightcore: ["normal"],
+};
+
+const CATEGORY_ALIASES: Record<string, string> = {
+  punjabi: "punjab",
+  others: "otherz",
+};
+
+const TYPE_ALIASES: Record<string, string> = {
+  speedup: "speed up",
+  "sped up": "speed up",
+  spedup: "speed up",
+  "speed-up": "speed up",
+  "speed_up": "speed up",
+  morden: "modern",
+};
+
+function isPlaceholderCoverUrl(value: string): boolean {
+  return /placeholder/i.test(value);
+}
+
+function decodeMaybeUriComponent(value: string): string {
+  try {
+    return /%[0-9a-f]{2}/i.test(value) ? decodeURIComponent(value) : value;
+  } catch {
+    return value;
+  }
+}
+
+function normalizeCategory(value: string | null | undefined): string {
+  if (!value) return "";
+  const token = decodeMaybeUriComponent(value).trim().toLowerCase().replace(/\s+/g, " ");
+  if (!token) return "";
+  return CATEGORY_ALIASES[token] ?? token;
+}
+
+function normalizeType(value: string | null | undefined): string {
+  if (!value) return "";
+  const token = decodeMaybeUriComponent(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+  if (!token) return "";
+  return TYPE_ALIASES[token] ?? token;
+}
+
+function canAccessTrackWithoutAdmin(category: string, type: string): boolean {
+  if (!category) return false;
+  const allowedTypes = PUBLIC_ALLOWED_TYPES_BY_CATEGORY[category] ?? [];
+  if (!allowedTypes.length) return false;
+  const normalizedType = type || "normal";
+  return allowedTypes.includes(normalizedType);
+}
+
 function pick<T extends string>(value: string | null, allowed: readonly T[], fallback: T): T {
   if (!value) return fallback;
   const v = value.toLowerCase();
@@ -120,7 +180,7 @@ function normalizeTrack(input: unknown): Track | null {
   if (!src) return null;
   const title = typeof row.title === "string" && row.title.trim() ? row.title.trim() : DEFAULT_TRACK.title;
   const artist = typeof row.artist === "string" && row.artist.trim() ? row.artist.trim() : DEFAULT_TRACK.artist;
-  const cover = typeof row.cover === "string" && row.cover.trim() ? row.cover.trim() : "";
+  const cover = typeof row.cover === "string" && row.cover.trim() && !isPlaceholderCoverUrl(row.cover.trim()) ? row.cover.trim() : "";
   const album = typeof row.album === "string" && row.album.trim() ? row.album.trim() : undefined;
   const genre = typeof row.genre === "string" && row.genre.trim() ? row.genre.trim() : undefined;
   const year = typeof row.year === "string" && row.year.trim()
@@ -134,8 +194,10 @@ function normalizeTrack(input: unknown): Track | null {
       ? formatTime(row.duration)
       : undefined;
   const description = typeof row.description === "string" && row.description.trim() ? row.description.trim() : undefined;
-  const category = typeof row.category === "string" && row.category.trim() ? row.category.trim() : undefined;
-  const type = typeof row.type === "string" && row.type.trim() ? row.type.trim() : undefined;
+  const categoryRaw = typeof row.category === "string" ? row.category : "";
+  const typeRaw = typeof row.type === "string" ? row.type : "";
+  const category = normalizeCategory(categoryRaw) || undefined;
+  const type = normalizeType(typeRaw) || undefined;
   return { src, title, artist, cover, album, genre, year, duration, description, category, type };
 }
 
@@ -170,8 +232,8 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
   const [autoLayout, setAutoLayout] = useState<PlayerLayout>("small");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedType, setSelectedType] = useState<string>("");
 
   const getParam = (keys: string[]) => {
     if (embedParams) {
@@ -207,6 +269,12 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
   const startIndex = clamp(getParam(["start", "index"]), 0, 0, 99);
   const initialVolume = clamp(getParam(["volume"]), 0.8, 0, 1);
   const instance = sanitizeInstance((getParam(["instance"]) || "").trim());
+  const requestedCategory = normalizeCategory(getParam(["category"]));
+  const requestedType = normalizeType(getParam(["type"]));
+  const adminKey = (getParam(["admin-key", "admin_key", "adminkey"]) || "").trim();
+  const configuredAdminKey =
+    (process.env.NEXT_PUBLIC_AUDIO_ADMIN_KEY || process.env.NEXT_PUBLIC_QUOTES_ADMIN_KEY || "").trim();
+  const hasAdminAccess = Boolean(configuredAdminKey) && adminKey === configuredAdminKey;
 
   const defaultPalette =
     layout === "large"
@@ -310,73 +378,106 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
   }, [initialVolume]);
 
   useEffect(() => {
+    setSelectedCategory(requestedCategory);
+  }, [requestedCategory, dataUrl, instance]);
+
+  useEffect(() => {
+    setSelectedType(requestedType);
+  }, [requestedType, dataUrl, instance]);
+
+  useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.volume = volume;
   }, [volume]);
 
-  const activeTrack = tracks[activeIndex] ?? null;
-  const coverImage = activeTrack?.cover || cover || DEFAULT_COVER;
-  const playbackStateLabel = !activeTrack ? "" : isBuffering ? "Buffering" : isPlaying ? "Playing now" : "Ready to play";
-  
-  // Extract unique categories and types
+  const accessibleTracks = useMemo(() => {
+    if (hasAdminAccess) return tracks;
+    return tracks.filter((track) => {
+      const category = normalizeCategory(track.category);
+      const type = normalizeType(track.type);
+      return canAccessTrackWithoutAdmin(category, type);
+    });
+  }, [tracks, hasAdminAccess]);
+
   const categories = useMemo(() => {
-    const cats = new Set<string>();
-    tracks.forEach(t => {
-      if (t.category) cats.add(t.category.toLowerCase());
+    const set = new Set<string>();
+    accessibleTracks.forEach((track) => {
+      const category = normalizeCategory(track.category);
+      if (category) set.add(category);
     });
-    return Array.from(cats).sort();
-  }, [tracks]);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [accessibleTracks]);
 
-  const types = useMemo(() => {
-    const typs = new Set<string>();
-    tracks.forEach(t => {
-      if (t.type) typs.add(t.type.toLowerCase());
+  useEffect(() => {
+    if (!selectedCategory) return;
+    if (categories.includes(selectedCategory)) return;
+    setSelectedCategory("");
+  }, [categories, selectedCategory]);
+
+  const availableTypeOptions = useMemo(() => {
+    const set = new Set<string>();
+    accessibleTracks.forEach((track) => {
+      const category = normalizeCategory(track.category);
+      const type = normalizeType(track.type);
+      if (!type) return;
+      if (selectedCategory && category !== selectedCategory) return;
+      set.add(type);
     });
-    return Array.from(typs).sort();
-  }, [tracks]);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [accessibleTracks, selectedCategory]);
 
-  // Filter tracks based on selected category and type
+  useEffect(() => {
+    if (!selectedType) return;
+    if (availableTypeOptions.includes(selectedType)) return;
+    setSelectedType("");
+  }, [availableTypeOptions, selectedType]);
+
   const filteredTracks = useMemo(() => {
-    return tracks.filter(track => {
-      if (selectedCategory && track.category?.toLowerCase() !== selectedCategory.toLowerCase()) {
-        return false;
-      }
-      if (selectedType && track.type?.toLowerCase() !== selectedType.toLowerCase()) {
-        return false;
-      }
+    return accessibleTracks.filter((track) => {
+      const category = normalizeCategory(track.category);
+      const type = normalizeType(track.type);
+      if (selectedCategory && category !== selectedCategory) return false;
+      if (selectedType && type !== selectedType) return false;
       return true;
     });
-  }, [tracks, selectedCategory, selectedType]);
+  }, [accessibleTracks, selectedCategory, selectedType]);
 
-  // Adjust active index if it's beyond filtered tracks
   useEffect(() => {
-    if (filteredTracks.length > 0 && activeIndex >= filteredTracks.length) {
-      setActiveIndex(Math.max(0, filteredTracks.length - 1));
+    if (!filteredTracks.length) {
+      setActiveIndex(0);
+      return;
     }
+    if (activeIndex < filteredTracks.length) return;
+    setActiveIndex(Math.max(0, filteredTracks.length - 1));
   }, [filteredTracks, activeIndex]);
+
+  const activeTrack = filteredTracks[activeIndex] ?? null;
+  const activeTrackCover = activeTrack?.cover || "";
+  const artworkCover = activeTrack ? `/api/audio/artwork?url=${encodeURIComponent(activeTrack.src)}` : "";
+  const coverImage = activeTrack
+    ? singleTrack
+      ? cover || activeTrackCover || artworkCover || DEFAULT_COVER
+      : activeTrackCover || artworkCover || cover || DEFAULT_COVER
+    : cover || DEFAULT_COVER;
+  const playbackStateLabel = !activeTrack ? "" : isBuffering ? "Buffering" : isPlaying ? "Playing now" : "Ready to play";
 
   const playTrackAt = useCallback((index: number) => {
     if (index < 0 || index >= filteredTracks.length) return;
-    const filteredTrack = filteredTracks[index];
-    const originalIndex = tracks.findIndex(t => t.src === filteredTrack.src);
-    if (originalIndex >= 0) {
-      setActiveIndex(originalIndex);
-      setIsPlaying(true);
-    }
-  }, [filteredTracks, tracks]);
+    setActiveIndex(index);
+    setIsPlaying(true);
+  }, [filteredTracks]);
 
   const nextTrack = useCallback(() => {
     if (!filteredTracks.length) return;
-    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
-    if (currentFilteredIndex < filteredTracks.length - 1) {
-      playTrackAt(currentFilteredIndex + 1);
+    if (activeIndex < filteredTracks.length - 1) {
+      playTrackAt(activeIndex + 1);
       return;
     }
     if (loopMode === "playlist") {
       playTrackAt(0);
     }
-  }, [filteredTracks, activeTrack, loopMode, playTrackAt]);
+  }, [filteredTracks.length, activeIndex, loopMode, playTrackAt]);
 
   const previousTrack = useCallback(() => {
     const audio = audioRef.current;
@@ -385,15 +486,14 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
       audio.currentTime = 0;
       return;
     }
-    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
-    if (currentFilteredIndex > 0) {
-      playTrackAt(currentFilteredIndex - 1);
+    if (activeIndex > 0) {
+      playTrackAt(activeIndex - 1);
       return;
     }
     if (loopMode === "playlist") {
       playTrackAt(filteredTracks.length - 1);
     }
-  }, [filteredTracks, activeTrack, loopMode, playTrackAt]);
+  }, [filteredTracks.length, activeIndex, loopMode, playTrackAt]);
 
   const handleCoverError = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const target = event.currentTarget;
@@ -420,8 +520,8 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
         audio.play().catch(() => undefined);
         return;
       }
-      if (filteredTracks.length > 1 && (loopMode === "playlist" || currentFilteredIndex < filteredTracks.length - 1)) {
-        if (currentFilteredIndex < filteredTracks.length - 1) {
+      if (filteredTracks.length > 1 && (loopMode === "playlist" || activeIndex < filteredTracks.length - 1)) {
+        if (activeIndex < filteredTracks.length - 1) {
           nextTrack();
         } else if (loopMode === "playlist") {
           playTrackAt(0);
@@ -548,7 +648,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
   };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
+  const currentFilteredIndex = activeTrack ? activeIndex : -1;
   const canGoPrevious = currentFilteredIndex > 0 || loopMode === "playlist";
   const canGoNext = currentFilteredIndex < filteredTracks.length - 1 || loopMode === "playlist";
 
@@ -777,7 +877,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
                   <p className="font-semibold">{formatTime(duration)}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wider opacity-50 mb-1">Track {activeIndex + 1} of {tracks.length}</p>
+                  <p className="text-xs uppercase tracking-wider opacity-50 mb-1">Track {currentFilteredIndex + 1} of {filteredTracks.length}</p>
                 </div>
                 {playbackStateLabel ? (
                   <div>
@@ -873,7 +973,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
                       <button
                         type="button"
                         className={`filter-btn ${!selectedCategory ? 'active' : ''}`}
-                        onClick={() => setSelectedCategory(null)}
+                        onClick={() => setSelectedCategory("")}
                       >
                         All
                       </button>
@@ -895,11 +995,11 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
                       <button
                         type="button"
                         className={`filter-btn ${!selectedType ? 'active' : ''}`}
-                        onClick={() => setSelectedType(null)}
+                        onClick={() => setSelectedType("")}
                       >
                         All
                       </button>
-                      {types.map(typ => (
+                      {availableTypeOptions.map(typ => (
                         <button
                           key={typ}
                           type="button"
@@ -922,7 +1022,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
                           className={active ? "active" : ""}
                           onClick={() => playTrackAt(index)}
                         >
-                          <img src={track.cover || DEFAULT_COVER} alt={track.title} />
+                          <img src={track.cover || `/api/audio/artwork?url=${encodeURIComponent(track.src)}`} alt={track.title} />
                           <span>
                             <strong>{track.title}</strong>
                             <em>{track.artist}</em>

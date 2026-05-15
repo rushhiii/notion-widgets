@@ -1,24 +1,67 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Copy, RefreshCw } from "lucide-react";
 import AudioPlayerWidget from "@/components/widgets/AudioPlayerWidget";
 
 type PlayerLayout = "small" | "medium" | "large";
 type LoopMode = "none" | "track" | "playlist";
+type AudioThemePreset = {
+  id: string;
+  label: string;
+  accent: string;
+  bg: string;
+  text: string;
+};
 
-const FRIEND_REPO_PLAYLIST_URL =
-  "https://cdn.jsdelivr.net/gh/V0idVanguard/MyMusicCollection@main/playlist.json";
+const INTERNAL_PLAYLIST_SOURCE = "/api/audio/playlist";
+const PUBLIC_FILTER_TYPE_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
+  eng: ["normal", "slowed"],
+  hindi: ["normal", "slowed"],
+  otherz: ["normal"],
+  punjab: ["normal"],
+  nightcore: ["normal"],
+};
+const ADMIN_EXTRA_FILTER_TYPE_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
+  eng: ["speed up"],
+  "🔱": ["normal", "modern"],
+  "🎻": ["normal"],
+};
+
+function buildFilterTypeMap(includeAdminExtras: boolean): Record<string, string[]> {
+  const merged: Record<string, string[]> = { ...PUBLIC_FILTER_TYPE_OPTIONS_BY_CATEGORY };
+  if (!includeAdminExtras) return merged;
+  Object.entries(ADMIN_EXTRA_FILTER_TYPE_OPTIONS_BY_CATEGORY).forEach(([category, types]) => {
+    const current = merged[category] ?? [];
+    merged[category] = Array.from(new Set([...current, ...types])).sort((a, b) => a.localeCompare(b));
+  });
+  return merged;
+}
+
+function normalizeFilterCategory(value: string): string {
+  const token = value.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!token) return "";
+  if (token === "punjabi") return "punjab";
+  if (token === "others") return "otherz";
+  return token;
+}
+
+function normalizeFilterType(value: string): string {
+  const token = value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+  if (!token) return "";
+  if (["speed up", "speedup", "sped up", "spedup"].includes(token)) return "speed up";
+  if (["morden", "modern"].includes(token)) return "modern";
+  return token;
+}
 
 const defaults = {
   layout: "small" as PlayerLayout,
   src: "",
   title: "my magic shop",
   artist: "you gave me the best of me",
-  cover:
-    "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=900&q=80",
-  data: FRIEND_REPO_PLAYLIST_URL,
+  cover: "",
+  data: INTERNAL_PLAYLIST_SOURCE,
   accent: "#d54e84",
   bg: "#ececef",
   text: "#253452",
@@ -27,11 +70,14 @@ const defaults = {
   loop: "none" as LoopMode,
   queue: true,
   autoplay: false,
+  category: "",
+  type: "",
+  adminKey: "",
   instance: "",
 };
 
 const PREVIEW_DEMO = {
-  src: FRIEND_REPO_PLAYLIST_URL,
+  src: INTERNAL_PLAYLIST_SOURCE,
   title: defaults.title,
   artist: defaults.artist,
   cover: defaults.cover,
@@ -43,6 +89,22 @@ const layoutPalette: Record<PlayerLayout, { bg: string; text: string; accent: st
   large: { bg: "#081538", text: "#e8edff", accent: "#2ea4ff" },
 };
 
+const AUDIO_THEME_PRESETS: AudioThemePreset[] = [
+  { id: "petal", label: "Petal", accent: "#d54e84", bg: "#ececef", text: "#253452" },
+  { id: "midnight", label: "Midnight", accent: "#2ea4ff", bg: "#081538", text: "#e8edff" },
+  { id: "sunset", label: "Sunset", accent: "#ff6b35", bg: "#1c1024", text: "#ffe8d6" },
+  { id: "forest", label: "Forest", accent: "#18a67a", bg: "#0f1f1a", text: "#d7f7e8" },
+  { id: "mono", label: "Mono", accent: "#f3f4f6", bg: "#111827", text: "#f9fafb" },
+  { id: "amber", label: "Amber", accent: "#f59e0b", bg: "#201205", text: "#fff4d6" },
+];
+
+const builderSelectClass =
+  "w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2.5 text-sm text-white outline-none transition focus:border-white/25 focus:bg-white/12 [&>option]:bg-zinc-900 [&>option]:text-zinc-100";
+
+const darkSelectStyle: CSSProperties = {
+  colorScheme: "dark",
+};
+
 function sanitizeInstance(value: string): string {
   return value.replace(/[^a-z0-9_-]/gi, "");
 }
@@ -50,6 +112,9 @@ function sanitizeInstance(value: string): string {
 export default function AudioPlayerBuilder() {
   const searchParams = useSearchParams();
   const instanceParam = (searchParams.get("instance") ?? "").trim();
+  const categoryParam = normalizeFilterCategory(searchParams.get("category") ?? "");
+  const typeParam = normalizeFilterType(searchParams.get("type") ?? "");
+  const adminKeyParam = (searchParams.get("admin-key") ?? "").trim();
   const [layout, setLayout] = useState<PlayerLayout>(defaults.layout);
   const [src, setSrc] = useState(defaults.src);
   const [title, setTitle] = useState(defaults.title);
@@ -59,17 +124,69 @@ export default function AudioPlayerBuilder() {
   const [accent, setAccent] = useState(defaults.accent);
   const [bg, setBg] = useState(defaults.bg);
   const [text, setText] = useState(defaults.text);
+  const [themePresetId, setThemePresetId] = useState<string>("petal");
   const [volume, setVolume] = useState(defaults.volume);
   const [start, setStart] = useState(defaults.start);
   const [loop, setLoop] = useState<LoopMode>(defaults.loop);
   const [queue, setQueue] = useState(defaults.queue);
   const [autoplay, setAutoplay] = useState(defaults.autoplay);
+  const [categoryFilter, setCategoryFilter] = useState(categoryParam || defaults.category);
+  const [typeFilter, setTypeFilter] = useState(typeParam || defaults.type);
+  const [adminKey, setAdminKey] = useState(adminKeyParam || defaults.adminKey);
   const [instanceDraft, setInstanceDraft] = useState(instanceParam);
   const [instanceId, setInstanceId] = useState(instanceParam);
   const [copied, setCopied] = useState(false);
 
   const normalizedInstance = sanitizeInstance(instanceId.trim());
   const normalizedDraft = sanitizeInstance(instanceDraft.trim());
+  const normalizedCategoryFilter = normalizeFilterCategory(categoryFilter);
+  const normalizedTypeFilter = normalizeFilterType(typeFilter);
+  const configuredAdminKey =
+    (process.env.NEXT_PUBLIC_AUDIO_ADMIN_KEY || process.env.NEXT_PUBLIC_QUOTES_ADMIN_KEY || "").trim();
+  const includeAdminExtras = configuredAdminKey
+    ? adminKey.trim() === configuredAdminKey
+    : adminKey.trim().length > 0;
+
+  const filterTypeOptionsByCategory = useMemo(
+    () => buildFilterTypeMap(includeAdminExtras),
+    [includeAdminExtras],
+  );
+
+  const availableCategoryOptions = useMemo(
+    () => Object.keys(filterTypeOptionsByCategory).sort((a, b) => a.localeCompare(b)),
+    [filterTypeOptionsByCategory],
+  );
+
+  const allTypeOptions = useMemo(
+    () => Array.from(new Set(Object.values(filterTypeOptionsByCategory).flat())).sort((a, b) => a.localeCompare(b)),
+    [filterTypeOptionsByCategory],
+  );
+
+  const availableTypeOptions = useMemo(() => {
+    if (!normalizedCategoryFilter) return allTypeOptions;
+    return filterTypeOptionsByCategory[normalizedCategoryFilter] ?? allTypeOptions;
+  }, [normalizedCategoryFilter, filterTypeOptionsByCategory, allTypeOptions]);
+
+  useEffect(() => {
+    if (!normalizedCategoryFilter) return;
+    if (availableCategoryOptions.includes(normalizedCategoryFilter)) return;
+    setCategoryFilter("");
+  }, [availableCategoryOptions, normalizedCategoryFilter]);
+
+  useEffect(() => {
+    if (!normalizedTypeFilter) return;
+    if (availableTypeOptions.includes(normalizedTypeFilter)) return;
+    setTypeFilter("");
+  }, [availableTypeOptions, normalizedTypeFilter]);
+
+  useEffect(() => {
+    const matchedPreset = AUDIO_THEME_PRESETS.find(
+      (preset) => preset.accent.toLowerCase() === accent.toLowerCase()
+        && preset.bg.toLowerCase() === bg.toLowerCase()
+        && preset.text.toLowerCase() === text.toLowerCase(),
+    );
+    setThemePresetId(matchedPreset?.id ?? "custom");
+  }, [accent, bg, text]);
 
   const params = useMemo(() => {
     const p = new URLSearchParams();
@@ -88,9 +205,12 @@ export default function AudioPlayerBuilder() {
     p.set("loop", loop);
     p.set("queue", queue ? "1" : "0");
     if (autoplay) p.set("autoplay", "1");
+    if (normalizedCategoryFilter) p.set("category", normalizedCategoryFilter);
+    if (normalizedTypeFilter) p.set("type", normalizedTypeFilter);
+    if (adminKey.trim()) p.set("admin-key", adminKey.trim());
     if (normalizedInstance) p.set("instance", normalizedInstance);
     return p;
-  }, [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedInstance]);
+  }, [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedCategoryFilter, normalizedTypeFilter, adminKey, normalizedInstance]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -108,9 +228,12 @@ export default function AudioPlayerBuilder() {
       loop,
       queue: queue ? 1 : 0,
       autoplay: autoplay ? 1 : 0,
+      category: normalizedCategoryFilter || undefined,
+      type: normalizedTypeFilter || undefined,
+      "admin-key": adminKey.trim() || undefined,
       instance: normalizedInstance || undefined,
     }),
-    [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedInstance],
+    [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedCategoryFilter, normalizedTypeFilter, adminKey, normalizedInstance],
   );
 
   const reset = () => {
@@ -128,6 +251,9 @@ export default function AudioPlayerBuilder() {
     setLoop(defaults.loop);
     setQueue(defaults.queue);
     setAutoplay(defaults.autoplay);
+    setCategoryFilter(defaults.category);
+    setTypeFilter(defaults.type);
+    setAdminKey(defaults.adminKey);
     setInstanceId(instanceParam);
     setInstanceDraft(instanceParam);
   };
@@ -138,11 +264,22 @@ export default function AudioPlayerBuilder() {
     setAccent(palette.accent);
     setBg(palette.bg);
     setText(palette.text);
+    const matchedPreset = AUDIO_THEME_PRESETS.find(
+      (preset) => preset.accent === palette.accent && preset.bg === palette.bg && preset.text === palette.text,
+    );
+    setThemePresetId(matchedPreset?.id ?? "custom");
   };
 
-  const connectFriendDatasource = () => {
+  const applyThemePreset = (preset: AudioThemePreset) => {
+    setAccent(preset.accent);
+    setBg(preset.bg);
+    setText(preset.text);
+    setThemePresetId(preset.id);
+  };
+
+  const connectNotionDatasource = () => {
     setSrc("");
-    setData(FRIEND_REPO_PLAYLIST_URL);
+    setData(INTERNAL_PLAYLIST_SOURCE);
     if (layout === "small") {
       setLayout("large");
       const palette = layoutPalette.large;
@@ -188,7 +325,8 @@ export default function AudioPlayerBuilder() {
             <label className="space-y-1 text-sm">
               <span className="text-zinc-300">Layout</span>
               <select
-                className="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2.5 text-sm text-white outline-none transition focus:border-white/25 focus:bg-white/12"
+                className={builderSelectClass}
+                style={darkSelectStyle}
                 value={layout}
                 onChange={(e) => applyLayoutPalette(e.target.value as PlayerLayout)}
               >
@@ -209,27 +347,72 @@ export default function AudioPlayerBuilder() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-zinc-300">Playlist datasource JSON URL (optional)</span>
-              <input
-                className="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2.5 text-sm text-white outline-none transition focus:border-white/25 focus:bg-white/12"
-                value={data}
-                onChange={(e) => setData(e.target.value)}
-                placeholder={FRIEND_REPO_PLAYLIST_URL}
-              />
+              <span className="text-zinc-300">Playlist datasource</span>
               <p className="text-[11px] leading-relaxed text-zinc-500">
-                Connected to your friend repo by default. Use either src or data. Playlist JSON shape: [{"{"} src, title, artist, cover, category, type {"}"}]. Public R2 buckets work too.
+                Builder now defaults to the internal Notion Widgets playlist source. The raw JSON URL field is hidden to keep embed output stable.
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition hover:bg-cyan-400/20"
-                  onClick={connectFriendDatasource}
+                  onClick={connectNotionDatasource}
                 >
-                  Connect MyMusicCollection
+                  Use Internal Notion Playlist
                 </button>
-                <span className="text-[11px] text-zinc-500">Uses jsDelivr CDN from your friend repo.</span>
+                <span className="text-[11px] text-zinc-500">Source: {INTERNAL_PLAYLIST_SOURCE}</span>
               </div>
             </label>
+
+            <div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">Library Filters</p>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Category</span>
+                <select
+                  className={builderSelectClass}
+                  style={darkSelectStyle}
+                  value={normalizedCategoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                  <option value="">All categories</option>
+                  {availableCategoryOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Type (depends on category)</span>
+                <select
+                  className={builderSelectClass}
+                  style={darkSelectStyle}
+                  value={normalizedTypeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                >
+                  <option value="">All types</option>
+                  {availableTypeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-zinc-300">Admin access key (optional)</span>
+                <input
+                  className="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2.5 text-sm text-white outline-none transition focus:border-white/25 focus:bg-white/12"
+                  value={adminKey}
+                  onChange={(e) => setAdminKey(e.target.value)}
+                  placeholder="Adds admin-key=... to URL"
+                />
+                <p className="text-[11px] leading-relaxed text-zinc-500">
+                  When valid, the widget unlocks full category/type access.
+                </p>
+              </label>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1 text-sm">
@@ -263,6 +446,39 @@ export default function AudioPlayerBuilder() {
             </label>
 
             <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-300 text-sm">Theme presets</span>
+                  <span className="text-[11px] uppercase tracking-[0.12em] text-zinc-500">
+                    {themePresetId === "custom" ? "Custom" : themePresetId}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {AUDIO_THEME_PRESETS.map((preset) => {
+                    const active = themePresetId === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        className={`rounded-xl border px-2.5 py-2 text-left transition ${
+                          active
+                            ? "border-cyan-300/50 bg-cyan-400/12"
+                            : "border-white/10 bg-white/5 hover:bg-white/10"
+                        }`}
+                        onClick={() => applyThemePreset(preset)}
+                      >
+                        <span className="mb-1.5 block text-xs font-medium text-zinc-100">{preset.label}</span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: preset.accent }} />
+                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: preset.bg }} />
+                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: preset.text }} />
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Accent</span>
                 <input type="color" className="color-swatch" value={accent} onChange={(e) => setAccent(e.target.value)} />
@@ -297,7 +513,8 @@ export default function AudioPlayerBuilder() {
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Loop mode</span>
                 <select
-                  className="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2.5 text-sm text-white outline-none transition focus:border-white/25 focus:bg-white/12"
+                  className={builderSelectClass}
+                  style={darkSelectStyle}
                   value={loop}
                   onChange={(e) => setLoop(e.target.value as LoopMode)}
                 >
@@ -352,14 +569,14 @@ export default function AudioPlayerBuilder() {
           </div>
 
           <div className="space-y-3 rounded-2xl border border-white/10 bg-zinc-950/20 p-4">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">Embed URL</p>
                 <p className="text-sm text-zinc-300">Copy the exact settings as a public widget link.</p>
               </div>
               <button
                 onClick={copyLink}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-200"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-200 sm:w-auto"
               >
                 <Copy size={16} />
                 {copied ? "Copied" : "Copy URL"}
