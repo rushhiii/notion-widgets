@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { List, Pause, Play, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
 
@@ -255,6 +255,45 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
     return () => observer.disconnect();
   }, [explicitLayout]);
 
+  const playTrackAt = useCallback((index: number) => {
+    if (index < 0 || index >= filteredTracks.length) return;
+    const filteredTrack = filteredTracks[index];
+    const originalIndex = tracks.findIndex(t => t.src === filteredTrack.src);
+    if (originalIndex >= 0) {
+      setActiveIndex(originalIndex);
+      setIsPlaying(true);
+    }
+  }, [filteredTracks, tracks]);
+
+  const nextTrack = useCallback(() => {
+    if (!filteredTracks.length) return;
+    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
+    if (currentFilteredIndex < filteredTracks.length - 1) {
+      playTrackAt(currentFilteredIndex + 1);
+      return;
+    }
+    if (loopMode === "playlist") {
+      playTrackAt(0);
+    }
+  }, [filteredTracks, activeTrack, loopMode, playTrackAt]);
+
+  const previousTrack = useCallback(() => {
+    const audio = audioRef.current;
+    if (!filteredTracks.length) return;
+    if (audio && audio.currentTime > 3) {
+      audio.currentTime = 0;
+      return;
+    }
+    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
+    if (currentFilteredIndex > 0) {
+      playTrackAt(currentFilteredIndex - 1);
+      return;
+    }
+    if (loopMode === "playlist") {
+      playTrackAt(filteredTracks.length - 1);
+    }
+  }, [filteredTracks, activeTrack, loopMode, playTrackAt]);
+
   useEffect(() => {
     let canceled = false;
 
@@ -479,45 +518,6 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
       return;
     }
     audio.pause();
-  };
-
-  const playTrackAt = (index: number) => {
-    if (index < 0 || index >= filteredTracks.length) return;
-    const filteredTrack = filteredTracks[index];
-    const originalIndex = tracks.findIndex(t => t.src === filteredTrack.src);
-    if (originalIndex >= 0) {
-      setActiveIndex(originalIndex);
-      setIsPlaying(true);
-    }
-  };
-
-  const nextTrack = () => {
-    if (!filteredTracks.length) return;
-    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
-    if (currentFilteredIndex < filteredTracks.length - 1) {
-      playTrackAt(currentFilteredIndex + 1);
-      return;
-    }
-    if (loopMode === "playlist") {
-      playTrackAt(0);
-    }
-  };
-
-  const previousTrack = () => {
-    const audio = audioRef.current;
-    if (!filteredTracks.length) return;
-    if (audio && audio.currentTime > 3) {
-      audio.currentTime = 0;
-      return;
-    }
-    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
-    if (currentFilteredIndex > 0) {
-      playTrackAt(currentFilteredIndex - 1);
-      return;
-    }
-    if (loopMode === "playlist") {
-      playTrackAt(filteredTracks.length - 1);
-    }
   };
 
   const onSeek = (value: number) => {
