@@ -170,6 +170,8 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
   const [autoLayout, setAutoLayout] = useState<PlayerLayout>("small");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const getParam = (keys: string[]) => {
     if (embedParams) {
@@ -316,6 +318,43 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
   const activeTrack = tracks[activeIndex] ?? null;
   const coverImage = activeTrack?.cover || cover || DEFAULT_COVER;
   const playbackStateLabel = !activeTrack ? "" : isBuffering ? "Buffering" : isPlaying ? "Playing now" : "Ready to play";
+  
+  // Extract unique categories and types
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    tracks.forEach(t => {
+      if (t.category) cats.add(t.category.toLowerCase());
+    });
+    return Array.from(cats).sort();
+  }, [tracks]);
+
+  const types = useMemo(() => {
+    const typs = new Set<string>();
+    tracks.forEach(t => {
+      if (t.type) typs.add(t.type.toLowerCase());
+    });
+    return Array.from(typs).sort();
+  }, [tracks]);
+
+  // Filter tracks based on selected category and type
+  const filteredTracks = useMemo(() => {
+    return tracks.filter(track => {
+      if (selectedCategory && track.category?.toLowerCase() !== selectedCategory.toLowerCase()) {
+        return false;
+      }
+      if (selectedType && track.type?.toLowerCase() !== selectedType.toLowerCase()) {
+        return false;
+      }
+      return true;
+    });
+  }, [tracks, selectedCategory, selectedType]);
+
+  // Adjust active index if it's beyond filtered tracks
+  useEffect(() => {
+    if (filteredTracks.length > 0 && activeIndex >= filteredTracks.length) {
+      setActiveIndex(Math.max(0, filteredTracks.length - 1));
+    }
+  }, [filteredTracks, activeIndex]);
   const handleCoverError = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const target = event.currentTarget;
     if (target.src !== DEFAULT_COVER) {
@@ -372,12 +411,12 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
         audio.play().catch(() => undefined);
         return;
       }
-      if (tracks.length > 1 && (loopMode === "playlist" || activeIndex < tracks.length - 1)) {
-        setActiveIndex((prev) => {
-          const next = prev + 1;
-          if (next < tracks.length) return next;
-          return loopMode === "playlist" ? 0 : prev;
-        });
+      if (filteredTracks.length > 1 && (loopMode === "playlist" || currentFilteredIndex < filteredTracks.length - 1)) {
+        if (currentFilteredIndex < filteredTracks.length - 1) {
+          nextTrack();
+        } else if (loopMode === "playlist") {
+          playTrackAt(0);
+        }
         return;
       }
       setIsPlaying(false);
@@ -430,7 +469,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
-  }, [activeIndex, loopMode, tracks.length]);
+  }, [activeIndex, loopMode, filteredTracks.length, nextTrack, playTrackAt];
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -443,35 +482,41 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
   };
 
   const playTrackAt = (index: number) => {
-    if (index < 0 || index >= tracks.length) return;
-    setActiveIndex(index);
-    setIsPlaying(true);
+    if (index < 0 || index >= filteredTracks.length) return;
+    const filteredTrack = filteredTracks[index];
+    const originalIndex = tracks.findIndex(t => t.src === filteredTrack.src);
+    if (originalIndex >= 0) {
+      setActiveIndex(originalIndex);
+      setIsPlaying(true);
+    }
   };
 
   const nextTrack = () => {
-    if (!tracks.length) return;
-    if (activeIndex < tracks.length - 1) {
-      setActiveIndex((prev) => prev + 1);
+    if (!filteredTracks.length) return;
+    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
+    if (currentFilteredIndex < filteredTracks.length - 1) {
+      playTrackAt(currentFilteredIndex + 1);
       return;
     }
     if (loopMode === "playlist") {
-      setActiveIndex(0);
+      playTrackAt(0);
     }
   };
 
   const previousTrack = () => {
     const audio = audioRef.current;
-    if (!tracks.length) return;
+    if (!filteredTracks.length) return;
     if (audio && audio.currentTime > 3) {
       audio.currentTime = 0;
       return;
     }
-    if (activeIndex > 0) {
-      setActiveIndex((prev) => prev - 1);
+    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
+    if (currentFilteredIndex > 0) {
+      playTrackAt(currentFilteredIndex - 1);
       return;
     }
     if (loopMode === "playlist") {
-      setActiveIndex(tracks.length - 1);
+      playTrackAt(filteredTracks.length - 1);
     }
   };
 
@@ -506,8 +551,9 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
   };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const canGoPrevious = activeIndex > 0 || loopMode === "playlist";
-  const canGoNext = activeIndex < tracks.length - 1 || loopMode === "playlist";
+  const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
+  const canGoPrevious = currentFilteredIndex > 0 || loopMode === "playlist";
+  const canGoNext = currentFilteredIndex < filteredTracks.length - 1 || loopMode === "playlist";
 
   const shellStyle: CSSProperties & Record<string, string | number> = {
     backgroundColor: bg,
@@ -568,9 +614,9 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
               <div key={`meta-${activeTrack.src}-${activeIndex}`} className="small-title-wrap" id="album-name">
                 <h3>{activeTrack.title}</h3>
                 <p id="track-name">{activeTrack.artist}</p>
-                {tracks.length > 0 && (
+                {filteredTracks.length > 0 && (
                   <p id="track-number" style={{ fontSize: '0.72rem', color: '#acaebd', marginTop: '6px', opacity: 0.7 }}>
-                    Track {activeIndex + 1} of {tracks.length}
+                    Track {currentFilteredIndex + 1} of {filteredTracks.length}
                   </p>
                 )}
               </div>
@@ -581,7 +627,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
 
               <div className="small-status-strip">
                 <span className={isPlaying ? "is-live" : ""}>{playbackStateLabel}</span>
-                <span>Track {activeIndex + 1} of {tracks.length}</span>
+                <span>Track {currentFilteredIndex + 1} of {filteredTracks.length}</span>
                 <span>{formatTime(duration)}</span>
               </div>
 
@@ -645,7 +691,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
                   🕐 {formatTime(duration)}
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-3 py-1 text-xs font-semibold opacity-80">
-                  📍 Track {activeIndex + 1}/{tracks.length}
+                  📍 Track {currentFilteredIndex + 1}/{filteredTracks.length}
                 </span>
                 {playbackStateLabel ? (
                   <span className={`inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-semibold ${isPlaying ? "bg-emerald-400/20" : "bg-white/15"} opacity-90`}>
@@ -821,33 +867,81 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
               </div>
             </div>
 
-            {showQueue && tracks.length > 1 ? (
-              <ul className="track-queue">
-                {tracks.map((track, index) => {
-                  const active = index === activeIndex;
-                  return (
-                    <li key={`${track.src}-${index}`}>
+            {showQueue && filteredTracks.length > 1 ? (
+              <div>
+                <div className="filter-controls">
+                  <div className="filter-group">
+                    <span className="filter-label">Category:</span>
+                    <div className="filter-buttons">
                       <button
                         type="button"
-                        className={active ? "active" : ""}
-                        onClick={() => playTrackAt(index)}
+                        className={`filter-btn ${!selectedCategory ? 'active' : ''}`}
+                        onClick={() => setSelectedCategory(null)}
                       >
-                        <img src={track.cover || DEFAULT_COVER} alt={track.title} />
-                        <span>
-                          <strong>{track.title}</strong>
-                          <em>{track.artist}</em>
-                          {(track.category || track.type) && (
-                            <span className="track-metadata" style={{ fontSize: '0.7rem', opacity: 0.7, marginLeft: '6px', display: 'block', marginTop: '2px' }}>
-                              {track.category && <span>[{track.category}]</span>}
-                              {track.type && <span style={{ marginLeft: '4px' }}>({track.type})</span>}
-                            </span>
-                          )}
-                        </span>
+                        All
                       </button>
-                    </li>
-                  );
-                })}
-              </ul>
+                      {categories.map(cat => (
+                        <button
+                          key={cat}
+                          type="button"
+                          className={`filter-btn ${selectedCategory === cat ? 'active' : ''}`}
+                          onClick={() => setSelectedCategory(cat)}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="filter-group">
+                    <span className="filter-label">Type:</span>
+                    <div className="filter-buttons">
+                      <button
+                        type="button"
+                        className={`filter-btn ${!selectedType ? 'active' : ''}`}
+                        onClick={() => setSelectedType(null)}
+                      >
+                        All
+                      </button>
+                      {types.map(typ => (
+                        <button
+                          key={typ}
+                          type="button"
+                          className={`filter-btn ${selectedType === typ ? 'active' : ''}`}
+                          onClick={() => setSelectedType(typ)}
+                        >
+                          {typ}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <ul className="track-queue">
+                  {filteredTracks.map((track, index) => {
+                    const active = track.src === activeTrack?.src;
+                    return (
+                      <li key={`${track.src}-${index}`}>
+                        <button
+                          type="button"
+                          className={active ? "active" : ""}
+                          onClick={() => playTrackAt(index)}
+                        >
+                          <img src={track.cover || DEFAULT_COVER} alt={track.title} />
+                          <span>
+                            <strong>{track.title}</strong>
+                            <em>{track.artist}</em>
+                            {(track.category || track.type) && (
+                              <span className="track-metadata" style={{ fontSize: '0.7rem', opacity: 0.7, marginLeft: '6px', display: 'block', marginTop: '2px' }}>
+                                {track.category && <span>[{track.category}]</span>}
+                                {track.type && <span style={{ marginLeft: '4px' }}>({track.type})</span>}
+                              </span>
+                            )}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             ) : null}
           </div>
         ) : null}
@@ -1213,6 +1307,61 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
           gap: 8px;
           max-height: 260px;
           overflow: auto;
+        }
+
+        .filter-controls {
+          margin: 12px 14px 8px;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.06);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+        }
+
+        .filter-group {
+          margin-bottom: 12px;
+        }
+
+        .filter-group:last-child {
+          margin-bottom: 0;
+        }
+
+        .filter-label {
+          display: block;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          opacity: 0.6;
+          margin-bottom: 6px;
+        }
+
+        .filter-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .filter-btn {
+          padding: 5px 10px;
+          border-radius: 6px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.05);
+          color: inherit;
+          font-size: 0.8rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .filter-btn.active {
+          background: var(--audio-accent);
+          color: #fff;
+          border-color: var(--audio-accent);
         }
 
         .track-queue button {
