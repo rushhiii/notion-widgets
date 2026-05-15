@@ -394,6 +394,43 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
       setActiveIndex(Math.max(0, filteredTracks.length - 1));
     }
   }, [filteredTracks, activeIndex]);
+  
+  // Extract unique categories and types
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    tracks.forEach(t => {
+      if (t.category) cats.add(t.category.toLowerCase());
+    });
+    return Array.from(cats).sort();
+  }, [tracks]);
+
+  const types = useMemo(() => {
+    const typs = new Set<string>();
+    tracks.forEach(t => {
+      if (t.type) typs.add(t.type.toLowerCase());
+    });
+    return Array.from(typs).sort();
+  }, [tracks]);
+
+  // Filter tracks based on selected category and type
+  const filteredTracks = useMemo(() => {
+    return tracks.filter(track => {
+      if (selectedCategory && track.category?.toLowerCase() !== selectedCategory.toLowerCase()) {
+        return false;
+      }
+      if (selectedType && track.type?.toLowerCase() !== selectedType.toLowerCase()) {
+        return false;
+      }
+      return true;
+    });
+  }, [tracks, selectedCategory, selectedType]);
+
+  // Adjust active index if it's beyond filtered tracks
+  useEffect(() => {
+    if (filteredTracks.length > 0 && activeIndex >= filteredTracks.length) {
+      setActiveIndex(Math.max(0, filteredTracks.length - 1));
+    }
+  }, [filteredTracks, activeIndex]);
   const handleCoverError = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const target = event.currentTarget;
     if (target.src !== DEFAULT_COVER) {
