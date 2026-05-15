@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 /**
- * Audio proxy endpoint that fetches remote audio and adds CORS headers
+ * Audio proxy endpoint that streams remote audio with CORS headers
  * Usage: /api/audio?url=<encoded-url>
  */
 export async function GET(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     const decodedUrl = decodeURIComponent(audioUrl);
     
-    // Validate URL is HTTPS or a data URL
+    // Validate URL protocol
     const urlObj = new URL(decodedUrl);
     if (!['https:', 'http:'].includes(urlObj.protocol)) {
       return NextResponse.json({ error: 'Invalid URL protocol' }, { status: 400 });
@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(decodedUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Range': request.headers.get('range') || undefined,
       }
     });
 
@@ -34,18 +35,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const buffer = await response.arrayBuffer();
     const contentType = response.headers.get('content-type') || 'audio/mpeg';
+    const contentLength = response.headers.get('content-length');
+    const contentRange = response.headers.get('content-range');
 
-    return new NextResponse(buffer, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': buffer.byteLength.toString(),
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Cache-Control': 'public, max-age=3600'
-      }
+    const headers: Record<string, string> = {
+      'Content-Type': contentType,
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Range',
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'public, max-age=86400'
+    };
+
+    if (contentLength) headers['Content-Length'] = contentLength;
+    if (contentRange) headers['Content-Range'] = contentRange;
+
+    // Stream the audio response directly
+    return new NextResponse(response.body, {
+      status: response.status,
+      headers
     });
   } catch (error) {
     console.error('Audio proxy error:', error);

@@ -255,45 +255,6 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
     return () => observer.disconnect();
   }, [explicitLayout]);
 
-  const playTrackAt = useCallback((index: number) => {
-    if (index < 0 || index >= filteredTracks.length) return;
-    const filteredTrack = filteredTracks[index];
-    const originalIndex = tracks.findIndex(t => t.src === filteredTrack.src);
-    if (originalIndex >= 0) {
-      setActiveIndex(originalIndex);
-      setIsPlaying(true);
-    }
-  }, [filteredTracks, tracks]);
-
-  const nextTrack = useCallback(() => {
-    if (!filteredTracks.length) return;
-    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
-    if (currentFilteredIndex < filteredTracks.length - 1) {
-      playTrackAt(currentFilteredIndex + 1);
-      return;
-    }
-    if (loopMode === "playlist") {
-      playTrackAt(0);
-    }
-  }, [filteredTracks, activeTrack, loopMode, playTrackAt]);
-
-  const previousTrack = useCallback(() => {
-    const audio = audioRef.current;
-    if (!filteredTracks.length) return;
-    if (audio && audio.currentTime > 3) {
-      audio.currentTime = 0;
-      return;
-    }
-    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
-    if (currentFilteredIndex > 0) {
-      playTrackAt(currentFilteredIndex - 1);
-      return;
-    }
-    if (loopMode === "playlist") {
-      playTrackAt(filteredTracks.length - 1);
-    }
-  }, [filteredTracks, activeTrack, loopMode, playTrackAt]);
-
   useEffect(() => {
     let canceled = false;
 
@@ -395,43 +356,51 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
     }
   }, [filteredTracks, activeIndex]);
 
+  const playTrackAt = useCallback((index: number) => {
+    if (index < 0 || index >= filteredTracks.length) return;
+    const filteredTrack = filteredTracks[index];
+    const originalIndex = tracks.findIndex(t => t.src === filteredTrack.src);
+    if (originalIndex >= 0) {
+      setActiveIndex(originalIndex);
+      setIsPlaying(true);
+    }
+  }, [filteredTracks, tracks]);
+
+  const nextTrack = useCallback(() => {
+    if (!filteredTracks.length) return;
+    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
+    if (currentFilteredIndex < filteredTracks.length - 1) {
+      playTrackAt(currentFilteredIndex + 1);
+      return;
+    }
+    if (loopMode === "playlist") {
+      playTrackAt(0);
+    }
+  }, [filteredTracks, activeTrack, loopMode, playTrackAt]);
+
+  const previousTrack = useCallback(() => {
+    const audio = audioRef.current;
+    if (!filteredTracks.length) return;
+    if (audio && audio.currentTime > 3) {
+      audio.currentTime = 0;
+      return;
+    }
+    const currentFilteredIndex = filteredTracks.findIndex(t => t.src === activeTrack?.src);
+    if (currentFilteredIndex > 0) {
+      playTrackAt(currentFilteredIndex - 1);
+      return;
+    }
+    if (loopMode === "playlist") {
+      playTrackAt(filteredTracks.length - 1);
+    }
+  }, [filteredTracks, activeTrack, loopMode, playTrackAt]);
+
   const handleCoverError = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const target = event.currentTarget;
     if (target.src !== DEFAULT_COVER) {
       target.src = DEFAULT_COVER;
     }
   };
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !activeTrack) return;
-
-    // Proxy remote audio through the app so playback does not depend on third-party CORS.
-    audio.src = toPlayableSrc(activeTrack.src, activeIndex);
-    setCurrentTime(0);
-    setDuration(0);
-    setIsBuffering(true);
-
-    // Try to load with a small delay to ensure src is set
-    const loadTimeout = setTimeout(() => {
-      audio.load();
-      if (autoplay || isPlaying) {
-        audio.play().catch((err) => {
-          const message = err instanceof Error ? err.message : 'Failed to play audio';
-          console.error('Audio playback error:', message);
-            if (message.includes('NotAllowedError')) {
-              setError('Playback was blocked by the browser. Click play once to start audio.');
-            } else if (message.includes('NotSupportedError')) {
-              setError('Audio source could not be loaded through the proxy. Check the track URL.');
-            } else {
-              setError(`Audio Error: ${message}`);
-            }
-        });
-      }
-    }, 100);
-
-    return () => clearTimeout(loadTimeout);
-  }, [activeTrack, autoplay, isPlaying]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -510,6 +479,33 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
       audio.removeEventListener("error", onError);
     };
   }, [activeIndex, loopMode, filteredTracks.length, nextTrack, playTrackAt]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !activeTrack) return;
+
+    // Set the audio source through the proxy
+    const src = toPlayableSrc(activeTrack.src, activeIndex);
+    audio.src = src;
+    setCurrentTime(0);
+    setDuration(0);
+    setIsBuffering(true);
+    setError(null);
+
+    // Reset and load the audio
+    audio.load();
+
+    // Auto-play if enabled or already playing
+    if (autoplay || isPlaying) {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          console.error('Audio playback error:', message);
+        });
+      }
+    }
+  }, [activeTrack, autoplay, isPlaying, activeIndex]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
