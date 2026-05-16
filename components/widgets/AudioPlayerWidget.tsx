@@ -1159,7 +1159,8 @@ export default function AudioPlayerWidget({
         .small-bg-layer {
           position: absolute;
           inset: 0;
-          background: rgba(255, 255, 255, 0.48);
+          // background: rgba(255, 255, 255, 0.48);
+          background: #191919;
           z-index: 0;
         }
 
@@ -1327,7 +1328,7 @@ export default function AudioPlayerWidget({
         .small-album-art {
           position: absolute;
           top: -40px;
-          left: 25px;
+          left: 40px;
           width: 132px;
           height: 132px;
           border-radius: 50%;
