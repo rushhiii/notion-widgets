@@ -284,6 +284,10 @@ export default function AudioPlayerWidget({
   const requestedCategory = normalizeCategory(getParam(["category"]));
   const requestedType = normalizeType(getParam(["type"]));
   const adminKey = (getParam(["admin-key", "admin_key", "adminkey"]) || "").trim();
+  const queryPreviewBlend = parseBool(getParam(["blend", "preview-blend", "previewBlend"]), false);
+  const queryPreviewTransparent = parseBool(getParam(["transparent", "preview-transparent", "previewTransparent"]), false);
+  const effectivePreviewBlend = previewBlend || queryPreviewBlend;
+  const effectivePreviewTransparent = previewTransparent || queryPreviewTransparent;
   const configuredAdminKey =
     (process.env.NEXT_PUBLIC_AUDIO_ADMIN_KEY || process.env.NEXT_PUBLIC_QUOTES_ADMIN_KEY || "").trim();
   const hasAdminAccess = Boolean(configuredAdminKey) && adminKey === configuredAdminKey;
@@ -701,10 +705,10 @@ export default function AudioPlayerWidget({
   const canGoNext = currentFilteredIndex < filteredTracks.length - 1 || loopMode === "playlist";
 
   const computedBg = useMemo(() => {
-    if (previewTransparent) return isColorDark(bg) ? "#20020220" : "#ffffff";
-    if (previewBlend) return "transparent";
+    if (effectivePreviewTransparent) return isColorDark(bg) ? "#20020220" : "#ffffff";
+    if (effectivePreviewBlend) return "transparent";
     return bg;
-  }, [bg, previewTransparent, previewBlend]);
+  }, [bg, effectivePreviewTransparent, effectivePreviewBlend]);
 
   const shellStyle: CSSProperties & Record<string, string | number> = {
     backgroundColor: computedBg,

@@ -32,18 +32,15 @@ for (const item of data) {
       }
       if (after !== item.src) { item.src = after; changed++; }
     }
-    // decode emoji and other encoded characters in the pathname for readability
+    // Keep track URLs URL-encoded, but normalize any raw or double-encoded path segments.
     if (typeof item.src === 'string') {
       try {
         const u = new URL(item.src);
-        const decodedPath = decodeURIComponent(u.pathname);
-        // Only rewrite if decoding changed something (avoids accidental double-decoding)
-        if (decodedPath !== u.pathname) {
-          // Rebuild the URL using decoded pathname (keeps origin + search + hash)
-          item.src = u.origin + decodedPath + (u.search || '') + (u.hash || '');
+        if (u.href !== item.src) {
+          item.src = u.href;
           changed++;
         }
-      } catch (e) {
+      } catch {
         // ignore invalid URLs
       }
     }

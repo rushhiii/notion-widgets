@@ -211,8 +211,10 @@ export default function AudioPlayerBuilder() {
     if (normalizedTypeFilter) p.set("type", normalizedTypeFilter);
     if (adminKey.trim()) p.set("admin-key", adminKey.trim());
     if (normalizedInstance) p.set("instance", normalizedInstance);
+    if (previewBlend) p.set("blend", "1");
+    if (previewTransparent) p.set("transparent", "1");
     return p;
-  }, [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedCategoryFilter, normalizedTypeFilter, adminKey, normalizedInstance]);
+  }, [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedCategoryFilter, normalizedTypeFilter, adminKey, normalizedInstance, previewBlend, previewTransparent]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -305,7 +307,7 @@ export default function AudioPlayerBuilder() {
   };
 
   return (
-    <main className="audio-builder-shell flex min-h-screen w-full items-start justify-center px-4 py-10 text-zinc-100">
+    <main className="audio-builder-shell flex min-h-screen w-full items-start justify-center bg-[#191919] px-4 py-10 text-zinc-100">
       <div className="grid w-full max-w-6xl grid-cols-1 gap-6 md:grid-cols-[340px,1fr]">
         <section className="flex max-h-[88vh] flex-col gap-4 overflow-y-auto scrollbar-hide rounded-[28px] border border-white/10 bg-white/[0.055] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl">
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">

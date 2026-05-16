@@ -155,7 +155,7 @@ export default function HomePage() {
 
   return (
     //     background-color: rgb(9 9 11 / var(--tw-bg-opacity, 1));
-    <main className="landing relative min-h-screen w-full overflow-x-hidden bg-[#09090b] text-white overflow-y-hidden">
+    <main className="landing relative min-h-screen w-full overflow-x-hidden bg-[#191919] text-white overflow-y-hidden">
       {/* <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.2),transparent_55%)]" /> */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,#8B5CF633,transparent_20%)]" />
       <ModernNavbar />
