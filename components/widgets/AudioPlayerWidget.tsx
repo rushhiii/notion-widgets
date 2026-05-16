@@ -1147,11 +1147,11 @@ export default function AudioPlayerWidget({
 
         .small-bg-artwork {
           position: absolute;
-          inset: -28px;
-          background-size: cover;
-          background-position: center;
-          filter: blur(28px);
-          opacity: 0.34;
+          // inset: -28px;
+          // background-size: cover;
+          // background-position: center;
+          // filter: blur(28px);
+          // opacity: 0.34;
           z-index: 0;
           animation: bgFadeIn 440ms cubic-bezier(0.22, 1, 0.36, 1);
         }
@@ -1161,13 +1161,15 @@ export default function AudioPlayerWidget({
           inset: 0;
           // background: rgba(255, 255, 255, 0.48);
           background: #191919;
+          // background: rgba(25 25 25 / 0)rent;
           z-index: 0;
         }
 
         .small-header {
           margin: 0 17px;
           // margin-left: 174px;
-          border-radius: 15px 15px 0 0;
+          // border-radius: 15px 15px 0 0;
+          border-radius: 1rem 1rem 0 0;
           padding: 13px 22px 10px;
           // padding-left: 28px;
           padding-left: 174px;
@@ -1316,7 +1318,7 @@ export default function AudioPlayerWidget({
           justify-content: center;
           gap: 8px;
           position: relative;
-          border: 1px solid #dce0e6;
+          // border: 1px solid #dce0e6;
           box-shadow: 0 24px 44px rgba(30, 41, 59, 0.14);
           padding: 0 16px;
           z-index: 2;
