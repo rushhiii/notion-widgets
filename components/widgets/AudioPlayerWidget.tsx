@@ -92,6 +92,25 @@ function normalizeType(value: string | null | undefined): string {
   return TYPE_ALIASES[token] ?? token;
 }
 
+function parseMultiFilterValues(value: string | null | undefined, normalizer: (value: string | null | undefined) => string): string[] {
+  if (!value) return [];
+  return Array.from(
+    new Set(
+      decodeMaybeUriComponent(value)
+        .split(",")
+        .map((token) => normalizer(token))
+        .filter((token): token is string => Boolean(token)),
+    ),
+  );
+}
+
+function toggleSelection(values: string[], value: string): string[] {
+  if (values.includes(value)) {
+    return values.filter((token) => token !== value);
+  }
+  return [...values, value].sort((left, right) => left.localeCompare(right));
+}
+
 function canAccessTrackWithoutAdmin(category: string, type: string): boolean {
   if (!category) return false;
   const allowedTypes = PUBLIC_ALLOWED_TYPES_BY_CATEGORY[category] ?? [];
@@ -244,8 +263,8 @@ export default function AudioPlayerWidget({
   const [autoLayout, setAutoLayout] = useState<PlayerLayout>("small");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedType, setSelectedType] = useState<string>("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
 
   const getParam = (keys: string[]) => {
     if (embedParams) {
@@ -281,8 +300,10 @@ export default function AudioPlayerWidget({
   const startIndex = clamp(getParam(["start", "index"]), 0, 0, 99);
   const initialVolume = clamp(getParam(["volume"]), 0.8, 0, 1);
   const instance = sanitizeInstance((getParam(["instance"]) || "").trim());
-  const requestedCategory = normalizeCategory(getParam(["category"]));
-  const requestedType = normalizeType(getParam(["type"]));
+  const requestedCategories = parseMultiFilterValues(getParam(["category"]), normalizeCategory);
+  const requestedTypes = parseMultiFilterValues(getParam(["type"]), normalizeType);
+  const requestedCategoriesKey = requestedCategories.join("|");
+  const requestedTypesKey = requestedTypes.join("|");
   const adminKey = (getParam(["admin-key", "admin_key", "adminkey"]) || "").trim();
   const queryPreviewBlend = parseBool(getParam(["blend", "preview-blend", "previewBlend"]), false);
   const queryPreviewTransparent = parseBool(getParam(["transparent", "preview-transparent", "previewTransparent"]), false);
@@ -379,8 +400,8 @@ export default function AudioPlayerWidget({
         // For internal playlist API, append filter params
         if (fetchUrl.includes("/api/audio/playlist")) {
           const url = new URL(fetchUrl, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
-          if (requestedCategory) url.searchParams.set("category", requestedCategory);
-          if (requestedType) url.searchParams.set("type", requestedType);
+          if (requestedCategories.length) url.searchParams.set("category", requestedCategories.join(","));
+          if (requestedTypes.length) url.searchParams.set("type", requestedTypes.join(","));
           if (adminKey) url.searchParams.set("admin-key", adminKey);
           fetchUrl = url.pathname + url.search;
         }
@@ -413,19 +434,19 @@ export default function AudioPlayerWidget({
       canceled = true;
       setLoading(false);
     };
-  }, [dataUrl, singleTrack, startIndex, sourceUrl, layout, instance, requestedCategory, requestedType, adminKey]);
+  }, [dataUrl, singleTrack, startIndex, sourceUrl, layout, instance, requestedCategoriesKey, requestedTypesKey, adminKey]);
 
   useEffect(() => {
     setVolume(initialVolume);
   }, [initialVolume]);
 
   useEffect(() => {
-    setSelectedCategory(requestedCategory);
-  }, [requestedCategory, dataUrl, instance]);
+    setSelectedCategories(requestedCategories);
+  }, [requestedCategoriesKey, dataUrl, instance]);
 
   useEffect(() => {
-    setSelectedType(requestedType);
-  }, [requestedType, dataUrl, instance]);
+    setSelectedTypes(requestedTypes);
+  }, [requestedTypesKey, dataUrl, instance]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -450,35 +471,47 @@ export default function AudioPlayerWidget({
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [accessibleTracks]);
-  
-  // Sync selectedCategory with requestedCategory on mount/change
+
   useEffect(() => {
-    if (requestedCategory) {
-      setSelectedCategory(requestedCategory);
-    }
-  }, [requestedCategory, dataUrl, instance]);
+    setSelectedCategories((prev) => prev.filter((category) => categories.includes(category)));
+  }, [categories]);
+
+  useEffect(() => {
+    setSelectedTypes((prev) => prev.filter((type) => {
+      const categoryScope = selectedCategories.length ? selectedCategories : categories;
+      const allowed = new Set<string>();
+      accessibleTracks.forEach((track) => {
+        const category = normalizeCategory(track.category);
+        const normalizedType = normalizeType(track.type);
+        if (!normalizedType) return;
+        if (categoryScope.length && !categoryScope.includes(category)) return;
+        allowed.add(normalizedType);
+      });
+      return allowed.has(type);
+    }));
+  }, [accessibleTracks, categories, selectedCategories]);
 
   const availableTypeOptions = useMemo(() => {
     const set = new Set<string>();
-    tracks.forEach((track) => {
+    accessibleTracks.forEach((track) => {
       const category = normalizeCategory(track.category);
       const type = normalizeType(track.type);
       if (!type) return;
-      if (selectedCategory && category !== selectedCategory) return;
+      if (selectedCategories.length && !selectedCategories.includes(category)) return;
       set.add(type);
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [tracks, selectedCategory]);
+  }, [accessibleTracks, selectedCategories]);
 
   const filteredTracks = useMemo(() => {
     return accessibleTracks.filter((track) => {
       const category = normalizeCategory(track.category);
       const type = normalizeType(track.type);
-      if (selectedCategory && category !== selectedCategory) return false;
-      if (selectedType && type !== selectedType) return false;
+      if (selectedCategories.length && !selectedCategories.includes(category)) return false;
+      if (selectedTypes.length && !selectedTypes.includes(type)) return false;
       return true;
     });
-  }, [accessibleTracks, selectedCategory, selectedType]);
+  }, [accessibleTracks, selectedCategories, selectedTypes]);
 
   useEffect(() => {
     if (!filteredTracks.length) {
@@ -720,7 +753,7 @@ export default function AudioPlayerWidget({
     "--audio-accent": accent,
     "--audio-text": text,
     borderRadius: layout === "small" ? 22 : 20,
-    boxShadow: previewBlend
+    boxShadow: effectivePreviewBlend
       ? "none"
       : layout === "large"
       ? "0 18px 40px rgba(4, 10, 30, 0.35)"
@@ -1052,8 +1085,8 @@ export default function AudioPlayerWidget({
                     <div className="filter-buttons">
                       <button
                         type="button"
-                        className={`filter-btn ${!selectedCategory ? 'active' : ''}`}
-                        onClick={() => setSelectedCategory("")}
+                        className={`filter-btn ${!selectedCategories.length ? 'active' : ''}`}
+                        onClick={() => setSelectedCategories([])}
                       >
                         All
                       </button>
@@ -1061,8 +1094,8 @@ export default function AudioPlayerWidget({
                         <button
                           key={cat}
                           type="button"
-                          className={`filter-btn ${selectedCategory === cat ? 'active' : ''}`}
-                          onClick={() => setSelectedCategory(cat)}
+                          className={`filter-btn ${selectedCategories.includes(cat) ? 'active' : ''}`}
+                          onClick={() => setSelectedCategories((prev) => toggleSelection(prev, cat))}
                         >
                           {cat}
                         </button>
@@ -1074,8 +1107,8 @@ export default function AudioPlayerWidget({
                     <div className="filter-buttons">
                       <button
                         type="button"
-                        className={`filter-btn ${!selectedType ? 'active' : ''}`}
-                        onClick={() => setSelectedType("")}
+                        className={`filter-btn ${!selectedTypes.length ? 'active' : ''}`}
+                        onClick={() => setSelectedTypes([])}
                       >
                         All
                       </button>
@@ -1083,8 +1116,8 @@ export default function AudioPlayerWidget({
                         <button
                           key={typ}
                           type="button"
-                          className={`filter-btn ${selectedType === typ ? 'active' : ''}`}
-                          onClick={() => setSelectedType(typ)}
+                          className={`filter-btn ${selectedTypes.includes(typ) ? 'active' : ''}`}
+                          onClick={() => setSelectedTypes((prev) => toggleSelection(prev, typ))}
                         >
                           {typ}
                         </button>

@@ -55,6 +55,25 @@ function normalizeFilterType(value: string): string {
   return token;
 }
 
+function parseMultiFilterValues(value: string, normalizer: (value: string) => string): string[] {
+  if (!value.trim()) return [];
+  return Array.from(
+    new Set(
+      value
+        .split(",")
+        .map((token) => normalizer(token.trim()))
+        .filter((token): token is string => Boolean(token)),
+    ),
+  );
+}
+
+function toggleSelection(values: string[], value: string): string[] {
+  if (values.includes(value)) {
+    return values.filter((token) => token !== value);
+  }
+  return [...values, value].sort((left, right) => left.localeCompare(right));
+}
+
 const defaults = {
   layout: "small" as PlayerLayout,
   src: "",
@@ -112,8 +131,8 @@ function sanitizeInstance(value: string): string {
 export default function AudioPlayerBuilder() {
   const searchParams = useSearchParams();
   const instanceParam = (searchParams.get("instance") ?? "").trim();
-  const categoryParam = normalizeFilterCategory(searchParams.get("category") ?? "");
-  const typeParam = normalizeFilterType(searchParams.get("type") ?? "");
+  const categoryParam = parseMultiFilterValues(searchParams.get("category") ?? "", normalizeFilterCategory);
+  const typeParam = parseMultiFilterValues(searchParams.get("type") ?? "", normalizeFilterType);
   const adminKeyParam = (searchParams.get("admin-key") ?? "").trim();
   const [layout, setLayout] = useState<PlayerLayout>(defaults.layout);
   const [src, setSrc] = useState(defaults.src);
@@ -130,8 +149,8 @@ export default function AudioPlayerBuilder() {
   const [loop, setLoop] = useState<LoopMode>(defaults.loop);
   const [queue, setQueue] = useState(defaults.queue);
   const [autoplay, setAutoplay] = useState(defaults.autoplay);
-  const [categoryFilter, setCategoryFilter] = useState(categoryParam || defaults.category);
-  const [typeFilter, setTypeFilter] = useState(typeParam || defaults.type);
+  const [categoryFilters, setCategoryFilters] = useState<string[]>(categoryParam);
+  const [typeFilters, setTypeFilters] = useState<string[]>(typeParam);
   const [adminKey, setAdminKey] = useState(adminKeyParam || defaults.adminKey);
   const [instanceDraft, setInstanceDraft] = useState(instanceParam);
   const [instanceId, setInstanceId] = useState(instanceParam);
@@ -141,8 +160,8 @@ export default function AudioPlayerBuilder() {
 
   const normalizedInstance = sanitizeInstance(instanceId.trim());
   const normalizedDraft = sanitizeInstance(instanceDraft.trim());
-  const normalizedCategoryFilter = normalizeFilterCategory(categoryFilter);
-  const normalizedTypeFilter = normalizeFilterType(typeFilter);
+  const normalizedCategoryFilters = categoryFilters.map((value) => normalizeFilterCategory(value)).filter((value): value is string => Boolean(value));
+  const normalizedTypeFilters = typeFilters.map((value) => normalizeFilterType(value)).filter((value): value is string => Boolean(value));
   const configuredAdminKey =
     (process.env.NEXT_PUBLIC_AUDIO_ADMIN_KEY || process.env.NEXT_PUBLIC_QUOTES_ADMIN_KEY || "").trim();
   const includeAdminExtras = configuredAdminKey
@@ -165,21 +184,21 @@ export default function AudioPlayerBuilder() {
   );
 
   const availableTypeOptions = useMemo(() => {
-    if (!normalizedCategoryFilter) return allTypeOptions;
-    return filterTypeOptionsByCategory[normalizedCategoryFilter] ?? allTypeOptions;
-  }, [normalizedCategoryFilter, filterTypeOptionsByCategory, allTypeOptions]);
+    if (!normalizedCategoryFilters.length) return allTypeOptions;
+    const set = new Set<string>();
+    normalizedCategoryFilters.forEach((category) => {
+      (filterTypeOptionsByCategory[category] ?? []).forEach((type) => set.add(type));
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [normalizedCategoryFilters, filterTypeOptionsByCategory, allTypeOptions]);
 
   useEffect(() => {
-    if (!normalizedCategoryFilter) return;
-    if (availableCategoryOptions.includes(normalizedCategoryFilter)) return;
-    setCategoryFilter("");
-  }, [availableCategoryOptions, normalizedCategoryFilter]);
+    setCategoryFilters((prev) => prev.filter((value) => availableCategoryOptions.includes(value)));
+  }, [availableCategoryOptions]);
 
   useEffect(() => {
-    if (!normalizedTypeFilter) return;
-    if (availableTypeOptions.includes(normalizedTypeFilter)) return;
-    setTypeFilter("");
-  }, [availableTypeOptions, normalizedTypeFilter]);
+    setTypeFilters((prev) => prev.filter((value) => availableTypeOptions.includes(value)));
+  }, [availableTypeOptions]);
 
   useEffect(() => {
     const matchedPreset = AUDIO_THEME_PRESETS.find(
@@ -207,14 +226,14 @@ export default function AudioPlayerBuilder() {
     p.set("loop", loop);
     p.set("queue", queue ? "1" : "0");
     if (autoplay) p.set("autoplay", "1");
-    if (normalizedCategoryFilter) p.set("category", normalizedCategoryFilter);
-    if (normalizedTypeFilter) p.set("type", normalizedTypeFilter);
+    if (normalizedCategoryFilters.length) p.set("category", normalizedCategoryFilters.join(","));
+    if (normalizedTypeFilters.length) p.set("type", normalizedTypeFilters.join(","));
     if (adminKey.trim()) p.set("admin-key", adminKey.trim());
     if (normalizedInstance) p.set("instance", normalizedInstance);
     if (previewBlend) p.set("blend", "1");
     if (previewTransparent) p.set("transparent", "1");
     return p;
-  }, [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedCategoryFilter, normalizedTypeFilter, adminKey, normalizedInstance, previewBlend, previewTransparent]);
+  }, [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedCategoryFilters, normalizedTypeFilters, adminKey, normalizedInstance, previewBlend, previewTransparent]);
 
   const livePreviewParams = useMemo(
     () => ({
@@ -232,12 +251,12 @@ export default function AudioPlayerBuilder() {
       loop,
       queue: queue ? 1 : 0,
       autoplay: autoplay ? 1 : 0,
-      category: normalizedCategoryFilter || undefined,
-      type: normalizedTypeFilter || undefined,
+      category: normalizedCategoryFilters.length ? normalizedCategoryFilters.join(",") : undefined,
+      type: normalizedTypeFilters.length ? normalizedTypeFilters.join(",") : undefined,
       "admin-key": adminKey.trim() || undefined,
       instance: normalizedInstance || undefined,
     }),
-    [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedCategoryFilter, normalizedTypeFilter, adminKey, normalizedInstance],
+    [layout, src, title, artist, cover, data, accent, bg, text, volume, start, loop, queue, autoplay, normalizedCategoryFilters, normalizedTypeFilters, adminKey, normalizedInstance],
   );
 
   const reset = () => {
@@ -255,8 +274,8 @@ export default function AudioPlayerBuilder() {
     setLoop(defaults.loop);
     setQueue(defaults.queue);
     setAutoplay(defaults.autoplay);
-    setCategoryFilter(defaults.category);
-    setTypeFilter(defaults.type);
+    setCategoryFilters([]);
+    setTypeFilters([]);
     setAdminKey(defaults.adminKey);
     setInstanceId(instanceParam);
     setInstanceDraft(instanceParam);
@@ -370,39 +389,57 @@ export default function AudioPlayerBuilder() {
             <div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
               <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">Library Filters</p>
 
-              <label className="space-y-1 text-sm">
+              <div className="space-y-1 text-sm">
                 <span className="text-zinc-300">Category</span>
-                <select
-                  className={builderSelectClass}
-                  style={darkSelectStyle}
-                  value={normalizedCategoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                >
-                  <option value="">All categories</option>
-                  {availableCategoryOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${!normalizedCategoryFilters.length ? "border-cyan-300/50 bg-cyan-400/15 text-cyan-50" : "border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10"}`}
+                    onClick={() => setCategoryFilters([])}
+                  >
+                    All categories
+                  </button>
+                  {availableCategoryOptions.map((option) => {
+                    const active = normalizedCategoryFilters.includes(option);
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        className={`rounded-full border px-3 py-1.5 text-xs transition ${active ? "border-cyan-300/50 bg-cyan-400/15 text-cyan-50" : "border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10"}`}
+                        onClick={() => setCategoryFilters((prev) => toggleSelection(prev, option))}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-              <label className="space-y-1 text-sm">
+              <div className="space-y-1 text-sm">
                 <span className="text-zinc-300">Type (depends on category)</span>
-                <select
-                  className={builderSelectClass}
-                  style={darkSelectStyle}
-                  value={normalizedTypeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                >
-                  <option value="">All types</option>
-                  {availableTypeOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${!normalizedTypeFilters.length ? "border-cyan-300/50 bg-cyan-400/15 text-cyan-50" : "border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10"}`}
+                    onClick={() => setTypeFilters([])}
+                  >
+                    All types
+                  </button>
+                  {availableTypeOptions.map((option) => {
+                    const active = normalizedTypeFilters.includes(option);
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        className={`rounded-full border px-3 py-1.5 text-xs transition ${active ? "border-cyan-300/50 bg-cyan-400/15 text-cyan-50" : "border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10"}`}
+                        onClick={() => setTypeFilters((prev) => toggleSelection(prev, option))}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <label className="space-y-1 text-sm">
                 <span className="text-zinc-300">Admin access key (optional)</span>

@@ -63,6 +63,17 @@ function normalizeType(value: string | null | undefined): string {
   return TYPE_ALIASES[token] ?? token;
 }
 
+function parseMultiFilterValues(values: string[], normalizer: (value: string | null | undefined) => string): string[] {
+  return Array.from(
+    new Set(
+      values
+        .flatMap((value) => decodeMaybeUriComponent(value).split(","))
+        .map((value) => normalizer(value))
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+}
+
 function canAccessTrackWithoutAdmin(category: string, type: string): boolean {
   if (!category) return false;
   const allowedTypes = PUBLIC_ALLOWED_TYPES_BY_CATEGORY[category] ?? [];
@@ -103,8 +114,8 @@ async function readPlaylistTracks(): Promise<PlaylistTrack[]> {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  const requestedCategory = normalizeCategory(searchParams.get("category"));
-  const requestedType = normalizeType(searchParams.get("type"));
+  const requestedCategories = parseMultiFilterValues(searchParams.getAll("category"), normalizeCategory);
+  const requestedTypes = parseMultiFilterValues(searchParams.getAll("type"), normalizeType);
 
   const suppliedAdminKey =
     (searchParams.get("admin-key") || searchParams.get("admin_key") || searchParams.get("adminkey") || "").trim();
@@ -126,8 +137,8 @@ export async function GET(request: Request) {
       : tracks.filter((track) => canAccessTrackWithoutAdmin(track.category ?? "", track.type ?? ""));
 
     const filteredTracks = visibleTracks.filter((track) => {
-      if (requestedCategory && (track.category ?? "") !== requestedCategory) return false;
-      if (requestedType && (track.type ?? "") !== requestedType) return false;
+      if (requestedCategories.length && !requestedCategories.includes(track.category ?? "")) return false;
+      if (requestedTypes.length && !requestedTypes.includes(track.type ?? "")) return false;
       return true;
     });
 
