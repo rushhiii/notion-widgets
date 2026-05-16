@@ -83,7 +83,7 @@ function normalizeTrack(input: unknown): PlaylistTrack | null {
 }
 
 async function readPlaylistTracks(): Promise<PlaylistTrack[]> {
-  const playlistPath = path.join(process.cwd(), "playlist.json");
+  const playlistPath = path.join(process.cwd(), "public/audio/playlist.json");
   const content = await fs.readFile(playlistPath, "utf8");
   const payload = JSON.parse(content) as unknown;
 

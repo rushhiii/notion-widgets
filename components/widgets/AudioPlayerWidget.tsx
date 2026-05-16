@@ -2,7 +2,7 @@
 
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { List, Pause, Play, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { AlertCircle, List, Loader, Music2, Pause, Play, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
 
 type EmbedParams = Record<string, string | number | boolean | undefined>;
 type PlayerLayout = "small" | "medium" | "large";
@@ -42,11 +42,15 @@ const PUBLIC_ALLOWED_TYPES_BY_CATEGORY: Record<string, string[]> = {
   otherz: ["normal"],
   punjab: ["normal"],
   nightcore: ["normal"],
+  "🎻": ["normal"],
+  "🔱": ["normal", "modern"],
 };
 
 const CATEGORY_ALIASES: Record<string, string> = {
   punjabi: "punjab",
   others: "otherz",
+    instrumental: "🎻",
+    spritual: "🔱"
 };
 
 const TYPE_ALIASES: Record<string, string> = {
@@ -214,7 +218,15 @@ function parseTracksPayload(payload: unknown): Track[] {
   return [];
 }
 
-export default function AudioPlayerWidget({ embedParams }: { embedParams?: EmbedParams }) {
+export default function AudioPlayerWidget({
+  embedParams,
+  previewBlend = false,
+  previewTransparent = false,
+}: {
+  embedParams?: EmbedParams;
+  previewBlend?: boolean;
+  previewTransparent?: boolean;
+}) {
   const searchParams = useSearchParams();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -296,6 +308,23 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
       cover,
     };
   }, [sourceUrl, title, artist, cover]);
+
+  const hexToRgb = (h: string) => {
+    const hex = h.replace('#', '');
+    const bigint = parseInt(hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex, 16);
+    return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+  };
+
+  const isColorDark = (hex: string) => {
+    try {
+      const { r, g, b } = hexToRgb(hex);
+      // Perceived luminance
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance < 0.5;
+    } catch (e) {
+      return false;
+    }
+  };
 
   useEffect(() => {
     if (explicitLayout) return;
@@ -591,30 +620,49 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
     setDuration(0);
     setIsBuffering(true);
     setError(null);
+    setIsPlaying(false); // Reset to paused when track changes
 
     // Reset and load the audio
     audio.load();
 
-    // Auto-play if enabled or already playing
-    if (autoplay || isPlaying) {
+    // Auto-play if enabled (only on track change, not on isPlaying change)
+    if (autoplay) {
       const playPromise = audio.play();
       if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          const message = err instanceof Error ? err.message : 'Unknown error';
-          console.error('Audio playback error:', message);
-        });
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch((err) => {
+            // Only log if it's not an abort error
+            if (err?.name !== 'AbortError') {
+              const message = err instanceof Error ? err.message : 'Unknown error';
+              if (!message.includes('interrupted')) {
+                console.error('Audio playback error:', message);
+              }
+            }
+          });
       }
     }
-  }, [activeTrack, autoplay, isPlaying, activeIndex]);
+  }, [activeTrack, autoplay, activeIndex]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio || !activeTrack) return;
+    
     if (audio.paused) {
-      audio.play().catch(() => undefined);
-      return;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch((err) => {
+            if (err?.name !== 'AbortError' && !err?.message?.includes('interrupted')) {
+              console.error('Play failed:', err);
+            }
+          });
+      }
+    } else {
+      audio.pause();
+      setIsPlaying(false);
     }
-    audio.pause();
   };
 
   const onSeek = (value: number) => {
@@ -652,16 +700,23 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
   const canGoPrevious = currentFilteredIndex > 0 || loopMode === "playlist";
   const canGoNext = currentFilteredIndex < filteredTracks.length - 1 || loopMode === "playlist";
 
+  const computedBg = useMemo(() => {
+    if (previewTransparent) return isColorDark(bg) ? "#20020220" : "#ffffff";
+    if (previewBlend) return "transparent";
+    return bg;
+  }, [bg, previewTransparent, previewBlend]);
+
   const shellStyle: CSSProperties & Record<string, string | number> = {
-    backgroundColor: bg,
+    backgroundColor: computedBg,
     color: text,
     "--audio-accent": accent,
     "--audio-text": text,
     borderRadius: layout === "small" ? 22 : 20,
-    boxShadow:
-      layout === "large"
-        ? "0 18px 40px rgba(4, 10, 30, 0.35)"
-        : "0 12px 28px rgba(16, 24, 40, 0.16)",
+    boxShadow: previewBlend
+      ? "none"
+      : layout === "large"
+      ? "0 18px 40px rgba(4, 10, 30, 0.35)"
+      : "0 12px 28px rgba(16, 24, 40, 0.16)",
     width: "100%",
     maxWidth: layout === "small" ? 800 : layout === "medium" ? 420 : 500,
   };
@@ -670,31 +725,48 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
     "inline-flex h-11 w-11 items-center justify-center rounded-xl transition disabled:cursor-not-allowed disabled:opacity-45";
 
   return (
-    <div ref={containerRef} className="w-full p-2">
+    <div ref={containerRef} className="flex w-full items-center justify-center p-2">
       <audio ref={audioRef} preload="metadata" />
 
-      <section className={`audio-shell ${layout}`} style={shellStyle}>
+      <section className={`audio-shell ${layout}`} style={{ ...shellStyle, position: "relative" }}>
+        {(loading || isBuffering) && (
+          <div
+            className="absolute inset-0 rounded-[inherit] bg-black/40 backdrop-blur-sm transition-opacity duration-200"
+            style={{ pointerEvents: "none" }}
+          />
+        )}
+        
         {loading ? (
-          <div className="px-5 py-4 text-sm opacity-80">
-            <p>⏳ Loading playlist datasource...</p>
+          <div className="flex flex-col items-center justify-center gap-3 px-4 py-8 min-h-[120px]">
+            <Loader size={28} className="animate-spin" style={{ color: text }} />
+            <p className="text-sm text-center" style={{ opacity: 0.7 }}>Loading playlist...</p>
           </div>
         ) : null}
         {isBuffering && activeTrack && !error ? (
-          <div className="px-5 py-2 text-xs opacity-70">
-            <p>▶ Loading audio track...</p>
+          <div className="flex flex-col items-center justify-center gap-2 px-4 py-4 min-h-[60px]">
+            <Play size={24} className="animate-pulse" fill="currentColor" style={{ color: text }} />
+            <p className="text-xs text-center" style={{ opacity: 0.65 }}>Loading track...</p>
           </div>
         ) : null}
         {error ? (
-          <div className="mx-5 mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-100">
-            <p className="font-semibold">⚠ Audio Error</p>
-            <p className="mt-1 opacity-90">{error}</p>
+          <div className="mx-4 mt-4 rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-3 text-xs backdrop-blur-sm" style={{ color: text }}>
+            <div className="flex items-center gap-2">
+              <AlertCircle size={18} className="flex-shrink-0" />
+              <div>
+                <p className="font-semibold">Error</p>
+                <p className="mt-1 opacity-85">{error}</p>
+              </div>
+            </div>
           </div>
         ) : null}
 
         {!loading && !activeTrack ? (
-          <div className="px-6 py-7 text-sm opacity-90">
-            <p className="font-semibold">Audio Player Widget</p>
-            <p className="mt-2 opacity-80">Add an mp3 URL using src, or provide data with a playlist JSON URL.</p>
+          <div className="flex flex-col items-center justify-center gap-3 px-4 py-8 min-h-[140px] text-center">
+            <Music2 size={40} style={{ color: text, opacity: 0.4 }} />
+            <div>
+              <p className="text-sm font-medium" style={{ opacity: 0.9 }}>Audio Player</p>
+              <p className="text-xs mt-1" style={{ opacity: 0.6 }}>Add src or data URL to play</p>
+            </div>
           </div>
         ) : null}
 
@@ -712,21 +784,21 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
                 <h3>{activeTrack.title}</h3>
                 <p id="track-name">{activeTrack.artist}</p>
                 {filteredTracks.length > 0 && (
-                  <p id="track-number" style={{ fontSize: '0.72rem', color: '#acaebd', marginTop: '6px', opacity: 0.7 }}>
+                  <p id="track-number" style={{ fontSize: '0.72rem', color: text, marginTop: '6px', opacity: 0.7, fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
                     Track {currentFilteredIndex + 1} of {filteredTracks.length}
                   </p>
                 )}
               </div>
               <div className={`small-time-row ${duration > 0 ? "active" : ""}`}>
-                <span id="current-time">{formatTime(currentTime)}</span>
-                <span id="track-length">{formatTime(duration)}</span>
+                <span id="current-time" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>{formatTime(currentTime)}</span>
+                <span id="track-length" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>{formatTime(duration)}</span>
               </div>
 
-              <div className="small-status-strip">
+              {/* <div className="small-status-strip">
                 <span className={isPlaying ? "is-live" : ""}>{playbackStateLabel}</span>
                 <span>Track {currentFilteredIndex + 1} of {filteredTracks.length}</span>
                 <span>{formatTime(duration)}</span>
-              </div>
+              </div> */}
 
               <div
                 ref={smallSeekRef}
@@ -745,7 +817,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
               </div>
             </div>
 
-              <div className="small-controls" id="player-content">
+            <div className="small-controls" id="player-content">
               <div className={`small-album-art ${isPlaying ? "active" : ""} ${isBuffering ? "buffering" : ""}`}>
                 <img
                   key={`art-${activeTrack.src}-${activeIndex}`}
@@ -760,18 +832,18 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
               </div>
 
               <button type="button" className={`${controlButton} small-control-button`} onClick={previousTrack} disabled={!canGoPrevious}>
-                <SkipBack size={30} />
+                <SkipBack size={30} fill="currentColor" color={text} />
               </button>
               <button
                 type="button"
                 className={`${controlButton} play-main small-control-button`}
                 onClick={togglePlay}
-                style={{ backgroundColor: `${accent}24`, color: accent }}
+                style={{ color: accent }}
               >
-                {isPlaying ? <Pause size={34} /> : <Play size={34} />}
+                {isPlaying ? <Pause size={34} fill="currentColor" /> : <Play size={34} fill="currentColor" />}
               </button>
               <button type="button" className={`${controlButton} small-control-button`} onClick={nextTrack} disabled={!canGoNext}>
-                <SkipForward size={30} />
+                <SkipForward size={30} fill="currentColor" color={text} />
               </button>
             </div>
           </div>
@@ -784,10 +856,10 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
               <h3 className="text-4xl font-black leading-[1.04] tracking-tight">{activeTrack.title}</h3>
               <p className="mt-2 text-lg opacity-85">{activeTrack.artist}</p>
               <div className="mt-4 flex flex-wrap gap-2 items-center">
-                <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-3 py-1 text-xs font-semibold opacity-80">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-3 py-1 text-xs font-semibold opacity-80" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
                   🕐 {formatTime(duration)}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-3 py-1 text-xs font-semibold opacity-80">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-3 py-1 text-xs font-semibold opacity-80" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
                   📍 Track {currentFilteredIndex + 1}/{filteredTracks.length}
                 </span>
                 {playbackStateLabel ? (
@@ -820,7 +892,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
                 )}
               </div>
             </div>
-            <div className="px-6 pb-2 text-sm opacity-85 flex justify-between">
+            <div className="px-6 pb-2 text-sm opacity-85 flex justify-between" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
               <span>{formatTime(currentTime)}</span>
               <span>{formatTime(duration)}</span>
             </div>
@@ -838,26 +910,26 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
             <div className="px-6 pb-6 pt-4 flex items-center justify-between">
               <div className="flex gap-2">
                 <button type="button" className={controlButton} onClick={previousTrack} disabled={!canGoPrevious}>
-                  <SkipBack size={24} />
+                  <SkipBack size={24} fill="currentColor" color={text} />
                 </button>
                 <button
                   type="button"
                   className={`${controlButton} play-main`}
                   onClick={togglePlay}
-                  style={{ backgroundColor: `${accent}24`, color: accent }}
+                  style={{ color: accent }}
                 >
-                  {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                  {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
                 </button>
                 <button type="button" className={controlButton} onClick={nextTrack} disabled={!canGoNext}>
-                  <SkipForward size={24} />
+                  <SkipForward size={24} fill="currentColor" color={text} />
                 </button>
               </div>
               <div className="flex gap-2">
                 <button type="button" className={controlButton} onClick={toggleMute}>
-                  {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                  {isMuted ? <VolumeX size={20} fill="currentColor" color={text} /> : <Volume2 size={20} fill="currentColor" color={text} />}
                 </button>
                 <button type="button" className={controlButton} onClick={() => undefined}>
-                  <List size={20} />
+                  <List size={20} fill="currentColor" color={text} />
                 </button>
               </div>
             </div>
@@ -874,7 +946,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
               <div className="mt-3 flex flex-wrap gap-4 text-sm opacity-75">
                 <div>
                   <p className="text-xs uppercase tracking-wider opacity-50 mb-1">Duration</p>
-                  <p className="font-semibold">{formatTime(duration)}</p>
+                  <p className="font-semibold" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>{formatTime(duration)}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider opacity-50 mb-1">Track {currentFilteredIndex + 1} of {filteredTracks.length}</p>
@@ -907,7 +979,7 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
               </div>
             </div>
 
-            <div className="px-6 pb-1 pt-4 text-sm opacity-90 flex justify-between">
+            <div className="px-6 pb-1 pt-4 text-sm opacity-90 flex justify-between" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
               <span>{formatTime(currentTime)}</span>
               <span>{formatTime(duration)}</span>
             </div>
@@ -927,24 +999,24 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
             <div className="px-6 py-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex gap-2">
                 <button type="button" className={controlButton} onClick={previousTrack} disabled={!canGoPrevious}>
-                  <SkipBack size={22} />
+                  <SkipBack size={22} fill="currentColor" color={text} />
                 </button>
                 <button
                   type="button"
                   className={`${controlButton} play-main`}
                   onClick={togglePlay}
-                  style={{ backgroundColor: `${accent}24`, color: accent }}
+                  style={{ color: accent }}
                 >
-                  {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                  {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
                 </button>
                 <button type="button" className={controlButton} onClick={nextTrack} disabled={!canGoNext}>
-                  <SkipForward size={22} />
+                  <SkipForward size={22} fill="currentColor" color={text} />
                 </button>
               </div>
 
               <div className="flex items-center gap-3">
                 <button type="button" className={controlButton} onClick={toggleMute}>
-                  {isMuted ? <VolumeX size={19} /> : <Volume2 size={19} />}
+                  {isMuted ? <VolumeX size={19} fill="currentColor" color={text} /> : <Volume2 size={19} fill="currentColor" color={text} />}
                 </button>
                 <input
                   type="range"
@@ -1084,17 +1156,21 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
         }
 
         .small-header {
-          margin: 0 15px;
-          margin-left: 174px;
+          margin: 0 17px;
+          // margin-left: 174px;
           border-radius: 15px 15px 0 0;
           padding: 13px 22px 10px;
-          padding-left: 28px;
+          // padding-left: 28px;
+          padding-left: 174px;
           background: #fff7f7;
           backdrop-filter: blur(4px);
           min-height: 96px;
           position: relative;
           z-index: 1;
-          top: 0;
+          // top: 82px;
+          top: 111px;
+          opsity: 0;
+  visibility: hidden;
           transition:
             top 420ms cubic-bezier(0.22, 1, 0.36, 1),
             box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1102,7 +1178,10 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
         }
 
         .small-header.active {
-          top: -82px;
+          top: 0;
+          opsity: 1;
+  visibility: visible;
+          
           box-shadow: 0 18px 40px rgba(22, 27, 43, 0.16);
         }
 
@@ -1225,12 +1304,12 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
           min-height: 104px;
           display: flex;
           align-items: center;
-          justify-content: flex-end;
+          justify-content: center;
           gap: 8px;
           position: relative;
           border: 1px solid #dce0e6;
           box-shadow: 0 24px 44px rgba(30, 41, 59, 0.14);
-          padding: 0 16px 0 166px;
+          padding: 0 16px;
           z-index: 2;
           transition:
             transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1239,13 +1318,13 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
 
         .small-album-art {
           position: absolute;
-          top: -30px;
-          left: 22px;
+          top: -40px;
+          left: 25px;
           width: 132px;
           height: 132px;
-          border-radius: 22px;
+          border-radius: 50%;
           overflow: hidden;
-          box-shadow: 0 0 0 10px #fff;
+          box-shadow: 0 0 0 5px #fff;
           transition:
             top 420ms cubic-bezier(0.22, 1, 0.36, 1),
             box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1254,21 +1333,22 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
         }
 
         .small-album-art.active {
-          top: -40px;
+          // top: -70px;
           box-shadow: 0 0 0 4px #fff7f7, 0 30px 50px -15px #afb7c1;
-          transform: translateY(-1px) scale(1.015);
+          transform: translateY(-25px) scale(1.015);
         }
 
         .small-album-art img {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          // object-fit: fit;
           display: block;
           animation: artSwapIn 420ms cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .small-album-art.active img {
-          animation: artSwapIn 420ms cubic-bezier(0.22, 1, 0.36, 1), rotateAlbumArt 5.8s linear infinite;
+          // animation: artSwapIn 420ms cubic-bezier(0.22, 1, 0.36, 1), rotateAlbumArt 5.8s linear infinite;
         }
 
         .small-album-art.buffering img {
@@ -1297,8 +1377,8 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
         }
 
         .small-control-button {
-          background: #ffffff;
-          color: #d6dee7;
+          // background: #ffffff;
+          // color: #d6dee7;
           border-radius: 8px;
           transform: translateY(0);
           box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
@@ -1312,12 +1392,12 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
         .small-control-button:hover {
           background: #d6d6de;
           color: #ffffff;
-          transform: translateY(-2px);
-          box-shadow: 0 10px 20px rgba(45, 52, 76, 0.18);
+          // transform: translateY(-2px);
+          // box-shadow: 0 10px 20px rgba(45, 52, 76, 0.18);
         }
 
         .small-control-button:active {
-          transform: translateY(-1px) scale(0.98);
+          // transform: translateY(-1px) scale(0.98);
         }
 
         .small-controls .play-main.small-control-button {
@@ -1326,6 +1406,11 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
 
         .play-main {
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.36);
+          transition: background-color 200ms ease;
+        }
+
+        .play-main:hover:not(:disabled) {
+          background-color: rgba(255, 255, 255, 0.15);
         }
 
         @keyframes rotateAlbumArt {
@@ -1345,6 +1430,103 @@ export default function AudioPlayerWidget({ embedParams }: { embedParams?: Embed
           to {
             opacity: 1;
             transform: scale(1);
+          }
+        }
+
+        @media (max-width: 400px) {
+          .small-layout {
+            padding: 12px;
+          }
+
+          .small-header {
+            margin: 0 12px;
+            padding: 10px 16px 8px;
+            padding-left: 120px;
+            min-height: 80px;
+            border-radius: 12px 12px 0 0;
+          }
+
+          .small-title-wrap h3 {
+            font-size: 0.9rem;
+            line-height: 1.1;
+          }
+
+          .small-title-wrap p {
+            margin: 2px 0 8px;
+            font-size: 0.7rem;
+          }
+
+          .small-controls {
+            min-height: 90px;
+            padding: 0 12px;
+            gap: 6px;
+          }
+
+          .small-album-art {
+            width: 100px;
+            height: 100px;
+            left: 12px;
+            top: -35px;
+            box-shadow: 0 0 0 4px #fff;
+          }
+
+          .small-album-art.active {
+            transform: translateY(-18px) scale(1.01);
+          }
+
+          .small-control-button {
+            height: 36px !important;
+            width: 36px !important;
+          }
+
+          .play-main {
+            height: 42px !important;
+            width: 42px !important;
+          }
+        }
+
+        @media (max-width: 320px) {
+          .small-layout {
+            padding: 10px;
+          }
+
+          .small-header {
+            margin: 0 10px;
+            padding: 8px 12px 6px;
+            padding-left: 100px;
+            min-height: 72px;
+          }
+
+          .small-title-wrap h3 {
+            font-size: 0.8rem;
+          }
+
+          .small-title-wrap p {
+            font-size: 0.65rem;
+            margin: 2px 0 6px;
+          }
+
+          .small-controls {
+            min-height: 80px;
+            padding: 0 10px;
+            gap: 4px;
+          }
+
+          .small-album-art {
+            width: 85px;
+            height: 85px;
+            left: 10px;
+            top: -30px;
+          }
+
+          .small-control-button {
+            height: 32px !important;
+            width: 32px !important;
+          }
+
+          .play-main {
+            height: 38px !important;
+            width: 38px !important;
           }
         }
 

@@ -23,11 +23,16 @@ export async function GET(request: NextRequest) {
 
    const response = await fetch(decodedUrl, {
       headers: {
-       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'audio/*',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Range': 'bytes=0-',
+      },
+      redirect: 'follow',
     });
 
     if (!response.ok) {
+      console.error('Audio fetch failed:', { url: decodedUrl, status: response.status, statusText: response.statusText });
       return NextResponse.json(
         { error: `Failed to fetch audio: ${response.statusText}` },
         { status: response.status }

@@ -17,16 +17,16 @@ type AudioThemePreset = {
 
 const INTERNAL_PLAYLIST_SOURCE = "/api/audio/playlist";
 const PUBLIC_FILTER_TYPE_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
-  eng: ["normal", "slowed"],
+  eng: ["normal", "slowed", "speed up"],
   hindi: ["normal", "slowed"],
   otherz: ["normal"],
   punjab: ["normal"],
   nightcore: ["normal"],
+  "🎻": ["normal"],
+  "🔱": ["normal", "modern"],
 };
 const ADMIN_EXTRA_FILTER_TYPE_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
   eng: ["speed up"],
-  "🔱": ["normal", "modern"],
-  "🎻": ["normal"],
 };
 
 function buildFilterTypeMap(includeAdminExtras: boolean): Record<string, string[]> {
@@ -91,10 +91,10 @@ const layoutPalette: Record<PlayerLayout, { bg: string; text: string; accent: st
 
 const AUDIO_THEME_PRESETS: AudioThemePreset[] = [
   { id: "petal", label: "Petal", accent: "#d54e84", bg: "#ececef", text: "#253452" },
-  { id: "midnight", label: "Midnight", accent: "#2ea4ff", bg: "#081538", text: "#e8edff" },
+  { id: "midnight", label: "Midnight", accent: "#60a5fa", bg: "#081538", text: "#e8edff" },
   { id: "sunset", label: "Sunset", accent: "#ff6b35", bg: "#1c1024", text: "#ffe8d6" },
   { id: "forest", label: "Forest", accent: "#18a67a", bg: "#0f1f1a", text: "#d7f7e8" },
-  { id: "mono", label: "Mono", accent: "#f3f4f6", bg: "#111827", text: "#f9fafb" },
+  { id: "mono", label: "Mono", accent: "#1f2937", bg: "#f9fafb", text: "#111827" },
   { id: "amber", label: "Amber", accent: "#f59e0b", bg: "#201205", text: "#fff4d6" },
 ];
 
@@ -136,6 +136,8 @@ export default function AudioPlayerBuilder() {
   const [instanceDraft, setInstanceDraft] = useState(instanceParam);
   const [instanceId, setInstanceId] = useState(instanceParam);
   const [copied, setCopied] = useState(false);
+  const [previewBlend, setPreviewBlend] = useState(false);
+  const [previewTransparent, setPreviewTransparent] = useState(false);
 
   const normalizedInstance = sanitizeInstance(instanceId.trim());
   const normalizedDraft = sanitizeInstance(instanceDraft.trim());
@@ -589,16 +591,22 @@ export default function AudioPlayerBuilder() {
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">Preview</p>
-              <h3 className="text-sm font-semibold text-zinc-200">Live Player</h3>
+        <section className="flex items-center justify-center h-[88vh] shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl rounded-[28px]">
+          <div className="relative flex items-center justify-center p-4">
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-3">
+              <label className="flex items-center gap-2 text-sm text-zinc-300">
+                <input type="checkbox" className="h-4 w-4 rounded" checked={previewBlend} onChange={(e) => setPreviewBlend(e.target.checked)} />
+                <span>Blend with page</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm text-zinc-300">
+                <input type="checkbox" className="h-4 w-4 rounded" checked={previewTransparent} onChange={(e) => setPreviewTransparent(e.target.checked)} />
+                <span>Transparent preset</span>
+              </label>
             </div>
-            <p className="text-xs text-zinc-400">Matches copied URL settings.</p>
-          </div>
-          <div className="min-h-[420px] rounded-[24px] border border-white/10 bg-[#0c0d10]/70 p-3">
-            <AudioPlayerWidget embedParams={livePreviewParams} />
+
+            <div className="bg-[#202020] p-4 rounded-[28px] border border-white/10 bg-white/[0.03]">
+              <AudioPlayerWidget embedParams={livePreviewParams} previewBlend={previewBlend} previewTransparent={previewTransparent} />
+            </div>
           </div>
         </section>
       </div>

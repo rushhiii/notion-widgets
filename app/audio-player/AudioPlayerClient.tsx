@@ -10,7 +10,7 @@ export default function AudioPlayerClient() {
 
   if (embed) {
     return (
-      <main className="flex w-full min-h-screen items-center justify-center bg-transparent">
+      <main className="w-full min-h-screen flex items-center justify-center">
         <AudioPlayerWidget />
       </main>
     );
