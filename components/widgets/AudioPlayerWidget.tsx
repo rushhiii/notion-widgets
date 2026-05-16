@@ -375,7 +375,16 @@ export default function AudioPlayerWidget({
 
       setLoading(true);
       try {
-        const response = await fetch(toPlayablePlaylistUrl(dataUrl), { cache: "no-store" });
+        let fetchUrl = toPlayablePlaylistUrl(dataUrl);
+        // For internal playlist API, append filter params
+        if (fetchUrl.includes("/api/audio/playlist")) {
+          const url = new URL(fetchUrl, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+          if (requestedCategory) url.searchParams.set("category", requestedCategory);
+          if (requestedType) url.searchParams.set("type", requestedType);
+          if (adminKey) url.searchParams.set("admin-key", adminKey);
+          fetchUrl = url.pathname + url.search;
+        }
+        const response = await fetch(fetchUrl, { cache: "no-store" });
         if (!response.ok) {
           throw new Error("Unable to fetch playlist JSON.");
         }
@@ -404,7 +413,7 @@ export default function AudioPlayerWidget({
       canceled = true;
       setLoading(false);
     };
-  }, [dataUrl, singleTrack, startIndex, sourceUrl, layout, instance]);
+  }, [dataUrl, singleTrack, startIndex, sourceUrl, layout, instance, requestedCategory, requestedType, adminKey]);
 
   useEffect(() => {
     setVolume(initialVolume);
@@ -441,16 +450,17 @@ export default function AudioPlayerWidget({
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [accessibleTracks]);
-
+  
+  // Sync selectedCategory with requestedCategory on mount/change
   useEffect(() => {
-    if (!selectedCategory) return;
-    if (categories.includes(selectedCategory)) return;
-    setSelectedCategory("");
-  }, [categories, selectedCategory]);
+    if (requestedCategory) {
+      setSelectedCategory(requestedCategory);
+    }
+  }, [requestedCategory, dataUrl, instance]);
 
   const availableTypeOptions = useMemo(() => {
     const set = new Set<string>();
-    accessibleTracks.forEach((track) => {
+    tracks.forEach((track) => {
       const category = normalizeCategory(track.category);
       const type = normalizeType(track.type);
       if (!type) return;
@@ -458,13 +468,7 @@ export default function AudioPlayerWidget({
       set.add(type);
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [accessibleTracks, selectedCategory]);
-
-  useEffect(() => {
-    if (!selectedType) return;
-    if (availableTypeOptions.includes(selectedType)) return;
-    setSelectedType("");
-  }, [availableTypeOptions, selectedType]);
+  }, [tracks, selectedCategory]);
 
   const filteredTracks = useMemo(() => {
     return accessibleTracks.filter((track) => {
