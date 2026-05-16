@@ -265,6 +265,7 @@ export default function AudioPlayerWidget({
   const [error, setError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  
 
   const getParam = (keys: string[]) => {
     if (embedParams) {
@@ -296,6 +297,10 @@ export default function AudioPlayerWidget({
   const dataUrl = (getParam(["data", "playlist"]) || "").trim();
   const autoplay = parseBool(getParam(["autoplay"]), false);
   const showQueue = parseBool(getParam(["queue", "show-queue", "showQueue"]), true);
+  const [queueVisible, setQueueVisible] = useState<boolean>(showQueue);
+  useEffect(() => {
+    setQueueVisible(showQueue);
+  }, [showQueue]);
   const loopMode = pick(getParam(["loop"]), ["none", "track", "playlist"] as const, "none");
   const startIndex = clamp(getParam(["start", "index"]), 0, 0, 99);
   const initialVolume = clamp(getParam(["volume"]), 0.8, 0, 1);
@@ -447,6 +452,8 @@ export default function AudioPlayerWidget({
   useEffect(() => {
     setSelectedTypes(requestedTypes);
   }, [requestedTypesKey, dataUrl, instance]);
+
+  
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -756,8 +763,8 @@ export default function AudioPlayerWidget({
     boxShadow: effectivePreviewBlend
       ? "none"
       : layout === "large"
-      ? "0 18px 40px rgba(4, 10, 30, 0.35)"
-      : "0 12px 28px rgba(16, 24, 40, 0.16)",
+      ? "0 26px 60px rgba(4, 10, 30, 0.46), 0 2px 0 rgba(255, 255, 255, 0.05) inset"
+      : "0 18px 40px rgba(16, 24, 40, 0.24), 0 1px 0 rgba(255, 255, 255, 0.05) inset",
     width: "100%",
     maxWidth: layout === "small" ? 800 : layout === "medium" ? 420 : 500,
   };
@@ -776,17 +783,21 @@ export default function AudioPlayerWidget({
             style={{ pointerEvents: "none" }}
           />
         )}
-        
+
         {loading ? (
-          <div className="flex flex-col items-center justify-center gap-3 px-4 py-8 min-h-[120px]">
-            <Loader size={28} className="animate-spin" style={{ color: text }} />
-            <p className="text-sm text-center" style={{ opacity: 0.7 }}>Loading playlist...</p>
+          <div className="absolute inset-0 z-20 flex items-center justify-center px-4 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-[#08102b]/70 px-5 py-4 backdrop-blur-sm">
+              <Loader size={28} className="animate-spin" style={{ color: text }} />
+              <p className="text-sm" style={{ opacity: 0.75 }}>Loading playlist...</p>
+            </div>
           </div>
         ) : null}
         {isBuffering && activeTrack && !error ? (
-          <div className="flex flex-col items-center justify-center gap-2 px-4 py-4 min-h-[60px]">
-            <Play size={24} className="animate-pulse" fill="currentColor" style={{ color: text }} />
-            <p className="text-xs text-center" style={{ opacity: 0.65 }}>Loading track...</p>
+          <div className="absolute inset-0 z-20 flex items-center justify-center px-4 text-center">
+            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-[#08102b]/70 px-5 py-4 backdrop-blur-sm">
+              <Play size={24} className="animate-pulse" fill="currentColor" style={{ color: text }} />
+              <p className="text-xs" style={{ opacity: 0.72 }}>Loading track...</p>
+            </div>
           </div>
         ) : null}
         {error ? (
@@ -896,7 +907,7 @@ export default function AudioPlayerWidget({
             <div className="px-6 pb-4 pt-5">
               <h3 className="text-4xl font-black leading-[1.04] tracking-tight">{activeTrack.title}</h3>
               <p className="mt-2 text-lg opacity-85">{activeTrack.artist}</p>
-              <div className="mt-4 flex flex-wrap gap-2 items-center">
+              {/* <div className="mt-4 flex flex-wrap gap-2 items-center">
                 <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-3 py-1 text-xs font-semibold opacity-80" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
                   🕐 {formatTime(duration)}
                 </span>
@@ -908,8 +919,8 @@ export default function AudioPlayerWidget({
                     {playbackStateLabel}
                   </span>
                 ) : null}
-              </div>
-              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3">
+              </div> */}
+              {/* <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.18em] opacity-55">Now playing</p>
@@ -931,9 +942,9 @@ export default function AudioPlayerWidget({
                     )}
                   </div>
                 )}
-              </div>
+              </div> */}
             </div>
-            <div className="px-6 pb-2 text-sm opacity-85 flex justify-between" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
+            <div className="mt-4 px-6 pb-2 text-sm opacity-85 flex justify-between" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
               <span>{formatTime(currentTime)}</span>
               <span>{formatTime(duration)}</span>
             </div>
@@ -948,8 +959,8 @@ export default function AudioPlayerWidget({
                 style={{ accentColor: accent }}
               />
             </div>
-            <div className="px-6 pb-6 pt-4 flex items-center justify-between">
-              <div className="flex gap-2">
+            <div className="px-6 pb-6 pt-4 relative medium-controls-wrap">
+              <div className="medium-controls-center">
                 <button type="button" className={controlButton} onClick={previousTrack} disabled={!canGoPrevious}>
                   <SkipBack size={24} fill="currentColor" color={text} />
                 </button>
@@ -965,13 +976,13 @@ export default function AudioPlayerWidget({
                   <SkipForward size={24} fill="currentColor" color={text} />
                 </button>
               </div>
-              <div className="flex gap-2">
+              <div className="medium-controls-side" aria-hidden>
                 <button type="button" className={controlButton} onClick={toggleMute}>
                   {isMuted ? <VolumeX size={20} fill="currentColor" color={text} /> : <Volume2 size={20} fill="currentColor" color={text} />}
                 </button>
-                <button type="button" className={controlButton} onClick={() => undefined}>
+                {/* <button type="button" className={controlButton} onClick={() => setQueueVisible((v) => !v)} aria-pressed={queueVisible} aria-label="Toggle queue">
                   <List size={20} fill="currentColor" color={text} />
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
@@ -984,7 +995,7 @@ export default function AudioPlayerWidget({
             <div className="px-6 pt-5">
               <h3 className="text-[2rem] font-bold leading-tight">{activeTrack.title}</h3>
               <p className="mt-1 text-lg opacity-85">{activeTrack.artist}</p>
-              <div className="mt-3 flex flex-wrap gap-4 text-sm opacity-75">
+              {/* <div className="mt-3 flex flex-wrap gap-4 text-sm opacity-75">
                 <div>
                   <p className="text-xs uppercase tracking-wider opacity-50 mb-1">Duration</p>
                   <p className="font-semibold" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>{formatTime(duration)}</p>
@@ -998,8 +1009,8 @@ export default function AudioPlayerWidget({
                     <p className={`font-semibold ${isPlaying ? "text-emerald-200" : ""}`}>{playbackStateLabel}</p>
                   </div>
                 ) : null}
-              </div>
-              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3">
+              </div> */}
+              {/* <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3">
                 <p className="text-[10px] uppercase tracking-[0.18em] opacity-55">Now playing</p>
                 <p className="mt-1 text-sm font-semibold opacity-95">{activeTrack.title}</p>
                 <p className="mt-1 text-sm opacity-80">{activeTrack.artist}</p>
@@ -1017,7 +1028,7 @@ export default function AudioPlayerWidget({
                     )}
                   </div>
                 )}
-              </div>
+              </div> */}
             </div>
 
             <div className="px-6 pb-1 pt-4 text-sm opacity-90 flex justify-between" style={{ fontFamily: '"Karla", -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
@@ -1037,8 +1048,8 @@ export default function AudioPlayerWidget({
               />
             </div>
 
-            <div className="px-6 py-5 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex gap-2">
+            <div className="large-controls-wrap px-6 py-5">
+              <div className="large-controls-primary">
                 <button type="button" className={controlButton} onClick={previousTrack} disabled={!canGoPrevious}>
                   <SkipBack size={22} fill="currentColor" color={text} />
                 </button>
@@ -1055,7 +1066,7 @@ export default function AudioPlayerWidget({
                 </button>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="large-controls-secondary">
                 <button type="button" className={controlButton} onClick={toggleMute}>
                   {isMuted ? <VolumeX size={19} fill="currentColor" color={text} /> : <Volume2 size={19} fill="currentColor" color={text} />}
                 </button>
@@ -1071,88 +1082,66 @@ export default function AudioPlayerWidget({
                     if (audioRef.current) audioRef.current.muted = false;
                     setIsMuted(false);
                   }}
-                  className="w-28"
+                  className="large-volume-slider"
                   style={{ accentColor: accent }}
                 />
+                  <button type="button" className={controlButton} onClick={() => setQueueVisible((v) => !v)} aria-pressed={queueVisible} aria-label="Toggle queue">
+                  <List size={20} fill="currentColor" color={text} />
+                </button>
               </div>
             </div>
 
-            {showQueue && filteredTracks.length > 1 ? (
-              <div>
-                <div className="filter-controls">
+            {queueVisible && filteredTracks.length > 1 ? (
+              <div className="large-queue-panel">
+                {/* <div className="filter-controls">
                   <div className="filter-group">
                     <span className="filter-label">Category:</span>
                     <div className="filter-buttons">
-                      <button
-                        type="button"
-                        className={`filter-btn ${!selectedCategories.length ? 'active' : ''}`}
-                        onClick={() => setSelectedCategories([])}
-                      >
-                        All
-                      </button>
-                      {categories.map(cat => (
-                        <button
-                          key={cat}
-                          type="button"
-                          className={`filter-btn ${selectedCategories.includes(cat) ? 'active' : ''}`}
-                          onClick={() => setSelectedCategories((prev) => toggleSelection(prev, cat))}
-                        >
-                          {cat}
-                        </button>
+                      <button type="button" className={`filter-btn ${!selectedCategories.length ? 'active' : ''}`} onClick={() => setSelectedCategories([])}>All</button>
+                      {categories.map((cat) => (
+                        <button key={cat} type="button" className={`filter-btn ${selectedCategories.includes(cat) ? 'active' : ''}`} onClick={() => setSelectedCategories((prev) => toggleSelection(prev, cat))}>{cat}</button>
                       ))}
                     </div>
                   </div>
                   <div className="filter-group">
                     <span className="filter-label">Type:</span>
                     <div className="filter-buttons">
-                      <button
-                        type="button"
-                        className={`filter-btn ${!selectedTypes.length ? 'active' : ''}`}
-                        onClick={() => setSelectedTypes([])}
-                      >
-                        All
-                      </button>
-                      {availableTypeOptions.map(typ => (
-                        <button
-                          key={typ}
-                          type="button"
-                          className={`filter-btn ${selectedTypes.includes(typ) ? 'active' : ''}`}
-                          onClick={() => setSelectedTypes((prev) => toggleSelection(prev, typ))}
-                        >
-                          {typ}
-                        </button>
+                      <button type="button" className={`filter-btn ${!selectedTypes.length ? 'active' : ''}`} onClick={() => setSelectedTypes([])}>All</button>
+                      {availableTypeOptions.map((typ) => (
+                        <button key={typ} type="button" className={`filter-btn ${selectedTypes.includes(typ) ? 'active' : ''}`} onClick={() => setSelectedTypes((prev) => toggleSelection(prev, typ))}>{typ}</button>
                       ))}
                     </div>
                   </div>
+                </div> */}
+                <div className="track-queue-shell">
+                  <div className="track-queue-fade track-queue-fade-top" aria-hidden="true" />
+                  <div className="track-queue-fade track-queue-fade-bottom" aria-hidden="true" />
+                  <ul className="track-queue">
+                    {filteredTracks.map((track, index) => {
+                      const active = track.src === activeTrack?.src;
+                      return (
+                        <li key={`${track.src}-${index}`}>
+                          <button type="button" className={active ? 'active' : ''} onClick={() => playTrackAt(index)}>
+                            <img src={track.cover || `/api/audio/artwork?url=${encodeURIComponent(track.src)}`} alt={track.title} />
+                            <span>
+                              <strong>{track.title}</strong>
+                              <em>{track.artist}</em>
+                              {(track.category || track.type) && (
+                                <span className="track-metadata" style={{ fontSize: '0.7rem', opacity: 0.7, marginLeft: '6px', display: 'block', marginTop: '2px' }}>
+                                  {track.category && <span>[{track.category}]</span>}
+                                  {track.type && <span style={{ marginLeft: '4px' }}>({track.type})</span>}
+                                </span>
+                              )}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
-                <ul className="track-queue">
-                  {filteredTracks.map((track, index) => {
-                    const active = track.src === activeTrack?.src;
-                    return (
-                      <li key={`${track.src}-${index}`}>
-                        <button
-                          type="button"
-                          className={active ? "active" : ""}
-                          onClick={() => playTrackAt(index)}
-                        >
-                          <img src={track.cover || `/api/audio/artwork?url=${encodeURIComponent(track.src)}`} alt={track.title} />
-                          <span>
-                            <strong>{track.title}</strong>
-                            <em>{track.artist}</em>
-                            {(track.category || track.type) && (
-                              <span className="track-metadata" style={{ fontSize: '0.7rem', opacity: 0.7, marginLeft: '6px', display: 'block', marginTop: '2px' }}>
-                                {track.category && <span>[{track.category}]</span>}
-                                {track.type && <span style={{ marginLeft: '4px' }}>({track.type})</span>}
-                              </span>
-                            )}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
               </div>
             ) : null}
+
           </div>
         ) : null}
       </section>
@@ -1599,19 +1588,23 @@ export default function AudioPlayerWidget({
 
         .medium-layout {
           padding-top: 8px;
+          position: relative;
+          z-index: 1;
         }
 
         .cover-card {
           width: calc(100% - 36px);
           margin: 18px auto 0;
           border-radius: 16px;
-          aspect-ratio: 1 / 1;
-          object-fit: cover;
+          object-fit: contain;
+          height: auto;
           box-shadow: 0 10px 20px rgba(83, 19, 49, 0.24);
         }
 
         .large-layout {
           padding: 14px 0 16px;
+          position: relative;
+          z-index: 1;
         }
 
         .cover-large {
@@ -1622,15 +1615,102 @@ export default function AudioPlayerWidget({
           aspect-ratio: 1 / 1;
         }
 
+        .medium-controls-wrap {
+          position: relative;
+        }
+
+        .medium-controls-center {
+          display: flex;
+          gap: 12px;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .medium-controls-side {
+          position: absolute;
+          right: 18px;
+          top: 20%;
+          // transform: translateY(-50%);
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .large-controls-wrap {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 12px;
+        }
+
+        .large-controls-primary {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .large-controls-secondary {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .large-volume-slider {
+          width: 100%;
+          max-width: 220px;
+        }
+
+        .large-queue-panel {
+          margin: 6px 18px 0;
+          padding: 10px 0 12px;
+          background: linear-gradient(180deg, rgba(8, 16, 43, 0.12), rgba(8, 16, 43, 0.04));
+          border-radius: 0 0 18px 18px;
+        }
+
+        .track-queue-shell {
+          position: relative;
+        }
+
         .track-queue {
-          margin: 6px 14px 0;
-          padding: 0;
+          margin: 6px 0 0;
+          padding: 10px 0 16px;
           list-style: none;
           display: flex;
           flex-direction: column;
           gap: 8px;
           max-height: 260px;
           overflow: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .track-queue::-webkit-scrollbar {
+          width: 0;
+          height: 0;
+          display: none;
+        }
+
+        .track-queue-fade {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 28px;
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        .track-queue-fade-top {
+          top: 0;
+          background: linear-gradient(to bottom, rgba(8, 16, 43, 0.96), rgba(8, 16, 43, 0));
+        }
+
+        .track-queue-fade-bottom {
+          bottom: 0;
+          background: linear-gradient(to top, rgba(8, 16, 43, 0.96), rgba(8, 16, 43, 0));
         }
 
         .filter-controls {
@@ -1733,6 +1813,166 @@ export default function AudioPlayerWidget({
           font-size: 0.8rem;
           opacity: 0.76;
           font-style: normal;
+        }
+
+        @media (max-width: 420px) {
+          .medium-layout,
+          .large-layout {
+            padding-top: 4px;
+            padding-bottom: 10px;
+          }
+
+          .cover-card,
+          .cover-large {
+            width: calc(100% - 24px);
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 14px;
+          }
+
+          .medium-layout > .px-6,
+          .large-layout > .px-6 {
+            padding-left: 12px;
+            padding-right: 12px;
+          }
+
+          .medium-layout h3 {
+            font-size: 1.45rem;
+            line-height: 1.08;
+          }
+
+          .medium-layout p.mt-2 {
+            font-size: 0.92rem;
+          }
+
+          .medium-controls-wrap,
+          .px-6.py-5.flex.flex-wrap.items-center.justify-between.gap-4 {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+          }
+
+          .medium-controls-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+          }
+
+          .medium-controls-center {
+            justify-content: center;
+            flex-wrap: wrap;
+          }
+
+          .medium-controls-side {
+            position: static;
+            transform: none;
+            justify-content: center;
+            width: 100%;
+          }
+
+          .large-layout .px-6.pt-5 h3,
+          .large-layout h3.text-\[2rem\] {
+            font-size: 1.35rem;
+            line-height: 1.1;
+          }
+
+          .large-layout .mt-3.flex.flex-wrap.gap-4.text-sm.opacity-75 {
+            gap: 10px;
+            row-gap: 8px;
+            font-size: 0.78rem;
+          }
+
+          .large-layout .flex.items-center.gap-3 {
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+
+          .large-layout .w-28 {
+            width: 100%;
+          }
+
+          .large-queue-panel {
+            margin: 6px 12px 0;
+          }
+
+          .filter-controls {
+            margin: 10px 0 8px;
+            padding: 10px;
+          }
+
+          .filter-buttons {
+            gap: 5px;
+          }
+
+          .filter-btn {
+            padding: 5px 8px;
+            font-size: 0.75rem;
+          }
+
+          .track-queue button {
+            padding: 7px;
+            gap: 8px;
+          }
+
+          .track-queue img {
+            width: 40px;
+            height: 40px;
+          }
+
+          .track-queue strong {
+            font-size: 0.88rem;
+          }
+
+          .track-queue em {
+            font-size: 0.74rem;
+          }
+        }
+
+        @media (max-width: 320px) {
+          .medium-layout,
+          .large-layout {
+            padding-top: 2px;
+          }
+
+          .cover-card,
+          .cover-large {
+            width: calc(100% - 16px);
+            border-radius: 12px;
+          }
+
+          .medium-layout h3,
+          .large-layout h3 {
+            font-size: 1.2rem;
+          }
+
+          .medium-layout p.mt-2,
+          .large-layout p.mt-1.text-lg.opacity-85 {
+            font-size: 0.84rem;
+          }
+
+          .medium-controls-center,
+          .medium-controls-side,
+          .px-6.py-5.flex.flex-wrap.items-center.justify-between.gap-4 {
+            gap: 6px;
+          }
+
+          .medium-controls-wrap {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+          }
+
+          .large-queue-panel {
+            margin-left: 10px;
+            margin-right: 10px;
+          }
+
+          .filter-controls {
+            padding: 8px;
+          }
+
+          .track-queue button {
+            border-radius: 10px;
+          }
         }
 
         @media (max-width: 880px) {
