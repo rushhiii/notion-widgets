@@ -27,7 +27,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: `Failed to fetch playlist: ${response.statusText}` }, { status: response.status });
     }
 
-    const payload = await response.json();
+    const payload = JSON.parse((await response.text()).replace(/^\uFEFF/, ""));
 
     return NextResponse.json(payload, {
       status: 200,

@@ -24,8 +24,8 @@ type Track = {
 
 const DEFAULT_TRACK: Track = {
   src: "",
-  title: "Instrumental Track",
-  artist: "Custom Source",
+  title: "",
+  artist: "",
   cover: "",
 };
 
@@ -1339,10 +1339,11 @@ export default function AudioPlayerWidget({
         }
 
         .small-album-art img {
+          // border-radius: 100%;
           width: 100%;
           height: 100%;
           object-fit: cover;
-          // object-fit: fit;
+          // object-fit: none;
           display: block;
           animation: artSwapIn 420ms cubic-bezier(0.22, 1, 0.36, 1);
         }

@@ -17,11 +17,15 @@ const PUBLIC_ALLOWED_TYPES_BY_CATEGORY: Record<string, string[]> = {
   otherz: ["normal"],
   punjab: ["normal"],
   nightcore: ["normal"],
+  "🎻": ["normal"],
+  "🔱": ["normal", "modern"],
 };
 
 const CATEGORY_ALIASES: Record<string, string> = {
   punjabi: "punjab",
   others: "otherz",
+  instrumental: "🎻",
+  spritual: "🔱",
 };
 
 const TYPE_ALIASES: Record<string, string> = {
@@ -84,7 +88,7 @@ function normalizeTrack(input: unknown): PlaylistTrack | null {
 
 async function readPlaylistTracks(): Promise<PlaylistTrack[]> {
   const playlistPath = path.join(process.cwd(), "public/audio/playlist.json");
-  const content = await fs.readFile(playlistPath, "utf8");
+  const content = (await fs.readFile(playlistPath, "utf8")).replace(/^\uFEFF/, "");
   const payload = JSON.parse(content) as unknown;
 
   const rows = (Array.isArray(payload)

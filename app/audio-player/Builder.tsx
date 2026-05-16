@@ -58,8 +58,8 @@ function normalizeFilterType(value: string): string {
 const defaults = {
   layout: "small" as PlayerLayout,
   src: "",
-  title: "my magic shop",
-  artist: "you gave me the best of me",
+  title: "",
+  artist: "",
   cover: "",
   data: INTERNAL_PLAYLIST_SOURCE,
   accent: "#d54e84",
