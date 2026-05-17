@@ -74,6 +74,11 @@ function toggleSelection(values: string[], value: string): string[] {
   return [...values, value].sort((left, right) => left.localeCompare(right));
 }
 
+function sameStringArray(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
+}
+
 const defaults = {
   layout: "small" as PlayerLayout,
   src: "",
@@ -160,8 +165,14 @@ export default function AudioPlayerBuilder() {
 
   const normalizedInstance = sanitizeInstance(instanceId.trim());
   const normalizedDraft = sanitizeInstance(instanceDraft.trim());
-  const normalizedCategoryFilters = categoryFilters.map((value) => normalizeFilterCategory(value)).filter((value): value is string => Boolean(value));
-  const normalizedTypeFilters = typeFilters.map((value) => normalizeFilterType(value)).filter((value): value is string => Boolean(value));
+  const normalizedCategoryFilters = useMemo(
+    () => categoryFilters.map((value) => normalizeFilterCategory(value)).filter((value): value is string => Boolean(value)),
+    [categoryFilters],
+  );
+  const normalizedTypeFilters = useMemo(
+    () => typeFilters.map((value) => normalizeFilterType(value)).filter((value): value is string => Boolean(value)),
+    [typeFilters],
+  );
   const configuredAdminKey =
     (process.env.NEXT_PUBLIC_AUDIO_ADMIN_KEY || process.env.NEXT_PUBLIC_QUOTES_ADMIN_KEY || "").trim();
   const includeAdminExtras = configuredAdminKey
@@ -193,11 +204,17 @@ export default function AudioPlayerBuilder() {
   }, [normalizedCategoryFilters, filterTypeOptionsByCategory, allTypeOptions]);
 
   useEffect(() => {
-    setCategoryFilters((prev) => prev.filter((value) => availableCategoryOptions.includes(value)));
+    setCategoryFilters((prev) => {
+      const next = prev.filter((value) => availableCategoryOptions.includes(value));
+      return sameStringArray(prev, next) ? prev : next;
+    });
   }, [availableCategoryOptions]);
 
   useEffect(() => {
-    setTypeFilters((prev) => prev.filter((value) => availableTypeOptions.includes(value)));
+    setTypeFilters((prev) => {
+      const next = prev.filter((value) => availableTypeOptions.includes(value));
+      return sameStringArray(prev, next) ? prev : next;
+    });
   }, [availableTypeOptions]);
 
   useEffect(() => {
@@ -206,7 +223,8 @@ export default function AudioPlayerBuilder() {
         && preset.bg.toLowerCase() === bg.toLowerCase()
         && preset.text.toLowerCase() === text.toLowerCase(),
     );
-    setThemePresetId(matchedPreset?.id ?? "custom");
+    const nextPresetId = matchedPreset?.id ?? "custom";
+    setThemePresetId((prev) => (prev === nextPresetId ? prev : nextPresetId));
   }, [accent, bg, text]);
 
   const params = useMemo(() => {

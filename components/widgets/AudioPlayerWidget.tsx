@@ -1051,7 +1051,7 @@ export default function AudioPlayerWidget({
             <div className="large-controls-wrap px-6 py-5">
               <div className="large-controls-primary">
                 <button type="button" className={controlButton} onClick={previousTrack} disabled={!canGoPrevious}>
-                  <SkipBack size={22} fill="currentColor" color={text} />
+                  <SkipBack size={28} fill="currentColor" color={text} />
                 </button>
                 <button
                   type="button"
@@ -1059,16 +1059,16 @@ export default function AudioPlayerWidget({
                   onClick={togglePlay}
                   style={{ color: accent }}
                 >
-                  {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+                  {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" />}
                 </button>
                 <button type="button" className={controlButton} onClick={nextTrack} disabled={!canGoNext}>
-                  <SkipForward size={22} fill="currentColor" color={text} />
+                  <SkipForward size={28} fill="currentColor" color={text} />
                 </button>
               </div>
 
               <div className="large-controls-secondary">
                 <button type="button" className={controlButton} onClick={toggleMute}>
-                  {isMuted ? <VolumeX size={19} fill="currentColor" color={text} /> : <Volume2 size={19} fill="currentColor" color={text} />}
+                  {isMuted ? <VolumeX size={24} fill="currentColor" color={text} /> : <Volume2 size={24} fill="currentColor" color={text} />}
                 </button>
                 <input
                   type="range"
@@ -1086,7 +1086,7 @@ export default function AudioPlayerWidget({
                   style={{ accentColor: accent }}
                 />
                   <button type="button" className={controlButton} onClick={() => setQueueVisible((v) => !v)} aria-pressed={queueVisible} aria-label="Toggle queue">
-                  <List size={20} fill="currentColor" color={text} />
+                  <List size={24} fill="currentColor" color={text} />
                 </button>
               </div>
             </div>
@@ -1113,32 +1113,28 @@ export default function AudioPlayerWidget({
                     </div>
                   </div>
                 </div> */}
-                <div className="track-queue-shell">
-                  <div className="track-queue-fade track-queue-fade-top" aria-hidden="true" />
-                  <div className="track-queue-fade track-queue-fade-bottom" aria-hidden="true" />
-                  <ul className="track-queue">
-                    {filteredTracks.map((track, index) => {
-                      const active = track.src === activeTrack?.src;
-                      return (
-                        <li key={`${track.src}-${index}`}>
-                          <button type="button" className={active ? 'active' : ''} onClick={() => playTrackAt(index)}>
-                            <img src={track.cover || `/api/audio/artwork?url=${encodeURIComponent(track.src)}`} alt={track.title} />
-                            <span>
-                              <strong>{track.title}</strong>
-                              <em>{track.artist}</em>
-                              {(track.category || track.type) && (
-                                <span className="track-metadata" style={{ fontSize: '0.7rem', opacity: 0.7, marginLeft: '6px', display: 'block', marginTop: '2px' }}>
-                                  {track.category && <span>[{track.category}]</span>}
-                                  {track.type && <span style={{ marginLeft: '4px' }}>({track.type})</span>}
-                                </span>
-                              )}
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                <ul className="track-queue">
+                  {filteredTracks.map((track, index) => {
+                    const active = track.src === activeTrack?.src;
+                    return (
+                      <li key={`${track.src}-${index}`}>
+                        <button type="button" className={active ? 'active' : ''} onClick={() => playTrackAt(index)}>
+                          <img src={track.cover || `/api/audio/artwork?url=${encodeURIComponent(track.src)}`} alt={track.title} />
+                          <span>
+                            <strong>{track.title}</strong>
+                            <em>{track.artist}</em>
+                            {/* {(track.category || track.type) && (
+                              <span className="track-metadata" style={{ fontSize: '0.7rem', opacity: 0.7, marginLeft: '6px', display: 'block', marginTop: '2px' }}>
+                                {track.category && <span>[{track.category}]</span>}
+                                {track.type && <span style={{ marginLeft: '4px' }}>({track.type})</span>}
+                              </span>
+                            )} */}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             ) : null}
 
@@ -1439,7 +1435,7 @@ export default function AudioPlayerWidget({
         }
 
         .play-main {
-          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.36);
+          // box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.36);
           transition: background-color 200ms ease;
         }
 
@@ -1667,50 +1663,39 @@ export default function AudioPlayerWidget({
         .large-queue-panel {
           margin: 6px 18px 0;
           padding: 10px 0 12px;
-          background: linear-gradient(180deg, rgba(8, 16, 43, 0.12), rgba(8, 16, 43, 0.04));
+          background: linear-gradient(180deg, rgba(8, 16, 43, 0.08), rgba(8, 16, 43, 0.03));
           border-radius: 0 0 18px 18px;
-        }
-
-        .track-queue-shell {
-          position: relative;
         }
 
         .track-queue {
           margin: 6px 0 0;
-          padding: 10px 0 16px;
+          padding: 10px .45rem 16px 0;
           list-style: none;
           display: flex;
           flex-direction: column;
           gap: 8px;
           max-height: 260px;
-          overflow: auto;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          overflow: hidden auto;
+          overscroll-behavior: contain;
+          scrollbar-gutter: stable;
+          scrollbar-color: transparent transparent;
+          --sidebar-mask-fade: 1rem;
+          min-height: 0;
+          -webkit-mask-image: linear-gradient(to bottom, #0000 0, #000 var(--sidebar-mask-fade), #000 calc(100% - var(--sidebar-mask-fade)), #0000 100%);
+          mask-image: linear-gradient(to bottom, #0000 0, #000 var(--sidebar-mask-fade), #000 calc(100% - var(--sidebar-mask-fade)), #0000 100%);
+          -webkit-mask-size: 100% 100%;
+          mask-size: 100% 100%;
+          -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+          scroll-padding-top: .45rem;
+          scroll-padding-bottom: 2rem;
+          transition: scrollbar-color .2s, border-color .2s;
         }
 
         .track-queue::-webkit-scrollbar {
           width: 0;
           height: 0;
           display: none;
-        }
-
-        .track-queue-fade {
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 28px;
-          pointer-events: none;
-          z-index: 2;
-        }
-
-        .track-queue-fade-top {
-          top: 0;
-          background: linear-gradient(to bottom, rgba(8, 16, 43, 0.96), rgba(8, 16, 43, 0));
-        }
-
-        .track-queue-fade-bottom {
-          bottom: 0;
-          background: linear-gradient(to top, rgba(8, 16, 43, 0.96), rgba(8, 16, 43, 0));
         }
 
         .filter-controls {
