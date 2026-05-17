@@ -80,17 +80,66 @@ async function updatePlaylistMetadata() {
         console.log(`⚠️  Track ${i + 1}: Could not extract filename from URL`);
         continue;
       }
-      
+
       const filename = fileMatch[1];
-      const parsed = parseFilename(filename);
-      
-      // Update artist and title from filename parsing
-      track.artist = parsed.artist;
-      track.title = parsed.title;
-      
-      // Update cover to use Archive.org thumbnail if available
+      const filenameDecoded = decodeURIComponent(filename);
+
+      // Fetch metadata only once per item
+      if (!fetchedMetadata[itemId]) {
+        console.log(`📥 Fetching metadata for item: ${itemId}`);
+        fetchedMetadata[itemId] = await fetchArchiveMetadata(itemId);
+        // Rate limiting: be nice to Archive.org
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      const metadata = fetchedMetadata[itemId];
+
+      // Try to use per-file metadata when available
+      let finalArtist = null;
+      let finalTitle = null;
+
+      if (metadata && Array.isArray(metadata.files)) {
+        const relPath = decodeURIComponent(track.src.split(`/items/${itemId}/`)[1]);
+        const fileObj = metadata.files.find(f => f.name === relPath || f.name === filenameDecoded || (f.name && f.name.endsWith(filenameDecoded)));
+
+        if (fileObj) {
+          finalArtist = fileObj.artist || fileObj.creator || null;
+          finalTitle = fileObj.title || null;
+        }
+      }
+
+      // Fallback to filename parsing when per-file metadata isn't available
+      if (!finalArtist || !finalTitle) {
+        const parsed = parseFilename(filename);
+        finalArtist = finalArtist || parsed.artist;
+        finalTitle = finalTitle || parsed.title;
+      }
+
+      // Clean artist: remove parenthetical qualifiers like (slowed+reverb)
+      finalArtist = finalArtist.replace(/\s*\(.*?\)\s*$/,'').trim();
+
+      // If artist becomes empty after cleaning, set Unknown Artist
+      if (!finalArtist) finalArtist = 'Unknown Artist';
+      // If artist equals title or looks like a variant, try to find the original (non-slowed/sped) file
+      const baseTitle = (finalTitle || '').replace(/\s*\(.*?\)\s*/g, '').trim();
+      if (metadata && Array.isArray(metadata.files) && (finalArtist === finalTitle || finalArtist === baseTitle || /slowed|sped|remix|reverb/i.test(filenameDecoded))) {
+        const alt = metadata.files.find(f => {
+          const n = f.name || '';
+          // prefer files containing the baseTitle but not slowed/sped/reverb variants
+          return n.includes(baseTitle) && !/slowed|sped|remix|reverb/i.test(n) && n.toLowerCase().endsWith('.mp3');
+        });
+
+        if (alt && (alt.artist || alt.creator)) {
+          finalArtist = (alt.artist || alt.creator).replace(/\s*\(.*?\)\s*$/,'').trim();
+          if (!finalArtist) finalArtist = 'Unknown Artist';
+        }
+      }
+
+      track.artist = finalArtist;
+      track.title = finalTitle;
+      // Keep placeholder covers per request
       track.cover = getCoverUrl(itemId);
-      
+
       console.log(`✅ Updated track ${i + 1}: "${track.title}" by "${track.artist}"`);
     }
     
