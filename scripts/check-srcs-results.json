@@ -1,0 +1,67 @@
+{
+  "failures": [
+    {
+      "index": 122,
+      "src": "https://ia601904.us.archive.org/35/items/ashwin-pathak-sunderkand-hd/tracks/ENG/slowed/Put%20Your%20Head%20x%20Streets%20%28slowed%2Breverb%29%20-%20Put%20Your%20Head%20x%20Streets%20%28slowed%2Breverb%29.mp3",
+      "title": "Put Your Head x Streets (slowed+reverb)",
+      "artist": "Put Your Head x Streets",
+      "status": 404
+    },
+    {
+      "index": 161,
+      "src": "https://ia601904.us.archive.org/35/items/ashwin-pathak-sunderkand-hd/tracks/ENG/sped-up/Glock%20In%20My%20Lap%20x%20Immortal%20%28sped%20up%29%20-%20Glock%20In%20My%20Lap%20x%20Immortal%20%28sped%20up%29.mp3",
+      "title": "Glock In My Lap x Immortal (sped up)",
+      "artist": "Glock In My Lap x Immortal",
+      "status": 404
+    },
+    {
+      "index": 176,
+      "src": "https://ia601904.us.archive.org/35/items/ashwin-pathak-sunderkand-hd/tracks/ENG/sped-up/YAD%20%28eng%2Bsped%20up%29%20-%20YAD%20%28eng%2Bsped%20up%29.mp3",
+      "title": "YAD (eng+sped up)",
+      "artist": "Vanna Rainelle",
+      "status": 404
+    },
+    {
+      "index": 194,
+      "src": "https://ia601904.us.archive.org/35/items/ashwin-pathak-sunderkand-hd/tracks/Hindi/Darshan%20Raval%20-%20Bhula%20Diya.mp3",
+      "title": "Bhula Diya",
+      "artist": "Darshan Raval",
+      "status": 404
+    },
+    {
+      "index": 216,
+      "src": "https://ia601904.us.archive.org/35/items/ashwin-pathak-sunderkand-hd/tracks/Hindi/Palak%20Muchhal%20-%20Kaun%20Tujhe%20%28female%20cover%29.mp3",
+      "title": "Kaun Tujhe (female cover)",
+      "artist": "Palak Muchhal",
+      "status": 404
+    },
+    {
+      "index": 220,
+      "src": "https://ia601904.us.archive.org/35/items/ashwin-pathak-sunderkand-hd/tracks/Hindi/RI%24HI%20RICH%20-%20PUBG%20TRAP%20MIX%20RAP.mp3",
+      "title": "PUBG TRAP MIX RAP",
+      "artist": "RI$HI RICH",
+      "status": 404
+    },
+    {
+      "index": 235,
+      "src": "https://ia601904.us.archive.org/35/items/ashwin-pathak-sunderkand-hd/tracks/Hindi/slowed/Banjaara%20%28slowed%2Breverb%29%20-%20Banjaara%20%28slowed%2Breverb%29.mp3",
+      "title": "Banjaara (slowed+reverb)",
+      "artist": "Mithoon x Mohammed Irfan",
+      "status": 404
+    },
+    {
+      "index": 266,
+      "src": "https://ia601904.us.archive.org/35/items/ashwin-pathak-sunderkand-hd/tracks/Punjab/Prabh%20-%20945.mp3",
+      "title": "945",
+      "artist": "Prabh",
+      "status": 404
+    },
+    {
+      "index": 299,
+      "src": "https://ia601904.us.archive.org/35/items/ashwin-pathak-sunderkand-hd/tracks/%F0%9F%94%B1/Witness%20the%20POWER%20of%20LORD%20SHIVA%20-%20Witness%20the%20POWER%20of%20LORD%20SHIVA.mp3",
+      "title": "Witness the POWER of LORD SHIVA",
+      "artist": "Mahadev",
+      "status": 404
+    }
+  ]
+}
